@@ -385,27 +385,30 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .sidebar-backdrop.show{display:block;opacity:1;}
 
 @media(max-width:768px){
-  .workspace-tabs{padding:0 8px;height:40px;justify-content:center;gap:2px;}
-  .workspace-tab{padding:8px 20px;font-size:13px;border-radius:8px 8px 0 0;}
-  .topbar{padding:0 8px;height:auto;min-height:var(--hdr);flex-wrap:wrap;gap:4px;padding-top:6px;padding-bottom:6px;}
-  .topbar .logo{font-size:14px;letter-spacing:0;}
-  .proj-name{width:100px;font-size:12px;padding:3px 8px;order:2;}
-  .topbar-search{order:10;flex:1 1 100%;margin-top:4px;min-width:0;}
-  .topbar-search input{width:100%;font-size:14px;padding:8px 6px;}
+  /* Workspace tabs — horizontally scrollable */
+  .workspace-tabs{padding:0 4px;height:40px;justify-content:flex-start;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-shrink:0;}
+  .workspace-tabs::-webkit-scrollbar{display:none;}
+  .workspace-tab{padding:7px 14px;font-size:12px;border-radius:8px 8px 0 0;white-space:nowrap;flex-shrink:0;}
+  /* Topbar — show only essentials */
+  .topbar{padding:0 8px;height:52px;flex-wrap:nowrap;gap:6px;overflow:hidden;}
+  .topbar .logo{font-size:13px;letter-spacing:0;white-space:nowrap;}
+  .proj-name{display:none;}
+  .topbar-search{display:none;}
   .topbar .spacer{display:none;}
-  .mobile-hamburger{display:flex;order:0;}
-  .top-btn{padding:4px 8px;font-size:11px;}
-  .top-btn.accent{padding:6px 10px;font-size:12px;}
-  .dark-toggle{font-size:16px;}
-  .today-badge{font-size:9px;padding:2px 6px;}
+  .today-badge{display:none;}
+  .dark-toggle{display:none;}
   .sync-status{display:none;}
-  #syncBtn,.top-btn[onclick*="exportJSON"],.top-btn[onclick*="importFile"],.top-btn[onclick*="openShortcuts"],.top-btn[onclick*="showMyTasks"],.top-btn[onclick*="exportOutlookCSV"]{display:none;}
+  /* Hide non-essential topbar buttons on mobile */
+  #syncBtn,.top-btn[onclick*="exportJSON"],.top-btn[onclick*="importFile"],.top-btn[onclick*="openShortcuts"],.top-btn[onclick*="showMyTasks"],.top-btn[onclick*="exportOutlookCSV"],.top-btn[onclick*="openSettings"],.legal-tracker-btn{display:none;}
+  .mobile-hamburger{display:flex;order:0;}
+  .top-btn{padding:6px 10px;font-size:12px;}
+  .top-btn.accent{padding:7px 12px;font-size:13px;font-weight:700;}
   .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:90;width:85vw!important;max-width:320px;min-width:0!important;transform:translateX(-100%);transition:transform .28s ease;box-shadow:none;border-right:none;}
   .sidebar.mobile-open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.25);}
   .sidebar.collapsed{width:0!important;min-width:0!important;transform:translateX(-100%);}
   .sidebar-toggle{display:none;}
-  .board{padding:8px;gap:10px;scroll-snap-type:x mandatory;}
-  .bucket{min-width:82vw;max-width:90vw;width:82vw;scroll-snap-align:start;border-radius:10px;}
+  .board{padding:8px;gap:10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;touch-action:pan-x;}
+  .bucket{min-width:86vw;max-width:92vw;width:86vw;scroll-snap-align:start;border-radius:10px;}
   .bucket-hdr{padding:10px;}
   .bucket-title{font-size:14px;}
   .bucket-cards{padding:6px;}
@@ -474,6 +477,10 @@ input,select,textarea{font-family:inherit;color:var(--text);}
   .bulk-bar.hidden{transform:translateY(20px);}
   .bulk-bar select{padding:8px;font-size:13px;flex:1;min-width:0;}
   .bulk-bar button{padding:8px 12px;font-size:12px;flex:1;}
+  /* Team panel — bottom sheet on mobile */
+  .team-panel-overlay{align-items:flex-end!important;}
+  .team-panel{width:100%!important;max-width:100%!important;border-radius:18px 18px 0 0!important;max-height:85vh;padding:20px 20px 32px;}
+  .team-panel-hdr{margin-bottom:14px;}
   .auth-card{padding:30px 24px;width:92vw;}
   .auth-card input[type=password],.auth-card input[type=email],.auth-card input[type=text]{padding:12px 14px;font-size:15px;}
   .auth-card .auth-btn{padding:13px;font-size:15px;}

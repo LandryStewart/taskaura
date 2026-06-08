@@ -561,7 +561,33 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .gantt-task-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .gantt-summary-bar{position:absolute;top:8px;bottom:8px;border-radius:4px;opacity:.25;pointer-events:none;}
 .gantt-no-tasks-row td{color:var(--muted);font-style:italic;font-size:11px;padding-left:38px!important;height:30px;}
-
+/* ── Team workspace tabs & panel ── */
+.workspace-tab.add-team-tab{color:var(--pri);font-weight:700;border:1px dashed var(--pri);opacity:.8;}
+.workspace-tab.add-team-tab:hover{opacity:1;background:var(--pri-l);}
+.workspace-tab.team-tab{border-top:2px solid var(--pri);}
+.tab-label{display:inline;}
+.team-panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;align-items:center;justify-content:center;display:none;}
+.team-panel-overlay.show{display:flex;}
+.team-panel{background:var(--card);border-radius:14px;width:440px;max-width:94vw;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto;}
+.team-panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.team-panel-hdr h2{font-size:17px;color:var(--text);}
+.team-panel-section{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+.team-panel-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.team-panel-section h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px;}
+.team-panel input[type=text]{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg);color:var(--text);margin-bottom:8px;}
+.team-panel input[type=text]:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(26,107,90,.12);}
+.team-panel-btn{width:100%;padding:9px;background:linear-gradient(135deg,var(--pri-d),var(--pri));color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;}
+.team-panel-btn:hover{opacity:.9;}
+.team-panel-btn.secondary{background:var(--bg);color:var(--text);border:1px solid var(--border);}
+.team-ws-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg);border-radius:6px;margin-bottom:8px;gap:10px;}
+.team-ws-name{font-weight:600;font-size:13px;margin-bottom:3px;}
+.team-ws-code{font-size:11px;color:var(--muted);}
+.team-ws-code code{background:var(--pri-l);color:var(--pri);padding:1px 6px;border-radius:3px;font-weight:700;font-size:11px;}
+.copy-code-btn{background:none;border:none;color:var(--pri);font-size:11px;cursor:pointer;text-decoration:underline;padding:0 0 0 4px;}
+.team-ws-open{background:var(--pri);color:#fff;border:none;border-radius:5px;padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.team-ws-open:hover{background:var(--pri-d);}
+.sync-indicator{width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:4px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -600,14 +626,9 @@ input,select,textarea{font-family:inherit;color:var(--text);}
  <div class="spacer"></div>
  <span id="todayBadge" class="today-badge" title="Tasks due today">0 today</span>
  <button class="dark-toggle" id="darkToggleBtn" onclick="toggleDarkQuick()" title="Toggle dark mode">🌙</button>
- <button class="top-btn" id="syncBtn" onclick="manualSync()" title="Cloud Sync">⬤ offline</button>
- <span class="sync-status" id="syncTime"></span>
  <button class="top-btn" onclick="showMyTasks()" title="My tasks">👤</button>
  <button class="top-btn accent" onclick="openNewTask()">＋ New Task</button>
  <button class="top-btn" onclick="openSettings()">⚙</button>
- <button class="top-btn" onclick="exportJSON()" title="Export">📥</button>
-  <button class="top-btn" onclick="document.getElementById('importFile').click()" title="Import">📤</button>
- <input type="file" id="importFile" accept=".json" class="hidden" onchange="importJSON(event)">
  <button class="top-btn" onclick="openShortcuts()" title="Keyboard shortcuts">?</button>
  <a href="https://landrystewart.github.io/Weekly-Legal-Priorities/" target="_blank" class="top-btn legal-tracker-btn" title="Weekly Legal Priorities">⚖ Legal Tracker</a>
  <button class="top-btn logout" onclick="doLogout()">🚪</button>
@@ -706,7 +727,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 <div class="settings-section"><h3>Buckets</h3><div class="sett-list" id="settBuckets"></div><button class="sett-add" onclick="addBucketSetting()">+ Add Bucket</button></div>
 <div class="settings-section"><h3>Labels</h3><div class="sett-list" id="settLabels"></div><button class="sett-add" onclick="addLabelSetting()">+ Add Label</button></div>
 <div class="settings-section"><h3>Preferences</h3><div class="toggle-row"><span>🌙 Dark Mode</span><label class="switch"><input type="checkbox" id="togDark" onchange="toggleDark()"><span class="slider"></span></label></div><div class="toggle-row"><span>📐 Compact Cards</span><label class="switch"><input type="checkbox" id="togCompact" onchange="toggleCompact()"><span class="slider"></span></label></div><div style="margin-top:8px"><label style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text2)">My Name</label><input type="text" id="settMyName" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg);margin-top:4px" placeholder="e.g. Landry Stewart"></div></div>
-<div class="settings-section"><h3>☁ Cloud Sync (GitHub)</h3><p style="font-size:11px;color:var(--text2);margin-bottom:8px">Enter a GitHub Personal Access Token to sync data across all devices.</p><input type="password" class="cloud-input" id="settGhToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"><div class="cloud-msg" id="cloudMsg"></div><button class="btn-save" onclick="testCloud()" style="width:100%;margin-top:6px;padding:8px">Test & Save Token</button></div>
+<div class="settings-section"><h3>☁ Sync Status</h3><p style="font-size:11px;color:var(--text2);margin-bottom:8px">Your data syncs automatically across all devices. <span class="sync-indicator"></span><span style="font-size:11px;color:#22c55e">Live sync active</span></p><p style="font-size:11px;color:var(--text2)">Team workspaces update in real time for all members. Use the <b>+ Team</b> tab to create or join a shared workspace.</p></div>
 
 
 </div>
@@ -733,6 +754,29 @@ input,select,textarea{font-family:inherit;color:var(--text);}
  <button class="bulk-del" onclick="bulkDelete()">Delete</button>
  <button class="bulk-cancel" onclick="clearSelection()">Cancel</button>
 </div>
+<!-- Team Workspace Panel -->
+<div class="team-panel-overlay" id="teamPanelOverlay">
+ <div class="team-panel">
+  <div class="team-panel-hdr">
+   <h2>👥 Team Workspaces</h2>
+   <button class="modal-close" onclick="closeTeamPanel()" style="font-size:20px">×</button>
+  </div>
+  <div class="team-panel-section" id="teamPanelList">
+   <div style="color:var(--muted);font-size:13px">No team workspaces yet.</div>
+  </div>
+  <div class="team-panel-section">
+   <h4>Create a Team Workspace</h4>
+   <input type="text" id="newTeamName" placeholder="Team name (e.g. Saddleside Dev Team)">
+   <button class="team-panel-btn" id="createTeamBtn" onclick="createTeamWorkspace()">Create Workspace</button>
+  </div>
+  <div class="team-panel-section">
+   <h4>Join with a Code</h4>
+   <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Ask your team lead for the 6-letter code, then enter it below.</p>
+   <input type="text" id="joinTeamCode" placeholder="Enter 6-letter code (e.g. AB12CD)" style="text-transform:uppercase;letter-spacing:2px">
+   <button class="team-panel-btn secondary" id="joinTeamBtn" onclick="joinTeamWorkspace()">Join Workspace</button>
+  </div>
+ </div>
+</div>
 <div class="toast-container" id="toastContainer"></div>
 <div class="tour-overlay" id="tourOverlay"></div>
 <div class="tour-tooltip hidden" id="tourTooltip">
@@ -750,7 +794,6 @@ const SUPABASE_URL = 'https://kxidfwesywhhdifekkqo.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Mpf3fQxq5253lluxVGdXxA_Se4rBp9z';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null;
-const GH_REPO="LandryStewart/Landry-workload";const GH_FILE="data.json";
 
 function initSupabaseAuth() {
   _supabase.auth.onAuthStateChange(function(event, session) {
@@ -829,13 +872,18 @@ function showSignIn() {
   document.getElementById('loginError').textContent = '';
 }
 
-function unlockApp() {
+async function unlockApp() {
   document.getElementById('authOverlay').classList.add('hidden');
   document.getElementById('appContainer').classList.remove('hidden');
-  var isFirst = !localStorage.getItem('wm_workspaces');
   migrateWorkspaces();
   load();
-  cloudLoad().then(function() { render(); updateDarkIcon(); if (isFirst) setTimeout(startTour, 500); });
+  render();
+  updateDarkIcon();
+  renderWorkspaceTabs();
+  await loadFromCloud();
+  render();
+  updateDarkIcon();
+  if (!localStorage.getItem('wm_tour_done')) setTimeout(startTour, 800);
 }
 
 function showLoginScreen() {
@@ -856,14 +904,156 @@ function migrateWorkspaces(){let allWs=JSON.parse(localStorage.getItem('wm_works
 let state=getDefaultState();
 function save(){state.projectName=document.getElementById('projName').value;let allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');allWs[currentWorkspace]=state;localStorage.setItem('wm_workspaces',JSON.stringify(allWs));localStorage.setItem('wm_state',JSON.stringify(state));debouncedCloudSave();}
 function load(){var allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');if(allWs[currentWorkspace]){state=JSON.parse(JSON.stringify(allWs[currentWorkspace]));}else{state=getDefaultState();}if(!state.notes)state.notes=[];if(!state.nextNoteId)state.nextNoteId=1;if(!state.folders)state.folders=[];if(!state.nextFolderId)state.nextFolderId=1;if(!state.filterPresets)state.filterPresets=[];if(state.sidebarCollapsed===undefined)state.sidebarCollapsed=false;if(!state.scheduleProjects)state.scheduleProjects=[];if(!state.nextProjectId)state.nextProjectId=1;if(!state.nextScheduleTaskId)state.nextScheduleTaskId=1;if(state.scheduleItems&&state.scheduleItems.length){var migProj={id:state.nextProjectId++,name:"Imported Schedule",color:"#1a6b5a",collapsed:false,tasks:state.scheduleItems.map(function(si){return{id:si.id,name:si.name,startDate:si.startDate,endDate:si.endDate,color:si.color,progress:si.progress||0};})};state.scheduleProjects.push(migProj);delete state.scheduleItems;}state.notes.forEach(n=>{if(n.folderId===undefined)n.folderId=null;if(n.linkedTaskId===undefined)n.linkedTaskId=null;});document.getElementById('projName').value=state.projectName||'My Project';if(state.darkMode)document.documentElement.setAttribute('data-theme','dark');else document.documentElement.removeAttribute('data-theme');document.getElementById('togDark').checked=!!state.darkMode;document.getElementById('togCompact').checked=!!state.compact;document.getElementById('settMyName').value=state.myName||'';const sb=document.getElementById('sidebar');if(state.sidebarCollapsed)sb.classList.add('collapsed');else sb.classList.remove('collapsed');}
-let lastSyncTime=null,syncTimer=null,ghSha=null;
-function getToken(){return localStorage.getItem('wm_gh_token')||'';}
-function setSyncUI(icon,text){document.getElementById('syncBtn').innerHTML=icon;document.getElementById('syncTime').textContent=text;}
-async function cloudSave(){const token=getToken();if(!token){setSyncUI('⬤','offline');return;}setSyncUI('🔄','syncing...');try{save();const allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');const payload={workspaces:allWs,activeWorkspace:currentWorkspace};const content=btoa(unescape(encodeURIComponent(JSON.stringify(payload,null,2))));const body={message:'sync',content};if(ghSha)body.sha=ghSha;const r=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE,{method:'PUT',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});if(r.ok){const d=await r.json();ghSha=d.content.sha;lastSyncTime=new Date();setSyncUI('☁️','synced '+lastSyncTime.toLocaleTimeString());}else{setSyncUI('❌','sync failed');}}catch(e){setSyncUI('❌','error');}}
-function debouncedCloudSave(){if(syncTimer)clearTimeout(syncTimer);syncTimer=setTimeout(()=>cloudSave(),5000);}
-async function cloudLoad(){const token=getToken();if(!token){setSyncUI('⬤','offline');return;}try{const r=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE,{headers:{'Authorization':'Bearer '+token}});if(r.ok){const d=await r.json();ghSha=d.sha;const txt=decodeURIComponent(escape(atob(d.content.replace(/\\n/g,''))));const cloud=JSON.parse(txt);if(cloud.workspaces){localStorage.setItem('wm_workspaces',JSON.stringify(cloud.workspaces));load();}else if(cloud.tasks){let allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');allWs['work']=cloud;if(!allWs['personal'])allWs['personal']=getDefaultState();localStorage.setItem('wm_workspaces',JSON.stringify(allWs));load();}lastSyncTime=new Date();setSyncUI('☁️','synced '+lastSyncTime.toLocaleTimeString());}else if(r.status===404){setSyncUI('☁️','no cloud data');}else{setSyncUI('❌','load failed');}}catch(e){setSyncUI('❌','error');}}
-function manualSync(){cloudSave();}
-async function testCloud(){const token=document.getElementById('settGhToken').value.trim();const msg=document.getElementById('cloudMsg');if(!token){msg.style.color='var(--crit)';msg.textContent='Enter a token.';return;}try{const r=await fetch('https://api.github.com/repos/'+GH_REPO,{headers:{'Authorization':'Bearer '+token}});if(r.ok){localStorage.setItem('wm_gh_token',token);msg.style.color='var(--low)';msg.textContent='Connected!';cloudSave();}else{msg.style.color='var(--crit)';msg.textContent='Failed.';}}catch(e){msg.style.color='var(--crit)';msg.textContent='Network error.';}}
+// ── Supabase Data Sync (Phase 2) ─────────────────────────────────────────────
+let syncTimer=null,teamWorkspaces=[],currentTeamWorkspaceId=null,realtimeChannel=null;
+
+async function syncToCloud(){
+  if(!currentUser)return;
+  try{
+    if(currentTeamWorkspaceId){
+      await _supabase.from('team_workspaces').update({data:state,updated_at:new Date().toISOString()}).eq('id',currentTeamWorkspaceId);
+    }else{
+      await _supabase.from('workspace_blobs').upsert({user_id:currentUser.id,workspace_key:currentWorkspace,data:state,updated_at:new Date().toISOString()},{onConflict:'user_id,workspace_key'});
+    }
+  }catch(e){}
+}
+function debouncedCloudSave(){if(syncTimer)clearTimeout(syncTimer);syncTimer=setTimeout(syncToCloud,2000);}
+
+async function loadFromCloud(){
+  if(!currentUser)return;
+  try{
+    const{data:blobs}=await _supabase.from('workspace_blobs').select('workspace_key,data').eq('user_id',currentUser.id);
+    if(blobs&&blobs.length){
+      let allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');
+      blobs.forEach(b=>{if(b.data)allWs[b.workspace_key]=b.data;});
+      localStorage.setItem('wm_workspaces',JSON.stringify(allWs));
+      load();
+    }else{
+      // First login — push local state up to Supabase for both workspaces
+      const curWs=currentWorkspace;
+      await syncToCloud();
+      currentWorkspace=(curWs==='work'?'personal':'work');
+      load();
+      await syncToCloud();
+      currentWorkspace=curWs;
+      load();
+    }
+    await loadTeamWorkspaces();
+  }catch(e){console.log('Cloud load error:',e);}
+}
+
+async function loadTeamWorkspaces(){
+  if(!currentUser)return;
+  try{
+    const{data:owned}=await _supabase.from('team_workspaces').select('id,name,code,data').eq('owner_id',currentUser.id);
+    const{data:members}=await _supabase.from('team_workspace_members').select('workspace_id').eq('user_id',currentUser.id);
+    let allTeams=[...(owned||[])];
+    const ownedIds=new Set(allTeams.map(t=>t.id));
+    const memberIds=(members||[]).map(m=>m.workspace_id).filter(id=>!ownedIds.has(id));
+    if(memberIds.length){
+      const{data:memberWs}=await _supabase.from('team_workspaces').select('id,name,code,data').in('id',memberIds);
+      if(memberWs)allTeams=[...allTeams,...memberWs];
+    }
+    teamWorkspaces=allTeams;
+    renderWorkspaceTabs();
+  }catch(e){}
+}
+
+// ── Team Workspace Functions (Phase 3) ───────────────────────────────────────
+async function switchToTeamWorkspace(id){
+  if(currentTeamWorkspaceId===id)return;
+  save();await syncToCloud();
+  if(realtimeChannel)realtimeChannel.unsubscribe();
+  currentTeamWorkspaceId=id;
+  currentWorkspace='team_'+id;
+  const tw=teamWorkspaces.find(w=>w.id===id);
+  if(tw&&tw.data&&tw.data.tasks){state=tw.data;}
+  else{state=getDefaultState();if(tw)state.projectName=tw.name;await syncToCloud();}
+  document.getElementById('projName').value=state.projectName||(tw?tw.name:'Team');
+  if(state.darkMode)document.documentElement.setAttribute('data-theme','dark');
+  else document.documentElement.removeAttribute('data-theme');
+  document.getElementById('togDark').checked=!!state.darkMode;
+  document.getElementById('togCompact').checked=!!state.compact;
+  document.getElementById('settMyName').value=state.myName||'';
+  renderWorkspaceTabs();render();
+  // Real-time sync: listen for changes from teammates
+  realtimeChannel=_supabase.channel('team_'+id)
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'team_workspaces',filter:'id=eq.'+id},function(payload){
+      if(payload.new&&payload.new.data&&payload.new.updated_by!==currentUser.id){
+        state=payload.new.data;render();showToast('🔄 Updated by a team member');
+      }
+    }).subscribe();
+}
+
+function renderWorkspaceTabs(){
+  const tabs=document.getElementById('workspaceTabs');if(!tabs)return;
+  const isWork=!currentTeamWorkspaceId&&currentWorkspace==='work';
+  const isPersonal=!currentTeamWorkspaceId&&currentWorkspace==='personal';
+  let html='<div class="workspace-tab '+(isWork?'active':'')+'" onclick="switchWorkspace(\'work\')"><span class="tab-icon">💼</span> Work <span class="tab-dot"></span></div>';
+  html+='<div class="workspace-tab '+(isPersonal?'active':'')+'" onclick="switchWorkspace(\'personal\')"><span class="tab-icon">🏠</span> Personal <span class="tab-dot"></span></div>';
+  teamWorkspaces.forEach(function(tw){
+    var active=currentTeamWorkspaceId===tw.id;
+    html+='<div class="workspace-tab team-tab '+(active?'active':'')+'" onclick="switchToTeamWorkspace(\''+tw.id+'\')"><span class="tab-icon">👥</span> '+esc(tw.name)+' <span class="tab-dot"></span></div>';
+  });
+  html+='<div class="workspace-tab add-team-tab" onclick="openTeamPanel()">＋ Team</div>';
+  tabs.innerHTML=html;
+}
+
+function openTeamPanel(){
+  var ol=document.getElementById('teamPanelOverlay');if(ol)ol.classList.add('show');
+  renderTeamPanel();
+}
+function closeTeamPanel(){var ol=document.getElementById('teamPanelOverlay');if(ol)ol.classList.remove('show');}
+function renderTeamPanel(){
+  var list=document.getElementById('teamPanelList');if(!list)return;
+  if(!teamWorkspaces.length){list.innerHTML='<div style="color:var(--muted);font-size:13px;font-style:italic">No team workspaces yet — create one below!</div>';return;}
+  list.innerHTML='<h4 style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">Your Teams</h4>'+teamWorkspaces.map(function(tw){
+    return'<div class="team-ws-item"><div style="min-width:0"><div class="team-ws-name">👥 '+esc(tw.name)+'</div><div class="team-ws-code">Invite code: <code>'+esc(tw.code)+'</code> <button class="copy-code-btn" onclick="copyText(\''+esc(tw.code)+'\')">Copy</button></div></div><button class="team-ws-open" onclick="closeTeamPanel();switchToTeamWorkspace(\''+tw.id+'\')">Open →</button></div>';
+  }).join('');
+}
+async function createTeamWorkspace(){
+  var nameEl=document.getElementById('newTeamName');
+  var name=(nameEl?nameEl.value.trim():'');
+  if(!name){showToast('Please enter a workspace name.');return;}
+  var code=Math.random().toString(36).substr(2,6).toUpperCase();
+  var btn=document.getElementById('createTeamBtn');
+  if(btn){btn.disabled=true;btn.textContent='Creating...';}
+  try{
+    var{data:ws,error}=await _supabase.from('team_workspaces').insert({name:name,code:code,owner_id:currentUser.id,data:getDefaultState()}).select().single();
+    if(error){showToast('Error: '+error.message);if(btn){btn.disabled=false;btn.textContent='Create Workspace';}return;}
+    await _supabase.from('team_workspace_members').insert({workspace_id:ws.id,user_id:currentUser.id});
+    teamWorkspaces.push(ws);
+    if(nameEl)nameEl.value='';
+    renderWorkspaceTabs();renderTeamPanel();
+    showToast('✅ Team "'+name+'" created! Share code: '+code);
+  }catch(e){showToast('Error creating workspace.');}
+  if(btn){btn.disabled=false;btn.textContent='Create Workspace';}
+}
+async function joinTeamWorkspace(){
+  var codeEl=document.getElementById('joinTeamCode');
+  var code=(codeEl?codeEl.value.trim().toUpperCase():'');
+  if(code.length<4){showToast('Enter the 6-letter code.');return;}
+  var btn=document.getElementById('joinTeamBtn');
+  if(btn){btn.disabled=true;btn.textContent='Joining...';}
+  try{
+    var{data:ws,error}=await _supabase.from('team_workspaces').select('id,name,code,data').eq('code',code).single();
+    if(error||!ws){showToast('Team not found. Check the code.');if(btn){btn.disabled=false;btn.textContent='Join Workspace';}return;}
+    var already=teamWorkspaces.find(function(t){return t.id===ws.id;});
+    if(!already){
+      await _supabase.from('team_workspace_members').insert({workspace_id:ws.id,user_id:currentUser.id});
+      teamWorkspaces.push(ws);
+      renderWorkspaceTabs();renderTeamPanel();
+    }
+    if(codeEl)codeEl.value='';
+    closeTeamPanel();
+    switchToTeamWorkspace(ws.id);
+    showToast('✅ Joined "'+ws.name+'"!');
+  }catch(e){showToast('Error joining workspace.');}
+  if(btn){btn.disabled=false;btn.textContent='Join Workspace';}
+}
+function copyText(txt){
+  navigator.clipboard.writeText(txt).then(function(){showToast('📋 Copied: '+txt);}).catch(function(){showToast(txt);});
+}
 function isOverdue(t){if(!t.due||t.pct>=100)return false;return new Date(t.due+'T23:59:59')<new Date();}
 function priClass(p){return'pri-'+(p||'medium').toLowerCase();}
 function priBadge(p){return{Critical:'crit',High:'high',Medium:'med',Low:'low'}[p]||'med';}
@@ -877,7 +1067,15 @@ function todayStr(){const n=new Date();return n.getFullYear()+'-'+String(n.getMo
 let currentView='board';
 function setView(v){currentView=v;if(isMobile())closeMobileSidebar();['board','list','calendar','notes','schedules'].forEach(t=>{const el=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',v===t);});document.getElementById('boardView').style.display=v==='board'?'flex':'none';document.getElementById('listView').style.display=v==='list'?'block':'none';document.getElementById('calendarView').style.display=v==='calendar'?'flex':'none';document.getElementById('notesView').style.display=v==='notes'?'flex':'none';document.getElementById('schedulesView').style.display=v==='schedules'?'flex':'none';render();}
 function render(){document.querySelectorAll('.workspace-tab').forEach(t=>{t.classList.toggle('active',t.dataset.ws===currentWorkspace);});updateFilters();updateStats();updateFilterChips();updateTodayBadge();renderPresets();if(currentView==='board')renderBoard();else if(currentView==='list')renderList();else if(currentView==='calendar')renderCalendar();else if(currentView==='notes')renderNotesView();else if(currentView==='schedules')renderSchedules();save();}
-function switchWorkspace(ws){if(ws===currentWorkspace)return;save();currentWorkspace=ws;load();render();updateDarkIcon();}
+function switchWorkspace(ws){
+  if(ws===currentWorkspace&&!currentTeamWorkspaceId)return;
+  save();
+  if(currentTeamWorkspaceId&&realtimeChannel)realtimeChannel.unsubscribe();
+  currentTeamWorkspaceId=null;
+  currentWorkspace=ws;
+  load();render();updateDarkIcon();renderWorkspaceTabs();
+  loadFromCloud().then(()=>{render();});
+}
 function isMobile(){return window.innerWidth<=768;}
 function toggleMobileSidebar(){var sb=document.getElementById('sidebar'),bd=document.getElementById('sidebarBackdrop');if(sb.classList.contains('mobile-open')){closeMobileSidebar();}else{sb.classList.add('mobile-open');sb.classList.remove('collapsed');bd.classList.add('show');}}
 function closeMobileSidebar(){var sb=document.getElementById('sidebar'),bd=document.getElementById('sidebarBackdrop');sb.classList.remove('mobile-open');bd.classList.remove('show');}
@@ -1021,7 +1219,7 @@ if(lnSec){
 function addChecklistItem(text,done){const cl=document.getElementById('mChecklist'),div=document.createElement('div');div.className='cl-item';const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!done;const inp=document.createElement('input');inp.type='text';inp.value=text||'';inp.placeholder='Checklist item...';const rm=document.createElement('button');rm.className='cl-rm';rm.innerHTML='×';rm.onclick=()=>div.remove();div.appendChild(cb);div.appendChild(inp);div.appendChild(rm);cl.appendChild(div);}
 function saveTask(){const title=document.getElementById('mTitle').value.trim();if(!title){showToast('Task title is required.');return;}const data={title,assignee:document.getElementById('mAssignee').value.trim(),bucket:document.getElementById('mBucket').value,due:document.getElementById('mDue').value,priority:document.getElementById('mPriority').value,pct:parseInt(document.getElementById('mPct').value)||0,notes:document.getElementById('mNotes').value,filePath:document.getElementById('mFilePath').value.trim(),labels:[...document.querySelectorAll('#mLabels .label-chip.selected')].map(e=>e.dataset.label),checklist:[...document.querySelectorAll('#mChecklist .cl-item')].map(e=>({text:e.querySelector('input[type=text]').value,done:e.querySelector('input[type=checkbox]').checked}))};if(editingId!=null)Object.assign(state.tasks.find(x=>x.id===editingId),data);else{data.id=state.nextId++;data.created=new Date().toISOString().split('T')[0];state.tasks.push(data);}closeTaskModal();render();}
 function deleteTask(){const t=state.tasks.find(x=>x.id===editingId);if(!t)return;const removed=t,idx=state.tasks.indexOf(t);state.tasks=state.tasks.filter(x=>x.id!==editingId);closeTaskModal();render();showToast('Task "'+removed.title+'" deleted',function(){state.tasks.splice(idx,0,removed);render();});}
-function openSettings(){document.getElementById('settBuckets').innerHTML=state.buckets.map((b,i)=>'<div class="sett-item"><input type="text" value="'+esc(b)+'" data-idx="'+i+'"><button class="sett-rm" onclick="removeBucket('+i+')">×</button></div>').join('');document.getElementById('settLabels').innerHTML=state.labels.map((l,i)=>'<div class="sett-item"><input type="color" value="'+l.color+'"><input type="text" value="'+esc(l.name)+'"><button class="sett-rm" onclick="removeLabel('+i+')">×</button></div>').join('');document.getElementById('settMyName').value=state.myName||'';document.getElementById('settGhToken').value=getToken();document.getElementById('cloudMsg').textContent='';document.getElementById('settingsOverlay').classList.add('show');}
+function openSettings(){document.getElementById('settBuckets').innerHTML=state.buckets.map((b,i)=>'<div class="sett-item"><input type="text" value="'+esc(b)+'" data-idx="'+i+'"><button class="sett-rm" onclick="removeBucket('+i+')">×</button></div>').join('');document.getElementById('settLabels').innerHTML=state.labels.map((l,i)=>'<div class="sett-item"><input type="color" value="'+l.color+'"><input type="text" value="'+esc(l.name)+'"><button class="sett-rm" onclick="removeLabel('+i+')">×</button></div>').join('');document.getElementById('settMyName').value=state.myName||'';document.getElementById('settingsOverlay').classList.add('show');}
 function closeSettings(){const overlay=document.getElementById('settingsOverlay');if(!overlay||!overlay.classList.contains('show'))return;const bi=document.querySelectorAll('#settBuckets input[type=text]'),nb=[...bi].map(i=>i.value.trim()).filter(Boolean);bi.forEach(inp=>{const idx=parseInt(inp.dataset.idx);if(isNaN(idx))return;const old=state.buckets[idx],nw=inp.value.trim();if(old&&nw&&old!==nw)state.tasks.forEach(t=>{if(t.bucket===old)t.bucket=nw;});});state.buckets=nb.length?nb:[...DEFAULT_BUCKETS];state.tasks.forEach(t=>{if(!state.buckets.includes(t.bucket))t.bucket=state.buckets[0];});const ln=document.querySelectorAll('#settLabels input[type=text]'),lc=document.querySelectorAll('#settLabels input[type=color]');state.labels=[...ln].map((inp,i)=>({name:inp.value.trim(),color:lc[i].value})).filter(l=>l.name);state.myName=document.getElementById('settMyName').value.trim();document.getElementById('settingsOverlay').classList.remove('show');render();}
 function addBucketSetting(){const sb=document.getElementById('settBuckets'),div=document.createElement('div');div.className='sett-item';div.innerHTML='<input type="text" value="New Bucket" data-idx="'+sb.children.length+'"><button class="sett-rm" onclick="this.parentElement.remove()">×</button>';sb.appendChild(div);}
 function removeBucket(i){const items=document.querySelectorAll('#settBuckets .sett-item');if(items.length<=1){showToast('Need at least one bucket.');return;}items[i].remove();}

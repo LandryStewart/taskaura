@@ -566,7 +566,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .workspace-tab.add-team-tab:hover{opacity:1;background:var(--pri-l);}
 .workspace-tab.team-tab{border-top:2px solid var(--pri);}
 .tab-label{display:inline;}
-.team-panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;align-items:center;justify-content:center;display:none;}
+.team-panel-overlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,.5);z-index:9998;align-items:center;justify-content:center;display:none;}
 .team-panel-overlay.show{display:flex;}
 .team-panel{background:var(--card);border-radius:14px;width:440px;max-width:94vw;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto;}
 .team-panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
@@ -1000,7 +1000,9 @@ function renderWorkspaceTabs(){
 }
 
 function openTeamPanel(){
-  var ol=document.getElementById('teamPanelOverlay');if(ol)ol.classList.add('show');
+  var ol=document.getElementById('teamPanelOverlay');if(!ol)return;
+  if(ol.parentElement!==document.body)document.body.appendChild(ol);
+  ol.classList.add('show');
   renderTeamPanel();
 }
 function closeTeamPanel(){var ol=document.getElementById('teamPanelOverlay');if(ol)ol.classList.remove('show');}

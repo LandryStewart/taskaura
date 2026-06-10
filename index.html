@@ -2154,7 +2154,31 @@ function importTasksFromJSON(input){
     try{raw=JSON.parse(e.target.result);}
     catch(err){showToast('Invalid JSON file.');return;}
 
-    // Accept array directly, or common wrappers: {tasks:[...]}, {data:[...]}, {items:[...]}
+    // ── TaskAura full workspace export ──
+    // Format: { workspaces: { work: { tasks, buckets, labels, notes, folders, ... } } }
+    const wsData=raw.workspaces&&(raw.workspaces.work||raw.workspaces[Object.keys(raw.workspaces)[0]]);
+    if(wsData&&wsData.tasks){
+      const taskCount=wsData.tasks.length;
+      const noteCount=(wsData.notes||[]).length;
+      const prev=document.getElementById('importPreview');
+      if(prev){
+        prev.innerHTML=
+          '<strong style="color:var(--low)">TaskAura export detected — ready to restore</strong>'+
+          '<br><span style="color:var(--muted)">'+taskCount+' tasks · '+(wsData.buckets||[]).length+' buckets · '+
+          (wsData.labels||[]).length+' labels · '+noteCount+' notes · '+(wsData.folders||[]).length+' folders</span>'+
+          '<br><span style="color:var(--crit);font-size:10px">This will replace your current Work workspace data.</span>'+
+          '<br><div style="margin-top:8px;display:flex;gap:6px">'+
+          '<button onclick="confirmFullRestore()" style="padding:5px 12px;background:var(--low);color:#fff;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer">Restore Workspace</button>'+
+          '<button onclick="confirmMergeImport()" style="padding:5px 12px;background:var(--pri);color:#fff;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer">Merge Tasks Only</button>'+
+          '<button onclick="document.getElementById(\'importPreview\').innerHTML=\'\'" style="padding:5px 10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;font-size:11px;cursor:pointer">Cancel</button>'+
+          '</div>';
+      }
+      window._pendingWSImport=wsData;
+      input.value='';
+      return;
+    }
+
+    // ── Generic task array import ──
     let arr=Array.isArray(raw)?raw:
       (raw.tasks||raw.data||raw.items||raw.issues||raw.cards||raw.records||null);
     if(!arr||!arr.length){showToast('No tasks found in JSON.');return;}
@@ -2255,6 +2279,48 @@ function confirmImport(){
   if(prev)prev.innerHTML='';
   render();
   showToast(tasks.length+' task'+(tasks.length>1?'s':'')+' imported.');
+}
+
+function confirmFullRestore(){
+  const ws=window._pendingWSImport;
+  if(!ws)return;
+  // Full workspace restore — replace everything
+  if(ws.tasks)state.tasks=ws.tasks;
+  if(ws.buckets&&ws.buckets.length)state.buckets=ws.buckets;
+  if(ws.labels)state.labels=ws.labels;
+  if(ws.notes)state.notes=ws.notes;
+  if(ws.folders)state.folders=ws.folders;
+  if(ws.filterPresets)state.filterPresets=ws.filterPresets;
+  if(ws.projectName)state.projectName=ws.projectName;
+  if(ws.nextId)state.nextId=ws.nextId;
+  if(ws.nextNoteId)state.nextNoteId=ws.nextNoteId;
+  if(ws.nextFolderId)state.nextFolderId=ws.nextFolderId;
+  if(ws.scheduleProjects)state.scheduleProjects=ws.scheduleProjects;
+  if(ws.nextProjectId)state.nextProjectId=ws.nextProjectId;
+  window._pendingWSImport=null;
+  const prev=document.getElementById('importPreview');
+  if(prev)prev.innerHTML='';
+  closeSettings();
+  render();
+  showToast('Workspace restored — '+state.tasks.length+' tasks loaded.');
+}
+
+function confirmMergeImport(){
+  const ws=window._pendingWSImport;
+  if(!ws||!ws.tasks)return;
+  // Merge tasks only — remap IDs to avoid conflicts
+  const offset=state.nextId;
+  const merged=ws.tasks.map(t=>({...t,id:t.id+offset}));
+  state.tasks.push(...merged);
+  state.nextId=offset+((ws.nextId||ws.tasks.length)+1);
+  // Also merge any new buckets/labels not already present
+  (ws.buckets||[]).forEach(b=>{if(!state.buckets.includes(b))state.buckets.push(b);});
+  (ws.labels||[]).forEach(l=>{if(!state.labels.find(x=>x.name===l.name))state.labels.push(l);});
+  window._pendingWSImport=null;
+  const prev=document.getElementById('importPreview');
+  if(prev)prev.innerHTML='';
+  render();
+  showToast(merged.length+' tasks merged into current workspace.');
 }
 
 function exportTasksJSON(){

@@ -752,7 +752,6 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 <body>
 <div class="auth-overlay" id="authOverlay">
  <div class="auth-card">
-  <div class="auth-icon">⚡</div>
   <h1>TaskAura</h1>
   <p class="auth-sub" id="authSub">Sign in to your account</p>
   <div class="auth-error" id="loginError"></div>
@@ -773,11 +772,11 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 </div>
 <div id="appContainer" class="hidden">
 <div class="workspace-tabs" id="workspaceTabs">
-<div class="workspace-tab active" data-ws="work" onclick="switchWorkspace('work')">Work <span class="tab-dot"></span></div>
+<div class="workspace-tab active" data-ws="work" onclick="switchWorkspace('work')">Personal Dashboard <span class="tab-dot"></span></div>
 </div>
 <div class="topbar">
  <button class="mobile-hamburger" id="mobileHamburger" onclick="toggleMobileSidebar()">☰</button>
- <div class="logo">⚡ TaskAura</div>
+ <div class="logo">TaskAura</div>
  <input class="proj-name" id="projName" placeholder="Project Name..." value="My Project">
  <div class="topbar-search"><span>🔍</span><input type="search" id="searchBox" placeholder="Search tasks..." oninput="applyFilters()"></div>
  <div class="spacer"></div>
@@ -1062,10 +1061,20 @@ async function unlockApp() {
   document.getElementById('appContainer').classList.remove('hidden');
   migrateWorkspaces();
   load();
+  // Auto-populate myName from signup metadata if not yet set
+  if(!state.myName && currentUser){
+    const authName=(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];
+    if(authName){state.myName=authName;const el=document.getElementById('settMyName');if(el)el.value=authName;}
+  }
   render();
   updateDarkIcon();
   renderWorkspaceTabs();
   await loadFromCloud();
+  // Re-apply auto-name after cloud load in case cloud data had empty myName
+  if(!state.myName && currentUser){
+    const authName=(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];
+    if(authName){state.myName=authName;const el=document.getElementById('settMyName');if(el)el.value=authName;save();}
+  }
   render();
   updateDarkIcon();
   if (!localStorage.getItem('wm_tour_done')) setTimeout(startTour, 800);

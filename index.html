@@ -1282,7 +1282,9 @@ function getPersonalTasks(){
   if(!myName)return[];
   const allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');
   const all=[];
-  ((allWs.work||{}).tasks||[]).filter(t=>t.assignee===myName).forEach(t=>all.push({...t,_wsName:'Work',_wsId:null}));
+  // Work is a personal workspace — show all tasks regardless of assignee
+  ((allWs.work||{}).tasks||[]).forEach(t=>all.push({...t,_wsName:'Work',_wsId:null}));
+  // Team workspaces — only show tasks assigned to you
   teamWorkspaces.forEach(tw=>{((tw.data||{}).tasks||[]).filter(t=>t.assignee===myName).forEach(t=>all.push({...t,_wsName:tw.name,_wsId:tw.id}));});
   return all;
 }

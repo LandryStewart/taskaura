@@ -51,7 +51,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .top-btn.logout:hover{background:rgba(220,38,38,.5);}
 .sync-status{font-size:10px;opacity:.8;display:flex;align-items:center;gap:4px;}
 .topbar-search{display:flex;align-items:center;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:0 8px;gap:4px;}
-.topbar-search input{background:none;border:none;color:#fff;padding:5px 4px;font-size:13px;width:170px;outline:none;}
+.topbar-search input{background:none;border:none;color:#fff;padding:5px 4px;font-size:13px;width:280px;outline:none;}
 .topbar-search input::placeholder{color:rgba(255,255,255,.55);}
 .today-badge{background:#f0b429;color:#333;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;}
 .dark-toggle{background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px;transition:transform .3s;}
@@ -773,16 +773,13 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 </div>
 <div id="appContainer" class="hidden">
 <div class="workspace-tabs" id="workspaceTabs">
-<div class="workspace-tab active" data-ws="work" onclick="switchWorkspace('work')">Work <span class="tab-dot"></span></div>
+<div class="workspace-tab active" data-ws="work" onclick="switchWorkspace('work')">Personal <span class="tab-dot"></span></div>
 </div>
+<input type="hidden" id="projName" value="My Project">
 <div class="topbar">
  <button class="mobile-hamburger" id="mobileHamburger" onclick="toggleMobileSidebar()">☰</button>
- <div class="logo">⚡ TaskAura</div>
- <input class="proj-name" id="projName" placeholder="Project Name..." value="My Project">
  <div class="topbar-search"><span>🔍</span><input type="search" id="searchBox" placeholder="Search tasks..." oninput="applyFilters()"></div>
  <div class="spacer"></div>
- <span id="todayBadge" class="today-badge" title="Tasks due today">0 today</span>
- <button class="dark-toggle" id="darkToggleBtn" onclick="toggleDarkQuick()" title="Toggle dark mode">◐</button>
  <button class="top-btn accent" onclick="openNewTask()">＋ New Task</button>
  <button class="top-btn" onclick="openSettings()">⚙</button>
  <button class="top-btn" onclick="openShortcuts()" title="Keyboard shortcuts">?</button>
@@ -1062,10 +1059,20 @@ async function unlockApp() {
   document.getElementById('appContainer').classList.remove('hidden');
   migrateWorkspaces();
   load();
+  // Auto-populate myName from signup metadata if not yet set
+  if(!state.myName && currentUser){
+    const authName=(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];
+    if(authName){state.myName=authName;const el=document.getElementById('settMyName');if(el)el.value=authName;}
+  }
   render();
   updateDarkIcon();
   renderWorkspaceTabs();
   await loadFromCloud();
+  // Re-apply auto-name after cloud load in case cloud data had empty myName
+  if(!state.myName && currentUser){
+    const authName=(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];
+    if(authName){state.myName=authName;const el=document.getElementById('settMyName');if(el)el.value=authName;save();}
+  }
   render();
   updateDarkIcon();
   if (!localStorage.getItem('wm_tour_done')) setTimeout(startTour, 800);

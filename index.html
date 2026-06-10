@@ -595,6 +595,12 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .team-ws-open:hover{background:var(--pri-d);}
 .sync-indicator{width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:4px;animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.dash-kpi-click{cursor:pointer;transition:transform .15s,box-shadow .15s;}
+.dash-kpi-click:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(37,99,235,.15);border-color:var(--pri);}
+.dash-kpi-click:hover .dash-kpi-val{color:var(--pri);}
+.dash-kpi-click.danger:hover .dash-kpi-val{color:var(--crit);}
+.dash-kpi-click.success:hover .dash-kpi-val{color:var(--low);}
+.dash-detail-panel{background:var(--card);border-radius:12px;padding:16px 20px;border:2px solid var(--pri);box-shadow:0 4px 20px rgba(37,99,235,.12);margin-bottom:4px;}
 
 /* ── Dashboard View ── */
 .dashboard-view{flex:1;overflow:auto;padding:20px;display:none;flex-direction:column;gap:20px;}
@@ -634,10 +640,10 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .dash-overdue-who{font-size:11px;color:var(--text2);}
 .dash-overdue-due{font-size:11px;color:var(--crit);font-weight:600;flex-shrink:0;}
 .dash-empty{text-align:center;padding:30px 20px;color:var(--muted);font-size:13px;font-style:italic;}
-.dash-demo-btn{background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;margin-top:4px;width:100%;}
-.dash-demo-btn:hover{opacity:.9;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 <div class="auth-overlay" id="authOverlay">
@@ -1066,17 +1072,18 @@ async function deleteTeamWorkspace(id){
   const tw=teamWorkspaces.find(w=>w.id===id);
   if(!tw)return;
   if(!confirm('Delete "'+tw.name+'" and all its tasks? This cannot be undone.'))return;
-  try{
-    await _supabase.from('team_workspace_members').delete().eq('workspace_id',id);
-    await _supabase.from('team_workspaces').delete().eq('id',id);
-    teamWorkspaces=teamWorkspaces.filter(w=>w.id!==id);
-    if(currentTeamWorkspaceId===id){
-      currentTeamWorkspaceId=null;currentWorkspace='work';
-      load();setView('board');
-    }
-    renderWorkspaceTabs();renderTeamPanel();
-    showToast('Team "'+tw.name+'" deleted.');
-  }catch(e){showToast('Error deleting workspace.');}
+  // Delete members first, then the workspace
+  const{error:membErr}=await _supabase.from('team_workspace_members').delete().eq('workspace_id',id);
+  if(membErr){showToast('Delete failed: '+membErr.message+' — run the RLS policies in Supabase SQL editor.');return;}
+  const{error:wsErr}=await _supabase.from('team_workspaces').delete().eq('id',id);
+  if(wsErr){showToast('Delete failed: '+wsErr.message+' — run the RLS policies in Supabase SQL editor.');return;}
+  teamWorkspaces=teamWorkspaces.filter(w=>w.id!==id);
+  if(currentTeamWorkspaceId===id){
+    currentTeamWorkspaceId=null;currentWorkspace='work';
+    load();setView('board');
+  }
+  renderWorkspaceTabs();renderTeamPanel();
+  showToast('Team "'+tw.name+'" deleted.');
 }
 async function createTeamWorkspace(){
   var nameEl=document.getElementById('newTeamName');
@@ -1135,107 +1142,171 @@ function isOrganizer(){
   return tw&&tw.owner_id===currentUser.id;
 }
 
+// ── Personal Tasks Aggregator ─────────────────────────────────────────────────
+function getPersonalTasks(){
+  const myName=(state.myName||'').trim();
+  if(!myName)return[];
+  const allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');
+  const all=[];
+  ((allWs.work||{}).tasks||[]).filter(t=>t.assignee===myName).forEach(t=>all.push({...t,_wsName:'Work',_wsId:null}));
+  teamWorkspaces.forEach(tw=>{((tw.data||{}).tasks||[]).filter(t=>t.assignee===myName).forEach(t=>all.push({...t,_wsName:tw.name,_wsId:tw.id}));});
+  return all;
+}
+
+// Navigate to a task in its workspace and open it
+function jumpToTask(wsId,taskId){
+  if(wsId){
+    switchToTeamWorkspace(wsId);
+    setTimeout(()=>{setView('board');openEditTask(taskId);},600);
+  }else{
+    switchWorkspace('work');
+    setTimeout(()=>{setView('board');openEditTask(taskId);},400);
+  }
+}
+
+// Team dashboard KPI click — navigate to filtered list view
+function dashGoFilter(type){
+  if(type==='overdue')document.getElementById('filterDueDate').value='overdue';
+  else if(type==='today')document.getElementById('filterDueDate').value='today';
+  else if(type==='thisweek')document.getElementById('filterDueDate').value='thisweek';
+  else{document.getElementById('filterDueDate').value='';document.getElementById('filterAssignee').value='';document.getElementById('filterPriority').value='';document.getElementById('searchBox').value='';}
+  setView('list');
+}
+
+// Personal dashboard KPI click — expand inline detail panel
+function showPersonalDetail(type){
+  const myTasks=getPersonalTasks();
+  const today=todayStr();
+  const weekEnd=new Date();weekEnd.setDate(weekEnd.getDate()+7);
+  const weekEndStr=weekEnd.toISOString().split('T')[0];
+  let filtered=[],title='';
+  if(type==='overdue'){filtered=myTasks.filter(t=>isOverdue(t));title='Overdue Tasks';}
+  else if(type==='today'){filtered=myTasks.filter(t=>t.due===today&&(t.pct||0)<100);title='Due Today';}
+  else if(type==='week'){filtered=myTasks.filter(t=>t.due&&t.due>today&&t.due<=weekEndStr&&(t.pct||0)<100);title='Due This Week';}
+  else{filtered=myTasks.filter(t=>(t.pct||0)<100);title='All My Open Tasks';}
+  filtered.sort((a,b)=>(a.due||'9999')>(b.due||'9999')?1:-1);
+  const panel=document.getElementById('dashDetailPanel');
+  if(!panel)return;
+  if(panel.dataset.activeType===type&&panel.style.display!=='none'){panel.style.display='none';panel.dataset.activeType='';return;}
+  panel.dataset.activeType=type;panel.style.display='block';
+  panel.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><h3 style="font-size:14px;font-weight:700;color:var(--text)">'+esc(title)+' ('+filtered.length+')</h3><button onclick="this.closest(\'#dashDetailPanel\').style.display=\'none\'" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1">×</button></div>'+
+    (filtered.length?filtered.map(t=>'<div class="dash-overdue-item" onclick="jumpToTask(\''+t._wsId+'\','+t.id+')" style="border-left-color:'+priColor(t.priority)+'"><div class="dash-overdue-title">'+esc(t.title)+'</div><span style="background:var(--pri-l);color:var(--pri);padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap">'+esc(t._wsName)+'</span><span class="dash-overdue-due">'+(t.due?fmtDate(t.due):'No date')+'</span></div>').join(''):'<div class="dash-empty">Nothing here ✓</div>');
+}
+
+// ── Dashboard Renderer ────────────────────────────────────────────────────────
 function renderDashboard(){
   const el=document.getElementById('dashboardView');if(!el)return;
+  if(!currentTeamWorkspaceId){renderPersonalDashboard(el);return;}
+
   const tw=teamWorkspaces.find(w=>w.id===currentTeamWorkspaceId);
   const wsName=tw?tw.name:'Team Workspace';
   const tasks=state.tasks||[];
   const total=tasks.length;
   const completed=tasks.filter(t=>t.pct>=100).length;
-  const overdue=tasks.filter(t=>isOverdue(t)).length;
+  const overdueCount=tasks.filter(t=>isOverdue(t)).length;
   const completedPct=total?Math.round(completed/total*100):0;
+  const today=todayStr();
+  const weekEnd=new Date();weekEnd.setDate(weekEnd.getDate()+7);
+  const weekEndStr=weekEnd.toISOString().split('T')[0];
+  const dueWeek=tasks.filter(t=>t.due&&t.due>=today&&t.due<=weekEndStr&&(t.pct||0)<100).length;
+  const assignees=[...new Set(tasks.map(t=>t.assignee).filter(Boolean))].sort();
+  const org=isOrganizer();
+  const roleBadge=org?'<span class="dash-role-badge">ORGANIZER</span>':'<span class="dash-role-badge" style="background:#16a34a">MEMBER</span>';
 
-  // Bucket breakdown
   const buckets=state.buckets||[];
   const maxBucket=Math.max(1,...buckets.map(b=>tasks.filter(t=>t.bucket===b).length));
   const bucketHTML=buckets.map(b=>{
     const cnt=tasks.filter(t=>t.bucket===b).length;
-    const w=Math.round(cnt/maxBucket*100);
-    return'<div class="db-row"><span class="db-name">'+esc(b)+'</span><div class="db-bar-bg"><div class="db-bar-fill" style="width:'+w+'%"></div></div><span class="db-count">'+cnt+'</span></div>';
+    return'<div class="db-row" style="cursor:pointer" onclick="dashGoFilter(\'total\')" title="View all tasks"><span class="db-name">'+esc(b)+'</span><div class="db-bar-bg"><div class="db-bar-fill" style="width:'+Math.round(cnt/maxBucket*100)+'%"></div></div><span class="db-count">'+cnt+'</span></div>';
   }).join('');
 
-  // Member breakdown
-  const assignees=[...new Set(tasks.map(t=>t.assignee).filter(Boolean))].sort();
   const memberHTML=assignees.length?assignees.map(a=>{
     const aTasks=tasks.filter(t=>t.assignee===a);
     const aDone=aTasks.filter(t=>t.pct>=100).length;
     const aOverdue=aTasks.filter(t=>isOverdue(t)).length;
     const pct=aTasks.length?Math.round(aDone/aTasks.length*100):0;
-    return'<div class="dash-member-row"><div class="dash-member-avatar" style="background:'+avatarColor(a)+'">'+initials(a)+'</div><div class="dash-member-info"><div class="dash-member-name">'+esc(a)+'</div><div class="dash-member-tasks">'+aTasks.length+' tasks'+(aOverdue?' · <span style="color:var(--crit)">'+aOverdue+' overdue</span>':'')+'</div></div><span class="dash-member-pct">'+pct+'%</span></div>';
+    return'<div class="dash-member-row" style="cursor:pointer" onclick="document.getElementById(\'filterAssignee\').value=\''+escAttr(a)+'\';setView(\'list\')" title="View '+esc(a)+'\'s tasks"><div class="dash-member-avatar" style="background:'+avatarColor(a)+'">'+initials(a)+'</div><div class="dash-member-info"><div class="dash-member-name">'+esc(a)+'</div><div class="dash-member-tasks">'+aTasks.length+' tasks'+(aOverdue?' · <span style="color:var(--crit)">'+aOverdue+' overdue</span>':'')+'</div></div><span class="dash-member-pct">'+pct+'%</span></div>';
   }).join(''):'<div class="dash-empty">No assigned tasks yet</div>';
 
-  // Overdue tasks
-  const overdueList=tasks.filter(t=>isOverdue(t)).slice(0,8);
-  const overdueHTML=overdueList.length?overdueList.map(t=>'<div class="dash-overdue-item" onclick="openEditTask('+t.id+')"><div class="dash-overdue-title">'+esc(t.title)+'</div><span class="dash-overdue-who">'+(t.assignee?esc(t.assignee):'Unassigned')+'</span><span class="dash-overdue-due">'+fmtDate(t.due)+'</span></div>').join(''):'<div class="dash-empty" style="color:var(--low)">✓ No overdue tasks!</div>';
+  const overdueItems=tasks.filter(t=>isOverdue(t)).slice(0,8);
+  const overdueHTML=overdueItems.length?overdueItems.map(t=>'<div class="dash-overdue-item" onclick="openEditTask('+t.id+')"><div class="dash-overdue-title">'+esc(t.title)+'</div><span class="dash-overdue-who">'+(t.assignee?esc(t.assignee):'Unassigned')+'</span><span class="dash-overdue-due">'+fmtDate(t.due)+'</span></div>').join(''):'<div class="dash-empty" style="color:var(--low)">✓ No overdue tasks!</div>';
 
-  const org=isOrganizer();
-  const isTeam=!!currentTeamWorkspaceId;
-  const roleBadge=isTeam?(org?'<span class="dash-role-badge">ORGANIZER</span>':'<span class="dash-role-badge" style="background:#16a34a">MEMBER</span>'):'';
-  const subLabel=isTeam?('Team workspace · '+(org?'Organizer':'Member')+' view'):'Personal workspace';
   el.innerHTML=
-    '<div class="dash-header"><div><h2>'+esc(wsName)+' Dashboard</h2><div class="dash-ws-name">'+subLabel+'</div></div>'+roleBadge+'</div>'+
+    '<div class="dash-header"><div><h2>'+esc(wsName)+' Dashboard</h2><div class="dash-ws-name">Team workspace · '+(org?'Organizer':'Member')+' view</div></div>'+roleBadge+'</div>'+
     '<div class="dash-kpi-row">'+
-      '<div class="dash-kpi"><div class="dash-kpi-label">Total Tasks</div><div class="dash-kpi-val">'+total+'</div><div class="dash-kpi-sub">across all members</div></div>'+
-      '<div class="dash-kpi success"><div class="dash-kpi-label">Completed</div><div class="dash-kpi-val">'+completedPct+'%</div><div class="dash-kpi-sub">'+completed+' of '+total+' tasks</div></div>'+
-      '<div class="dash-kpi danger"><div class="dash-kpi-label">Overdue</div><div class="dash-kpi-val">'+overdue+'</div><div class="dash-kpi-sub">need attention</div></div>'+
-      '<div class="dash-kpi"><div class="dash-kpi-label">Team Members</div><div class="dash-kpi-val">'+assignees.length+'</div><div class="dash-kpi-sub">active assignees</div></div>'+
+      '<div class="dash-kpi dash-kpi-click" onclick="dashGoFilter(\'total\')" title="View all tasks"><div class="dash-kpi-label">Total Tasks</div><div class="dash-kpi-val">'+total+'</div><div class="dash-kpi-sub">click to view list ↗</div></div>'+
+      '<div class="dash-kpi dash-kpi-click success" onclick="dashGoFilter(\'completed\')" title="View completed"><div class="dash-kpi-label">Completed</div><div class="dash-kpi-val">'+completedPct+'%</div><div class="dash-kpi-sub">'+completed+' of '+total+' tasks ↗</div></div>'+
+      '<div class="dash-kpi dash-kpi-click danger" onclick="dashGoFilter(\'overdue\')" title="View overdue"><div class="dash-kpi-label">Overdue</div><div class="dash-kpi-val">'+overdueCount+'</div><div class="dash-kpi-sub">click to view list ↗</div></div>'+
+      '<div class="dash-kpi dash-kpi-click" onclick="dashGoFilter(\'thisweek\')" title="Due this week"><div class="dash-kpi-label">Due This Week</div><div class="dash-kpi-val">'+dueWeek+'</div><div class="dash-kpi-sub">click to view list ↗</div></div>'+
     '</div>'+
     '<div class="dash-grid">'+
       '<div class="dash-panel"><h3>Tasks by Stage</h3><div class="dash-bucket-bar">'+(bucketHTML||'<div class="dash-empty">No tasks yet</div>')+'</div></div>'+
-      '<div class="dash-panel"><h3>Team Members</h3><div class="dash-member-list">'+memberHTML+'</div></div>'+
+      '<div class="dash-panel"><h3>Team Members <span style="font-size:10px;color:var(--muted);font-weight:400">— click to filter</span></h3><div class="dash-member-list">'+memberHTML+'</div></div>'+
       '<div class="dash-panel"><h3>Overdue Tasks</h3><div class="dash-overdue-list">'+overdueHTML+'</div></div>'+
       '<div class="dash-panel"><h3>Quick Actions</h3>'+
         '<div style="display:flex;flex-direction:column;gap:8px">'+
         '<button class="team-panel-btn" onclick="openNewTask()">＋ New Task</button>'+
-        (isTeam?(org?'<button class="team-panel-btn secondary" onclick="openTeamPanel()">👥 Manage Team</button>':'<button class="team-panel-btn secondary" onclick="openTeamPanel()">👥 Team Info</button>'):'<button class="team-panel-btn secondary" onclick="openTeamPanel()">👥 Create / Join Team</button>')+
-        (org?'<button class="dash-demo-btn" onclick="injectDemoData()">🏗 Load Real Estate Demo Data</button>':'')+
+        (org?'<button class="team-panel-btn secondary" onclick="openTeamPanel()">👥 Manage Team</button>':'<button class="team-panel-btn secondary" onclick="openTeamPanel()">👥 Team Info</button>')+
+        '<button class="team-panel-btn secondary" onclick="generatePDFReport()">📄 Export PDF Report</button>'+
         '</div>'+
       '</div>'+
     '</div>';
 }
-function injectDemoData(){
-  if(!confirm('This will replace the current workspace tasks with real estate/construction demo data. Continue?'))return;
-  const today=new Date();
-  function daysFromNow(n){const d=new Date(today);d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];}
-  const members=['Landry Stewart','Marcus Webb','Priya Nair','Jake Thornton','Sofia Reyes','Devon Clark','Amara Osei','Tyler Bates','Leila Farouk','Carlos Mendoza','Hannah Kim','Raj Patel'];
-  const demoLabels=[{name:'Entitlements',color:'#8b5cf6'},{name:'Development',color:'#0891b2'},{name:'Design',color:'#ec4899'},{name:'Engineering',color:'#f97316'},{name:'Admin',color:'#6b7280'},{name:'Permitting',color:'#d97706'},{name:'Site Work',color:'#16a34a'}];
-  state.labels=demoLabels;
-  state.buckets=['To Do','In Progress','Under Review','Complete'];
-  state.projectName='Saddleside Phase 2';
-  document.getElementById('projName').value='Saddleside Phase 2';
-  const tasks=[
-    {title:'Submit entitlement application to county',bucket:'In Progress',assignee:'Landry Stewart',priority:'Critical',due:daysFromNow(-3),pct:65,labels:['Entitlements'],notes:'County planning dept requires updated drainage study.',filePath:'R:\\DFW\\b. Active\\Saddleside\\Entitlements\\2024_Application'},
-    {title:'Grading permit — Phase 2 north section',bucket:'To Do',assignee:'Jake Thornton',priority:'High',due:daysFromNow(7),pct:0,labels:['Permitting','Engineering'],notes:'Need civil stamp from Thornton & Assoc.',filePath:'R:\\DFW\\b. Active\\Saddleside\\Permits\\Grading'},
-    {title:'Civil engineering — drainage study revision',bucket:'In Progress',assignee:'Raj Patel',priority:'High',due:daysFromNow(4),pct:40,labels:['Engineering'],filePath:'R:\\DFW\\b. Active\\Saddleside\\Civil\\Drainage_Study_Rev3'},
-    {title:'HOA docs — CC&Rs revision for Phase 2',bucket:'Under Review',assignee:'Landry Stewart',priority:'Medium',due:daysFromNow(10),pct:80,labels:['Admin','Entitlements']},
-    {title:'Utility coordination — gas & electric rough-in',bucket:'To Do',assignee:'Tyler Bates',priority:'High',due:daysFromNow(14),pct:0,labels:['Engineering','Site Work']},
-    {title:'Slab pour — Lots 41–52',bucket:'In Progress',assignee:'Carlos Mendoza',priority:'Critical',due:daysFromNow(-1),pct:50,labels:['Site Work'],notes:'Weather delay — need rescheduled pour date.'},
-    {title:'Architectural plans — model home elevations',bucket:'Under Review',assignee:'Sofia Reyes',priority:'Medium',due:daysFromNow(5),pct:90,labels:['Design']},
-    {title:'Subcontractor bid leveling — framing package',bucket:'In Progress',assignee:'Marcus Webb',priority:'High',due:daysFromNow(2),pct:30,labels:['Admin'],filePath:'R:\\DFW\\b. Active\\Saddleside\\Contracts\\Framing_Bids'},
-    {title:'Landscape design — common area Phase 2',bucket:'To Do',assignee:'Amara Osei',priority:'Low',due:daysFromNow(21),pct:0,labels:['Design','Site Work']},
-    {title:'Environmental review — wetlands sign-off',bucket:'Complete',assignee:'Priya Nair',priority:'High',due:daysFromNow(-14),pct:100,labels:['Entitlements'],notes:'Signed off 6/1. Filed with county.'},
-    {title:'Foundation inspection — Lots 33–40',bucket:'Complete',assignee:'Devon Clark',priority:'Medium',due:daysFromNow(-7),pct:100,labels:['Engineering']},
-    {title:'Street construction drawings — Phase 2 loop road',bucket:'In Progress',assignee:'Jake Thornton',priority:'High',due:daysFromNow(8),pct:55,labels:['Engineering','Site Work'],filePath:'R:\\DFW\\b. Active\\Saddleside\\Civil\\StreetDesign_Phase2'},
-    {title:'Construction loan draw request #4',bucket:'Under Review',assignee:'Landry Stewart',priority:'Critical',due:daysFromNow(1),pct:75,labels:['Admin'],notes:'Lender requires updated draw schedule.'},
-    {title:'Framing inspection — model homes',bucket:'To Do',assignee:'Tyler Bates',priority:'Medium',due:daysFromNow(11),pct:0,labels:['Engineering']},
-    {title:'Sales center interior design — FF&E selection',bucket:'In Progress',assignee:'Hannah Kim',priority:'Medium',due:daysFromNow(6),pct:25,labels:['Design']},
-    {title:'Stormwater pollution prevention plan (SWPPP)',bucket:'Under Review',assignee:'Raj Patel',priority:'High',due:daysFromNow(3),pct:85,labels:['Permitting','Engineering']},
-    {title:'Marketing materials — Phase 2 lot map brochure',bucket:'To Do',assignee:'Leila Farouk',priority:'Low',due:daysFromNow(18),pct:0,labels:['Design','Admin']},
-    {title:'Contractor closeout — Phase 1 punch list',bucket:'In Progress',assignee:'Carlos Mendoza',priority:'Medium',due:daysFromNow(-2),pct:80,labels:['Site Work','Admin'],notes:'16 items remain. Target close by EOM.'},
-    {title:'School district impact fee payment',bucket:'To Do',assignee:'Landry Stewart',priority:'High',due:daysFromNow(9),pct:0,labels:['Admin','Entitlements'],filePath:'R:\\DFW\\b. Active\\Saddleside\\Fees\\SchoolDistrict'},
-    {title:'Plumbing rough-in — Lots 41–52',bucket:'To Do',assignee:'Devon Clark',priority:'High',due:daysFromNow(13),pct:0,labels:['Engineering','Site Work']},
-    {title:'Masonry — fireplace surrounds model homes',bucket:'Complete',assignee:'Marcus Webb',priority:'Low',due:daysFromNow(-10),pct:100,labels:['Site Work']},
-    {title:'Electrical panel coordination — Lots 33–52',bucket:'In Progress',assignee:'Tyler Bates',priority:'High',due:daysFromNow(5),pct:35,labels:['Engineering']},
-    {title:'Title commitment — Phase 2 lots',bucket:'Under Review',assignee:'Priya Nair',priority:'Medium',due:daysFromNow(7),pct:70,labels:['Admin']},
-    {title:'Weekly owner-architect-contractor meeting',bucket:'In Progress',assignee:'Landry Stewart',priority:'Medium',due:daysFromNow(0),pct:0,labels:['Admin'],notes:'Every Monday 9am — agenda distributed via email.'},
-  ];
-  let id=1;
-  state.tasks=tasks.map(t=>({...t,id:id++,checklist:[],created:new Date().toISOString().split('T')[0]}));
-  state.nextId=id;
-  render();
-  syncToCloud();
-  showToast('🏗 Demo data loaded — 24 real estate tasks across '+members.filter(m=>tasks.some(t=>t.assignee===m)).length+' team members!');
+
+function renderPersonalDashboard(el){
+  const myName=(state.myName||'').trim();
+  if(!myName){
+    el.innerHTML='<div style="padding:60px 20px;text-align:center"><div style="font-size:52px;margin-bottom:16px">👤</div><h2 style="color:var(--text);margin-bottom:8px">Set your name to unlock your personal dashboard</h2><p style="color:var(--text2);margin-bottom:24px">Your personal dashboard tracks tasks assigned to you across every workspace.</p><button class="team-panel-btn" style="max-width:260px;margin:0 auto;display:block" onclick="openSettings()">⚙ Set My Name in Settings</button></div>';
+    return;
+  }
+  const myTasks=getPersonalTasks();
+  const today=todayStr();
+  const weekEnd=new Date();weekEnd.setDate(weekEnd.getDate()+7);
+  const weekEndStr=weekEnd.toISOString().split('T')[0];
+  const openTasks=myTasks.filter(t=>(t.pct||0)<100);
+  const total=openTasks.length;
+  const overdueCount=myTasks.filter(t=>isOverdue(t)).length;
+  const dueToday=myTasks.filter(t=>t.due===today&&(t.pct||0)<100).length;
+  const donePct=myTasks.length?Math.round(myTasks.filter(t=>t.pct>=100).length/myTasks.length*100):0;
+
+  // By workspace
+  const wsList=[{name:'Work',id:null},...teamWorkspaces.map(tw=>({name:tw.name,id:tw.id}))];
+  const maxWs=Math.max(1,...wsList.map(w=>myTasks.filter(t=>t._wsName===w.name).length));
+  const wsBreakHTML=wsList.map(w=>{
+    const cnt=myTasks.filter(t=>t._wsName===w.name).length;
+    return'<div class="db-row"><span class="db-name">'+esc(w.name)+'</span><div class="db-bar-bg"><div class="db-bar-fill" style="width:'+Math.round(cnt/maxWs*100)+'%"></div></div><span class="db-count">'+cnt+'</span></div>';
+  }).join('');
+
+  // Upcoming (today + next 7 days)
+  const upcoming=myTasks.filter(t=>t.due&&t.due>=today&&t.due<=weekEndStr&&(t.pct||0)<100).sort((a,b)=>a.due>b.due?1:-1).slice(0,8);
+  const upcomingHTML=upcoming.length?upcoming.map(t=>'<div class="dash-overdue-item" onclick="jumpToTask(\''+t._wsId+'\','+t.id+')" style="border-left-color:'+priColor(t.priority)+'"><div class="dash-overdue-title">'+esc(t.title)+'</div><span style="background:var(--pri-l);color:var(--pri);padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700;flex-shrink:0">'+esc(t._wsName)+'</span><span class="dash-overdue-due">'+fmtDate(t.due)+'</span></div>').join(''):'<div class="dash-empty">Nothing due this week 🎉</div>';
+
+  const overdueItems=myTasks.filter(t=>isOverdue(t)).sort((a,b)=>a.due>b.due?1:-1).slice(0,8);
+  const overdueHTML=overdueItems.length?overdueItems.map(t=>'<div class="dash-overdue-item" onclick="jumpToTask(\''+t._wsId+'\','+t.id+')" style="border-left-color:var(--crit)"><div class="dash-overdue-title">'+esc(t.title)+'</div><span style="background:#fef2f2;color:var(--crit);padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700;flex-shrink:0">'+esc(t._wsName)+'</span><span class="dash-overdue-due" style="color:var(--crit)">'+fmtDate(t.due)+'</span></div>').join(''):'<div class="dash-empty" style="color:var(--low)">✓ Nothing overdue!</div>';
+
+  el.innerHTML=
+    '<div class="dash-header"><div><h2>My Overview</h2><div class="dash-ws-name">Personal dashboard · '+esc(myName)+'</div></div><span class="dash-role-badge" style="background:#7c3aed">PERSONAL</span></div>'+
+    '<div id="dashDetailPanel" style="display:none" class="dash-detail-panel"></div>'+
+    '<div class="dash-kpi-row">'+
+      '<div class="dash-kpi dash-kpi-click" onclick="showPersonalDetail(\'all\')" title="View all open tasks"><div class="dash-kpi-label">My Open Tasks</div><div class="dash-kpi-val">'+total+'</div><div class="dash-kpi-sub">click to expand ↓</div></div>'+
+      '<div class="dash-kpi dash-kpi-click success" onclick="showPersonalDetail(\'done\')" title="Completion rate"><div class="dash-kpi-label">Completion</div><div class="dash-kpi-val">'+donePct+'%</div><div class="dash-kpi-sub">across all workspaces</div></div>'+
+      '<div class="dash-kpi dash-kpi-click'+(overdueCount?' danger':'')+'" onclick="showPersonalDetail(\'overdue\')" title="View overdue"><div class="dash-kpi-label">Overdue</div><div class="dash-kpi-val" style="'+(overdueCount?'color:var(--crit)':'')+'">'+overdueCount+'</div><div class="dash-kpi-sub">click to expand ↓</div></div>'+
+      '<div class="dash-kpi dash-kpi-click" onclick="showPersonalDetail(\'today\')" title="Due today"><div class="dash-kpi-label">Due Today</div><div class="dash-kpi-val" style="'+(dueToday?'color:var(--high)':'')+'">'+dueToday+'</div><div class="dash-kpi-sub">click to expand ↓</div></div>'+
+    '</div>'+
+    '<div class="dash-grid">'+
+      '<div class="dash-panel"><h3>Tasks by Workspace</h3><div class="dash-bucket-bar">'+wsBreakHTML+'</div></div>'+
+      '<div class="dash-panel"><h3>Upcoming This Week</h3><div class="dash-overdue-list">'+upcomingHTML+'</div></div>'+
+      '<div class="dash-panel"><h3>Overdue</h3><div class="dash-overdue-list">'+overdueHTML+'</div></div>'+
+      '<div class="dash-panel"><h3>Quick Actions</h3>'+
+        '<div style="display:flex;flex-direction:column;gap:8px">'+
+        '<button class="team-panel-btn" onclick="openNewTask()">＋ New Task</button>'+
+        '<button class="team-panel-btn secondary" onclick="openTeamPanel()">👥 Create / Join Team</button>'+
+        '<button class="team-panel-btn secondary" onclick="generatePDFReport()">📄 Export PDF Report</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
 }
+
 
 function isOverdue(t){if(!t.due||t.pct>=100)return false;return new Date(t.due+'T23:59:59')<new Date();}
 function priClass(p){return'pri-'+(p||'medium').toLowerCase();}
@@ -1841,6 +1912,300 @@ function deleteScheduleTask(){
 
 /* ── AI Settings (OpenAI + Azure OpenAI) ── */
 /* ── AI Core ── */
-</script>
+
+// ── PDF Report Generator ──────────────────────────────────────────────────────
+function generatePDFReport(){
+  // Gather tasks: personal mode = cross-workspace by myName; team mode = current workspace
+  let tasks=[];
+  let reportTitle='';
+  let reportSubtitle='';
+  const today=todayStr();
+
+  if(!currentTeamWorkspaceId){
+    // Personal: cross-workspace tasks assigned to me
+    const myName=(state.myName||'').trim();
+    if(!myName){showToast('Set your name in Settings (⚙) first.');return;}
+    tasks=getPersonalTasks().map(t=>({...t,_workspace:t._wsName||'Work'}));
+    reportTitle='Personal Task Report';
+    reportSubtitle='Tasks assigned to: '+myName;
+  } else {
+    const tw=teamWorkspaces.find(w=>w.id===currentTeamWorkspaceId);
+    const wsData=tw?tw.data:state;
+    tasks=(wsData.tasks||[]).map(t=>({...t,_workspace:(tw?tw.name:'Team')}));
+    reportTitle=(tw?tw.name:state.projectName)+' — Task Report';
+    reportSubtitle='All team tasks';
+  }
+
+  if(!tasks.length){showToast('No tasks to export.');return;}
+
+  const {jsPDF}=window.jspdf;
+  if(!jsPDF){showToast('PDF library not loaded yet. Please wait and try again.');return;}
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const pageW=doc.internal.pageSize.getWidth();
+  const pageH=doc.internal.pageSize.getHeight();
+  const margin=18;
+  const contentW=pageW-(margin*2);
+  const generatedDate=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+
+  // ── Color helpers ──
+  const priRGB=[37,99,235];
+  const navyRGB=[15,23,42];
+  const mutedRGB=[100,116,139];
+  const lightRGB=[239,246,255];
+
+  // ── Priority label ──
+  function priLabel(p){return p==='critical'?'Critical':p==='high'?'High':p==='medium'?'Medium':'Low';}
+  function priColor(p){return p==='critical'?[220,38,38]:p==='high'?[234,88,12]:p==='medium'?[124,58,237]:[22,163,74];}
+
+  // ── Group tasks by assignee ──
+  const assigneeMap={};
+  tasks.forEach(t=>{
+    const name=(t.assignee||'Unassigned').trim()||'Unassigned';
+    if(!assigneeMap[name])assigneeMap[name]=[];
+    assigneeMap[name].push(t);
+  });
+  const assignees=Object.keys(assigneeMap).sort((a,b)=>{
+    if(a==='Unassigned')return 1;if(b==='Unassigned')return-1;
+    return a.localeCompare(b);
+  });
+  // Sort each person's tasks by due date asc (no due → end)
+  assignees.forEach(name=>{
+    assigneeMap[name].sort((a,b)=>{
+      const da=a.due||'9999-12-31',db=b.due||'9999-12-31';
+      return da>db?1:da<db?-1:0;
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PAGE 1: Cover
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Header band
+  doc.setFillColor(...navyRGB);
+  doc.rect(0,0,pageW,52,'F');
+  // Brand dot
+  doc.setFillColor(...priRGB);
+  doc.circle(margin+5,26,5,'F');
+  // Title
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(22);
+  doc.text(reportTitle,margin+14,24);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(11);
+  doc.setTextColor(148,163,184);
+  doc.text(reportSubtitle,margin+14,33);
+  // Meta row
+  doc.setFontSize(9);
+  doc.text('Generated: '+generatedDate,margin+14,42);
+  doc.text('Total tasks: '+tasks.length,pageW/2,42,'center');
+  doc.text('Employees: '+assignees.filter(a=>a!=='Unassigned').length,pageW-margin,42,'right');
+
+  // Summary KPIs (small cards)
+  const overdue=tasks.filter(t=>t.due&&t.due<today&&(t.pct||0)<100).length;
+  const completed=tasks.filter(t=>(t.pct||0)>=100).length;
+  const dueToday=tasks.filter(t=>t.due===today&&(t.pct||0)<100).length;
+  const open=tasks.filter(t=>(t.pct||0)<100).length;
+  const kpis=[
+    {label:'Open',val:open,color:priRGB},
+    {label:'Completed',val:completed,color:[22,163,74]},
+    {label:'Overdue',val:overdue,color:[220,38,38]},
+    {label:'Due Today',val:dueToday,color:[234,88,12]}
+  ];
+  const kpiW=(contentW-9)/4;
+  let kx=margin;
+  kpis.forEach(k=>{
+    doc.setFillColor(...lightRGB);
+    doc.roundedRect(kx,60,kpiW,22,2,2,'F');
+    doc.setFillColor(...k.color);
+    doc.roundedRect(kx,60,3,22,1,1,'F');
+    doc.setTextColor(...navyRGB);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(16);
+    doc.text(String(k.val),kx+kpiW/2+3,72.5,'center');
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...mutedRGB);
+    doc.text(k.label,kx+kpiW/2+3,79,'center');
+    kx+=kpiW+3;
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PAGE 2: Table of Contents
+  // ─────────────────────────────────────────────────────────────────────────────
+  doc.addPage();
+  // TOC header band
+  doc.setFillColor(...navyRGB);
+  doc.rect(0,0,pageW,28,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(16);
+  doc.text('Table of Contents',margin,18);
+
+  let tocY=40;
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(10);
+  assignees.forEach((name,idx)=>{
+    const taskCount=assigneeMap[name].length;
+    const doneCount=assigneeMap[name].filter(t=>(t.pct||0)>=100).length;
+    const overdueCount=assigneeMap[name].filter(t=>t.due&&t.due<today&&(t.pct||0)<100).length;
+    // Row bg
+    if(idx%2===0){doc.setFillColor(248,250,252);doc.rect(margin,tocY-5,contentW,9,'F');}
+    // Index number
+    doc.setFillColor(...priRGB);
+    doc.circle(margin+4,tocY,3.5,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(7);
+    doc.text(String(idx+1),margin+4,tocY+0.8,'center');
+    // Name
+    doc.setTextColor(...navyRGB);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(10);
+    doc.text(name,margin+11,tocY+0.5);
+    // Stats
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...mutedRGB);
+    doc.text(taskCount+' task'+(taskCount!==1?'s':''),pageW-margin-70,tocY+0.5);
+    doc.text(doneCount+' done',pageW-margin-40,tocY+0.5);
+    if(overdueCount>0){
+      doc.setTextColor(220,38,38);
+      doc.text(overdueCount+' overdue',pageW-margin-10,tocY+0.5,'right');
+    } else {
+      doc.setTextColor(22,163,74);
+      doc.text('✓',pageW-margin-10,tocY+0.5,'right');
+    }
+    // Dots
+    doc.setTextColor(203,213,225);
+    doc.setFontSize(8);
+    const dotsStart=margin+11+doc.getTextWidth(name)+3;
+    const dotsEnd=pageW-margin-75;
+    if(dotsEnd>dotsStart){doc.text('·'.repeat(Math.floor((dotsEnd-dotsStart)/1.8)),dotsStart,tocY+0.5);}
+    tocY+=10;
+    if(tocY>pageH-20){doc.addPage();tocY=20;}
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PAGES 3+: Per-employee sections
+  // ─────────────────────────────────────────────────────────────────────────────
+  assignees.forEach((name,idx)=>{
+    doc.addPage();
+    const empTasks=assigneeMap[name];
+    const empDone=empTasks.filter(t=>(t.pct||0)>=100).length;
+    const empOverdue=empTasks.filter(t=>t.due&&t.due<today&&(t.pct||0)<100).length;
+    const empPct=empTasks.length?Math.round(empDone/empTasks.length*100):0;
+
+    // Section header
+    doc.setFillColor(...navyRGB);
+    doc.rect(0,0,pageW,34,'F');
+    doc.setFillColor(...priRGB);
+    doc.rect(0,0,5,34,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(15);
+    doc.text(name,margin+2,15);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(148,163,184);
+    doc.text(empTasks.length+' task'+(empTasks.length!==1?'s':'')+' · '+empDone+' completed ('+empPct+'%)'+
+      (empOverdue?' · '+empOverdue+' overdue':''),margin+2,24);
+    // Section number badge
+    doc.setFillColor(...priRGB);
+    doc.roundedRect(pageW-margin-20,5,18,16,3,3,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.text(String(idx+1)+' / '+assignees.length,pageW-margin-11,14.5,'center');
+
+    // Task table
+    const rows=empTasks.map(t=>{
+      const dueFmt=t.due?t.due:'—';
+      const status=(t.pct||0)>=100?'Done':isOverdue(t)?'Overdue':t.due===today?'Due Today':'Open';
+      const bucket=t.bucket||'—';
+      const wsName=t._workspace||t._wsName||'Work';
+      return[t.title||t.name||'(untitled)',wsName,bucket,priLabel(t.priority||'low'),dueFmt,(t.pct||0)+'%',status];
+    });
+
+    doc.autoTable({
+      startY:42,
+      head:[['Task','Workspace','Bucket','Priority','Due Date','Progress','Status']],
+      body:rows,
+      margin:{left:margin,right:margin},
+      styles:{fontSize:8,cellPadding:3,textColor:navyRGB,lineColor:[226,232,240],lineWidth:0.2},
+      headStyles:{fillColor:navyRGB,textColor:[255,255,255],fontStyle:'bold',fontSize:8},
+      alternateRowStyles:{fillColor:[248,250,252]},
+      columnStyles:{
+        0:{cellWidth:'auto'},
+        1:{cellWidth:28},
+        2:{cellWidth:24},
+        3:{cellWidth:18,halign:'center'},
+        4:{cellWidth:22,halign:'center'},
+        5:{cellWidth:16,halign:'center'},
+        6:{cellWidth:20,halign:'center'}
+      },
+      didDrawCell:function(data){
+        if(data.section==='body'&&data.column.index===3){
+          const p=empTasks[data.row.index]?empTasks[data.row.index].priority||'low':'low';
+          const [r,g,b]=priColor(p);
+          doc.setTextColor(r,g,b);
+          doc.setFont('helvetica','bold');
+          doc.setFontSize(8);
+          doc.text(priLabel(p),data.cell.x+data.cell.width/2,data.cell.y+data.cell.height/2+0.5,{align:'center'});
+          doc.setTextColor(...navyRGB);
+          doc.setFont('helvetica','normal');
+        }
+        if(data.section==='body'&&data.column.index===6){
+          const s=data.cell.text[0];
+          const colors={'Done':[22,163,74],'Overdue':[220,38,38],'Due Today':[234,88,12],'Open':priRGB};
+          const [r,g,b]=colors[s]||priRGB;
+          doc.setTextColor(r,g,b);
+          doc.setFont('helvetica','bold');
+          doc.setFontSize(8);
+          doc.text(s,data.cell.x+data.cell.width/2,data.cell.y+data.cell.height/2+0.5,{align:'center'});
+          doc.setTextColor(...navyRGB);
+          doc.setFont('helvetica','normal');
+        }
+      }
+    });
+
+    // Progress bar below table
+    const tableBottom=doc.lastAutoTable.finalY+6;
+    if(tableBottom<pageH-25){
+      doc.setFillColor(226,232,240);
+      doc.roundedRect(margin,tableBottom,contentW,5,2,2,'F');
+      if(empPct>0){
+        doc.setFillColor(...priRGB);
+        doc.roundedRect(margin,tableBottom,contentW*(empPct/100),5,2,2,'F');
+      }
+      doc.setTextColor(...mutedRGB);
+      doc.setFontSize(8);
+      doc.text(empPct+'% complete',margin,tableBottom+10);
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Footer on every page
+  // ─────────────────────────────────────────────────────────────────────────────
+  const totalPages=doc.internal.getNumberOfPages();
+  for(let i=1;i<=totalPages;i++){
+    doc.setPage(i);
+    doc.setFillColor(248,250,252);
+    doc.rect(0,pageH-10,pageW,10,'F');
+    doc.setDrawColor(226,232,240);
+    doc.line(0,pageH-10,pageW,pageH-10);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...mutedRGB);
+    doc.text('TaskAura · '+reportTitle+' · '+generatedDate,margin,pageH-3.5);
+    doc.text('Page '+i+' of '+totalPages,pageW-margin,pageH-3.5,'right');
+  }
+
+  // Save
+  const safeName=reportTitle.replace(/[^a-zA-Z0-9\s-]/g,'').replace(/\s+/g,'-').toLowerCase();
+  doc.save('taskaura-'+safeName+'-'+today+'.pdf');
+  showToast('PDF report generated!');
+}
+
+
 </body>
 </html>

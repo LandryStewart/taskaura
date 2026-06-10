@@ -686,6 +686,40 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .pd-chart-bar{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;}
 .pd-chart-bar-fill{width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#f97316,#ea580c);min-height:2px;transition:height .5s cubic-bezier(.4,0,.2,1);}
 .pd-chart-bar-label{font-size:9px;color:var(--muted);white-space:nowrap;}
+
+/* ── AI Chat Assistant ── */
+@keyframes chatSlideUp{from{opacity:0;transform:translateY(20px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes chatPulse{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.4);}70%{box-shadow:0 0 0 8px rgba(249,115,22,0);}}
+.ai-fab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#ea580c,#f97316);border:none;color:#fff;font-size:20px;cursor:pointer;z-index:8000;box-shadow:0 4px 18px rgba(249,115,22,.45);transition:transform .2s,box-shadow .2s;display:flex;align-items:center;justify-content:center;font-weight:700;letter-spacing:-.5px;font-size:13px;}
+.ai-fab:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(249,115,22,.55);}
+.ai-fab.has-key{animation:chatPulse 2.5s ease-in-out 1;}
+.ai-panel{position:fixed;bottom:88px;right:24px;width:380px;height:540px;background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.25);z-index:8001;display:flex;flex-direction:column;overflow:hidden;animation:chatSlideUp .22s ease both;}
+.ai-panel-hdr{padding:14px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.ai-panel-dot{width:8px;height:8px;border-radius:50%;background:#f97316;flex-shrink:0;}
+.ai-panel-title{font-size:14px;font-weight:700;color:var(--text);flex:1;}
+.ai-panel-model{font-size:10px;color:var(--muted);font-weight:500;}
+.ai-panel-close{background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1;padding:0 2px;}
+.ai-panel-close:hover{color:var(--text);}
+.ai-messages{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth;}
+.ai-messages::-webkit-scrollbar{width:4px;}
+.ai-messages::-webkit-scrollbar-track{background:transparent;}
+.ai-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.ai-msg{max-width:88%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word;}
+.ai-msg.user{background:linear-gradient(135deg,#ea580c,#f97316);color:#fff;align-self:flex-end;border-radius:14px 14px 4px 14px;}
+.ai-msg.assistant{background:var(--bg);color:var(--text);align-self:flex-start;border-radius:14px 14px 14px 4px;border:1px solid var(--border);}
+.ai-msg.typing{opacity:.6;}
+.ai-msg.error{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;align-self:flex-start;}
+.ai-no-key{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;gap:12px;}
+.ai-no-key p{font-size:13px;color:var(--text2);line-height:1.5;}
+.ai-footer{padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;align-items:flex-end;}
+.ai-input{flex:1;padding:9px 13px;border:1px solid var(--border);border-radius:12px;font-size:13px;background:var(--bg);color:var(--text);resize:none;max-height:100px;line-height:1.4;outline:none;font-family:inherit;}
+.ai-input:focus{border-color:var(--pri);}
+.ai-send{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#ea580c,#f97316);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s;}
+.ai-send:hover{opacity:.85;}
+.ai-send:disabled{opacity:.4;cursor:default;}
+.ai-clear{background:none;border:none;font-size:11px;color:var(--muted);cursor:pointer;padding:2px 4px;flex-shrink:0;align-self:center;}
+.ai-clear:hover{color:var(--crit);}
+[data-theme="dark"] .ai-msg.error{background:#450a0a;color:#fca5a5;border-color:#7f1d1d;}
 @media(max-width:768px){.dash-grid{grid-template-columns:1fr;}}
 .dash-panel{background:var(--card);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);border:1px solid var(--border);}
 .dash-panel h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:14px;}
@@ -851,7 +885,22 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 <div class="settings-section"><h3>Buckets</h3><div class="sett-list" id="settBuckets"></div><button class="sett-add" onclick="addBucketSetting()">+ Add Bucket</button></div>
 <div class="settings-section"><h3>Labels</h3><div class="sett-list" id="settLabels"></div><button class="sett-add" onclick="addLabelSetting()">+ Add Label</button></div>
 <div class="settings-section"><h3>Preferences</h3><div class="toggle-row"><span>🌙 Dark Mode</span><label class="switch"><input type="checkbox" id="togDark" onchange="toggleDark()"><span class="slider"></span></label></div><div class="toggle-row"><span>📐 Compact Cards</span><label class="switch"><input type="checkbox" id="togCompact" onchange="toggleCompact()"><span class="slider"></span></label></div><div style="margin-top:8px"><label style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text2)">My Name</label><input type="text" id="settMyName" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg);margin-top:4px" placeholder="e.g. Landry Stewart"></div></div>
-<div class="settings-section"><h3>☁ Sync Status</h3><p style="font-size:11px;color:var(--text2);margin-bottom:8px">Your data syncs automatically across all devices. <span class="sync-indicator"></span><span style="font-size:11px;color:#22c55e">Live sync active</span></p><p style="font-size:11px;color:var(--text2)">Team workspaces update in real time for all members. Use the <b>+ Team</b> tab to create or join a shared workspace.</p></div>
+<div class="settings-section"><h3>AI Assistant</h3>
+<p style="font-size:11px;color:var(--text2);margin-bottom:10px">Connect your Anthropic API key to enable the AI assistant. Your key is stored locally and never sent anywhere except directly to Anthropic.</p>
+<label style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text2)">Anthropic API Key</label>
+<div style="display:flex;gap:6px;margin-top:4px">
+  <input type="password" id="settAIKey" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg)" placeholder="sk-ant-...">
+  <button onclick="saveAIKey()" style="padding:6px 12px;background:var(--pri);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">Save</button>
+</div>
+<p style="font-size:10px;color:var(--muted);margin-top:6px">Get a key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--pri)">console.anthropic.com</a></p>
+<label style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text2);display:block;margin-top:10px">Model</label>
+<select id="settAIModel" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg);margin-top:4px">
+  <option value="claude-haiku-4-5-20251001">Claude Haiku (fast, affordable)</option>
+  <option value="claude-sonnet-4-6">Claude Sonnet (balanced)</option>
+  <option value="claude-opus-4-6">Claude Opus (most capable)</option>
+</select>
+</div>
+<div class="settings-section"><h3>Sync Status</h3><p style="font-size:11px;color:var(--text2);margin-bottom:8px">Your data syncs automatically across all devices. <span class="sync-indicator"></span><span style="font-size:11px;color:#22c55e">Live sync active</span></p><p style="font-size:11px;color:var(--text2)">Team workspaces update in real time for all members. Use the <b>+ Team</b> tab to create or join a shared workspace.</p></div>
 
 
 </div>
@@ -1008,6 +1057,7 @@ async function unlockApp() {
   render();
   updateDarkIcon();
   if (!localStorage.getItem('wm_tour_done')) setTimeout(startTour, 800);
+  initAIFab();
 }
 
 function showLoginScreen() {
@@ -1649,7 +1699,13 @@ if(lnSec){
 function addChecklistItem(text,done){const cl=document.getElementById('mChecklist'),div=document.createElement('div');div.className='cl-item';const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!done;const inp=document.createElement('input');inp.type='text';inp.value=text||'';inp.placeholder='Checklist item...';const rm=document.createElement('button');rm.className='cl-rm';rm.innerHTML='×';rm.onclick=()=>div.remove();div.appendChild(cb);div.appendChild(inp);div.appendChild(rm);cl.appendChild(div);}
 function saveTask(){const title=document.getElementById('mTitle').value.trim();if(!title){showToast('Task title is required.');return;}const data={title,assignee:document.getElementById('mAssignee').value.trim(),bucket:document.getElementById('mBucket').value,due:document.getElementById('mDue').value,priority:document.getElementById('mPriority').value,pct:parseInt(document.getElementById('mPct').value)||0,notes:document.getElementById('mNotes').value,filePath:document.getElementById('mFilePath').value.trim(),labels:[...document.querySelectorAll('#mLabels .label-chip.selected')].map(e=>e.dataset.label),checklist:[...document.querySelectorAll('#mChecklist .cl-item')].map(e=>({text:e.querySelector('input[type=text]').value,done:e.querySelector('input[type=checkbox]').checked}))};if(editingId!=null)Object.assign(state.tasks.find(x=>x.id===editingId),data);else{data.id=state.nextId++;data.created=new Date().toISOString().split('T')[0];state.tasks.push(data);}closeTaskModal();render();}
 function deleteTask(){const t=state.tasks.find(x=>x.id===editingId);if(!t)return;const removed=t,idx=state.tasks.indexOf(t);state.tasks=state.tasks.filter(x=>x.id!==editingId);closeTaskModal();render();showToast('Task "'+removed.title+'" deleted',function(){state.tasks.splice(idx,0,removed);render();});}
-function openSettings(){document.getElementById('settBuckets').innerHTML=state.buckets.map((b,i)=>'<div class="sett-item"><input type="text" value="'+esc(b)+'" data-idx="'+i+'"><button class="sett-rm" onclick="removeBucket('+i+')">×</button></div>').join('');document.getElementById('settLabels').innerHTML=state.labels.map((l,i)=>'<div class="sett-item"><input type="color" value="'+l.color+'"><input type="text" value="'+esc(l.name)+'"><button class="sett-rm" onclick="removeLabel('+i+')">×</button></div>').join('');document.getElementById('settMyName').value=state.myName||'';document.getElementById('settingsOverlay').classList.add('show');}
+function openSettings(){
+  // Populate AI key field placeholder and model
+  const aiKeyEl=document.getElementById('settAIKey');
+  if(aiKeyEl){aiKeyEl.placeholder=getAIKey()?'API key saved (enter new to replace)':'sk-ant-...';}
+  const aiModelEl=document.getElementById('settAIModel');
+  if(aiModelEl){aiModelEl.value=getAIModel();}
+  document.getElementById('settBuckets').innerHTML=state.buckets.map((b,i)=>'<div class="sett-item"><input type="text" value="'+esc(b)+'" data-idx="'+i+'"><button class="sett-rm" onclick="removeBucket('+i+')">×</button></div>').join('');document.getElementById('settLabels').innerHTML=state.labels.map((l,i)=>'<div class="sett-item"><input type="color" value="'+l.color+'"><input type="text" value="'+esc(l.name)+'"><button class="sett-rm" onclick="removeLabel('+i+')">×</button></div>').join('');document.getElementById('settMyName').value=state.myName||'';document.getElementById('settingsOverlay').classList.add('show');}
 function closeSettings(){const overlay=document.getElementById('settingsOverlay');if(!overlay||!overlay.classList.contains('show'))return;const bi=document.querySelectorAll('#settBuckets input[type=text]'),nb=[...bi].map(i=>i.value.trim()).filter(Boolean);bi.forEach(inp=>{const idx=parseInt(inp.dataset.idx);if(isNaN(idx))return;const old=state.buckets[idx],nw=inp.value.trim();if(old&&nw&&old!==nw)state.tasks.forEach(t=>{if(t.bucket===old)t.bucket=nw;});});state.buckets=nb.length?nb:[...DEFAULT_BUCKETS];state.tasks.forEach(t=>{if(!state.buckets.includes(t.bucket))t.bucket=state.buckets[0];});const ln=document.querySelectorAll('#settLabels input[type=text]'),lc=document.querySelectorAll('#settLabels input[type=color]');state.labels=[...ln].map((inp,i)=>({name:inp.value.trim(),color:lc[i].value})).filter(l=>l.name);state.myName=document.getElementById('settMyName').value.trim();document.getElementById('settingsOverlay').classList.remove('show');render();}
 function addBucketSetting(){const sb=document.getElementById('settBuckets'),div=document.createElement('div');div.className='sett-item';div.innerHTML='<input type="text" value="New Bucket" data-idx="'+sb.children.length+'"><button class="sett-rm" onclick="this.parentElement.remove()">×</button>';sb.appendChild(div);}
 function removeBucket(i){const items=document.querySelectorAll('#settBuckets .sett-item');if(items.length<=1){showToast('Need at least one bucket.');return;}items[i].remove();}
@@ -2076,8 +2132,225 @@ function deleteScheduleTask(){
 }
 
 
-/* ── AI Settings (OpenAI + Azure OpenAI) ── */
-/* ── AI Core ── */
+/* ── AI Assistant ── */
+let aiChatHistory=[];
+let aiStreaming=false;
+
+function getAIKey(){return localStorage.getItem('taskaura_ai_key')||'';}
+function getAIModel(){return localStorage.getItem('taskaura_ai_model')||'claude-haiku-4-5-20251001';}
+
+function saveAIKey(){
+  const key=document.getElementById('settAIKey').value.trim();
+  const model=document.getElementById('settAIModel').value;
+  if(key){localStorage.setItem('taskaura_ai_key',key);showToast('API key saved.');}
+  localStorage.setItem('taskaura_ai_model',model);
+  initAIFab();
+}
+
+function initAIFab(){
+  const fab=document.getElementById('aiFab');
+  const model=document.getElementById('settAIModel');
+  const modelLabel=document.getElementById('settAIModel');
+  if(!fab)return;
+  if(getAIKey()){
+    fab.classList.remove('hidden');
+    // Populate settings fields if open
+    const keyEl=document.getElementById('settAIKey');
+    if(keyEl&&!keyEl.value)keyEl.value='••••••••••••';
+  }
+  if(model){model.value=getAIModel();}
+  const panelModel=document.getElementById('aiPanelModel');
+  if(panelModel){
+    const m=getAIModel();
+    panelModel.textContent=m.includes('haiku')?'Claude Haiku':m.includes('sonnet')?'Claude Sonnet':'Claude Opus';
+  }
+}
+
+function toggleAIChat(){
+  const panel=document.getElementById('aiPanel');
+  const fab=document.getElementById('aiFab');
+  if(!panel)return;
+  const isOpen=!panel.classList.contains('hidden');
+  if(isOpen){
+    panel.classList.add('hidden');
+    fab.textContent='AI';
+  }else{
+    if(!getAIKey()){
+      showToast('Add your Anthropic API key in Settings first.');
+      openSettings();
+      return;
+    }
+    panel.classList.remove('hidden');
+    fab.textContent='×';
+    if(aiChatHistory.length===0)showAIWelcome();
+    document.getElementById('aiInput').focus();
+  }
+}
+
+function showAIWelcome(){
+  const myName=(state.myName||'').trim();
+  const today=todayStr();
+  const tasks=state.tasks||[];
+  const overdue=tasks.filter(t=>isOverdue(t)).length;
+  const dueToday=tasks.filter(t=>t.due===today&&(t.pct||0)<100).length;
+  const msg=`Hi${myName?' '+myName.split(' ')[0]:''}! I'm your TaskAura assistant. I can see your current tasks and workspace.`+
+    (overdue?`\n\nHeads up — you have **${overdue} overdue task${overdue>1?'s':''}**.`:'')+
+    (dueToday?`\n\n${dueToday} task${dueToday>1?'s are':' is'} due today.`:'')+
+    '\n\nAsk me anything — "What should I prioritize?", "Summarize my overdue tasks", or "Help me write a task description".';
+  appendAIMessage('assistant',msg);
+}
+
+function buildSystemPrompt(){
+  const today=todayStr();
+  const tasks=state.tasks||[];
+  const myName=(state.myName||'').trim();
+  const wsName=currentTeamWorkspaceId
+    ?(teamWorkspaces.find(w=>w.id===currentTeamWorkspaceId)||{}).name||'Team'
+    :'Work';
+
+  const overdue=tasks.filter(t=>isOverdue(t));
+  const dueToday=tasks.filter(t=>t.due===today&&(t.pct||0)<100);
+  const open=tasks.filter(t=>(t.pct||0)<100);
+  const done=tasks.filter(t=>(t.pct||0)>=100);
+
+  const taskList=tasks.slice(0,40).map(t=>
+    `- [${(t.pct||0)>=100?'Done':(t.due&&t.due<today?'OVERDUE':t.due===today?'Due Today':'Open')}] `+
+    `"${t.title}" | Priority: ${t.priority||'medium'} | Due: ${t.due||'none'} | `+
+    `Bucket: ${t.bucket||'—'} | Assignee: ${t.assignee||'—'} | Progress: ${t.pct||0}%`
+  ).join('\n');
+
+  const teams=teamWorkspaces.map(tw=>tw.name).join(', ')||'none';
+
+  return `You are an intelligent AI assistant embedded in TaskAura, a task management app. You help users manage tasks, prioritize work, draft task descriptions, and stay organized.
+
+Today's date: ${today}
+User: ${myName||'(name not set)'}
+Current workspace: ${wsName}
+Team workspaces: ${teams}
+
+Task Summary:
+- Total tasks: ${tasks.length}
+- Open: ${open.length}
+- Completed: ${done.length}
+- Overdue: ${overdue.length}
+- Due today: ${dueToday.length}
+
+Task List (up to 40 most recent):
+${taskList||'No tasks yet.'}
+
+Buckets: ${(state.buckets||[]).join(', ')||'none'}
+
+Instructions:
+- Be concise but helpful. Use markdown formatting (bold, bullets) where it aids clarity.
+- When referencing specific tasks, use their exact title.
+- If asked to prioritize, consider due dates, overdue status, and priority level.
+- If the user asks to create or update a task, explain that they'll need to do that themselves in the app (you can't modify tasks directly).
+- Keep responses focused on task management and productivity.`;
+}
+
+function appendAIMessage(role,text){
+  const el=document.getElementById('aiMessages');if(!el)return null;
+  const div=document.createElement('div');
+  div.className='ai-msg '+role;
+  div.textContent=text;
+  el.appendChild(div);
+  el.scrollTop=el.scrollHeight;
+  return div;
+}
+
+async function sendAIMessage(){
+  if(aiStreaming)return;
+  const input=document.getElementById('aiInput');
+  const text=(input.value||'').trim();
+  if(!text)return;
+  const key=getAIKey();
+  if(!key){showToast('Add your API key in Settings.');return;}
+
+  input.value='';
+  input.style.height='auto';
+  appendAIMessage('user',text);
+  aiChatHistory.push({role:'user',content:text});
+
+  // Thinking indicator
+  const thinkEl=appendAIMessage('assistant','...');
+  thinkEl.classList.add('typing');
+  document.getElementById('aiSend').disabled=true;
+  aiStreaming=true;
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01',
+        'content-type':'application/json',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:getAIModel(),
+        max_tokens:1024,
+        system:buildSystemPrompt(),
+        messages:aiChatHistory,
+        stream:true
+      })
+    });
+
+    if(!resp.ok){
+      const err=await resp.json().catch(()=>({error:{message:'Request failed ('+resp.status+')'}}));
+      thinkEl.textContent=(err.error&&err.error.message)||'Request failed ('+resp.status+')';
+      thinkEl.classList.remove('typing');
+      thinkEl.classList.add('error');
+      aiStreaming=false;
+      document.getElementById('aiSend').disabled=false;
+      return;
+    }
+
+    const reader=resp.body.getReader();
+    const decoder=new TextDecoder();
+    let fullText='';
+    thinkEl.textContent='';
+    thinkEl.classList.remove('typing');
+
+    while(true){
+      const{done,value}=await reader.read();
+      if(done)break;
+      const lines=decoder.decode(value).split('\n');
+      for(const line of lines){
+        if(!line.startsWith('data: '))continue;
+        const data=line.slice(6).trim();
+        if(data==='[DONE]')break;
+        try{
+          const parsed=JSON.parse(data);
+          if(parsed.type==='content_block_delta'&&parsed.delta&&parsed.delta.text){
+            fullText+=parsed.delta.text;
+            thinkEl.textContent=fullText;
+            document.getElementById('aiMessages').scrollTop=999999;
+          }
+        }catch(e){}
+      }
+    }
+
+    aiChatHistory.push({role:'assistant',content:fullText});
+    // Keep history manageable (last 20 turns)
+    if(aiChatHistory.length>20)aiChatHistory=aiChatHistory.slice(-20);
+
+  }catch(e){
+    thinkEl.textContent='Network error: '+e.message;
+    thinkEl.classList.remove('typing');
+    thinkEl.classList.add('error');
+  }
+
+  aiStreaming=false;
+  document.getElementById('aiSend').disabled=false;
+  document.getElementById('aiInput').focus();
+}
+
+function clearAIChat(){
+  aiChatHistory=[];
+  const el=document.getElementById('aiMessages');
+  if(el)el.innerHTML='';
+  showAIWelcome();
+}
 
 // ── PDF Report Generator ──────────────────────────────────────────────────────
 function generatePDFReport(){
@@ -2373,5 +2646,24 @@ function generatePDFReport(){
 }
 
 </script>
+
+<!-- AI Assistant -->
+<button class="ai-fab hidden" id="aiFab" onclick="toggleAIChat()" title="AI Assistant">AI</button>
+<div class="ai-panel hidden" id="aiPanel">
+  <div class="ai-panel-hdr">
+    <div class="ai-panel-dot"></div>
+    <div class="ai-panel-title">AI Assistant</div>
+    <span class="ai-panel-model" id="aiPanelModel">Claude Haiku</span>
+    <button class="ai-clear" onclick="clearAIChat()" title="Clear chat">Clear</button>
+    <button class="ai-panel-close" onclick="toggleAIChat()">×</button>
+  </div>
+  <div class="ai-messages" id="aiMessages"></div>
+  <div class="ai-footer">
+    <textarea class="ai-input" id="aiInput" placeholder="Ask anything about your tasks..." rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMessage();}
+      this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
+    <button class="ai-send" id="aiSend" onclick="sendAIMessage()" title="Send">▶</button>
+  </div>
+</div>
 </body>
 </html>

@@ -666,6 +666,18 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .pd-action-btn.primary{background:linear-gradient(135deg,#c2410c,#f97316);color:#fff;box-shadow:0 3px 10px rgba(249,115,22,.3);}
 .pd-action-btn.primary:hover{box-shadow:0 6px 18px rgba(249,115,22,.45);transform:translateY(-1px);}
 .pd-action-btn.secondary{background:var(--bg);color:var(--text);border:1px solid var(--border);}
+.pd-ai-body{display:flex;flex-direction:column;height:260px;}
+.pd-ai-messages{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:2px 0 8px;scrollbar-width:thin;}
+.pd-ai-msg{padding:8px 12px;border-radius:12px;font-size:13px;line-height:1.5;max-width:90%;white-space:pre-wrap;word-wrap:break-word;}
+.pd-ai-msg.user{background:linear-gradient(135deg,#ea580c,#f97316);color:#fff;align-self:flex-end;border-radius:12px 12px 4px 12px;}
+.pd-ai-msg.assistant{background:var(--bg);color:var(--text);align-self:flex-start;border-radius:12px 12px 12px 4px;border:1px solid var(--border);}
+.pd-ai-msg.error{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;align-self:flex-start;}
+.pd-ai-footer{display:flex;gap:8px;align-items:flex-end;margin-top:10px;border-top:1px solid var(--border);padding-top:10px;}
+.pd-ai-input{flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:10px;font-size:13px;background:var(--bg);color:var(--text);resize:none;outline:none;font-family:inherit;line-height:1.4;max-height:80px;}
+.pd-ai-input:focus{border-color:var(--pri);}
+.pd-ai-send{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#ea580c,#f97316);border:none;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.pd-ai-send:disabled{opacity:.4;cursor:default;}
+.pd-ai-empty{color:var(--muted);font-size:12px;text-align:center;padding:20px 0;}
 .pd-action-btn.secondary:hover{background:var(--card);border-color:var(--pri);color:var(--pri);}
 .pd-streak{display:flex;gap:3px;align-items:flex-end;height:32px;}
 .pd-streak-bar{width:14px;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#818cf8,#2563eb);opacity:.3;transition:all .4s;}
@@ -1526,8 +1538,18 @@ function renderPersonalDashboard(el){
     // Data panels
     '<div class="pd-panels">'+
       '<div class="pd-panel">'+
-        '<div class="pd-panel-title">By Workspace</div>'+
-        '<div class="pd-ws-bar">'+wsHTML+'</div>'+
+        '<div class="pd-panel-title">AI Assistant</div>'+
+        '<div class="pd-ai-body">'+
+          '<div class="pd-ai-messages" id="dashAIMessages">'+
+            '<div class="pd-ai-empty">Ask me anything about your tasks...</div>'+
+          '</div>'+
+          '<div class="pd-ai-footer">'+
+            '<textarea class="pd-ai-input" id="dashAIInput" placeholder="e.g. What\'s overdue? What should I focus on?" rows="1"'+
+              ' onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendDashAIMessage();}"'+
+              ' oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,80)+\'px\'"></textarea>'+
+            '<button class="pd-ai-send" id="dashAISend" onclick="sendDashAIMessage()" title="Send">▶</button>'+
+          '</div>'+
+        '</div>'+
       '</div>'+
       '<div class="pd-panel">'+
         '<div class="pd-panel-title">Upcoming This Week</div>'+
@@ -1546,6 +1568,7 @@ function renderPersonalDashboard(el){
         '</div>'+
       '</div>'+
     '</div>';
+  restoreDashAIMessages();
 }
 
 
@@ -2364,6 +2387,70 @@ function exportTasksJSON(){
 /* ── AI Assistant ── */
 let aiChatHistory=[];
 let aiStreaming=false;
+let dashAIHistory=[];
+let dashAIStreaming=false;
+
+function restoreDashAIMessages(){
+  const box=document.getElementById('dashAIMessages');
+  if(!box)return;
+  if(!dashAIHistory.length){box.innerHTML='<div class="pd-ai-empty">Ask me anything about your tasks...</div>';return;}
+  box.innerHTML=dashAIHistory.map(m=>'<div class="pd-ai-msg '+m.role+'">'+m.content.replace(/</g,'&lt;')+'</div>').join('');
+  box.scrollTop=box.scrollHeight;
+}
+
+async function sendDashAIMessage(){
+  if(dashAIStreaming)return;
+  const key=getAIKey();
+  if(!key){
+    const box=document.getElementById('dashAIMessages');
+    if(box)box.innerHTML+='<div class="pd-ai-msg error">Add your Anthropic API key in Settings (⚙) to use AI.</div>';
+    return;
+  }
+  const input=document.getElementById('dashAIInput');
+  const send=document.getElementById('dashAISend');
+  const text=(input?input.value.trim():'');
+  if(!text)return;
+  input.value='';input.style.height='auto';
+  const box=document.getElementById('dashAIMessages');
+  // Remove empty placeholder
+  if(box)box.innerHTML=box.innerHTML.replace('<div class="pd-ai-empty">Ask me anything about your tasks...</div>','');
+  // Add user message
+  dashAIHistory.push({role:'user',content:text});
+  if(box)box.innerHTML+='<div class="pd-ai-msg user">'+text.replace(/</g,'&lt;')+'</div>';
+  if(box)box.scrollTop=box.scrollHeight;
+  // Add streaming assistant bubble
+  dashAIStreaming=true;
+  if(send)send.disabled=true;
+  const msgId='dash-ai-'+Date.now();
+  if(box)box.innerHTML+='<div class="pd-ai-msg assistant" id="'+msgId+'">...</div>';
+  if(box)box.scrollTop=box.scrollHeight;
+  let full='';
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:getAIModel(),max_tokens:1024,system:buildSystemPrompt(),messages:dashAIHistory,stream:true})
+    });
+    if(!resp.ok){throw new Error('API error '+resp.status);}
+    const reader=resp.body.getReader();const decoder=new TextDecoder();
+    while(true){
+      const{done,value}=await reader.read();if(done)break;
+      const chunk=decoder.decode(value);
+      for(const line of chunk.split('\n')){
+        if(!line.startsWith('data:'))continue;
+        const data=line.slice(5).trim();if(data==='[DONE]')continue;
+        try{const ev=JSON.parse(data);if(ev.type==='content_block_delta'&&ev.delta&&ev.delta.text){full+=ev.delta.text;const el=document.getElementById(msgId);if(el){el.textContent=full;box.scrollTop=box.scrollHeight;}}}catch(e){}
+      }
+    }
+    dashAIHistory.push({role:'assistant',content:full});
+    if(dashAIHistory.length>20)dashAIHistory=dashAIHistory.slice(-20);
+  }catch(e){
+    const el=document.getElementById(msgId);
+    if(el){el.className='pd-ai-msg error';el.textContent='Error: '+e.message;}
+  }
+  dashAIStreaming=false;
+  if(send)send.disabled=false;
+}
 
 function getAIKey(){return localStorage.getItem('taskaura_ai_key')||'';}
 function getAIModel(){return localStorage.getItem('taskaura_ai_model')||'claude-haiku-4-5-20251001';}

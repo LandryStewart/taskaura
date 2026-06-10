@@ -1063,6 +1063,8 @@ async function unlockApp() {
 function showLoginScreen() {
   document.getElementById('appContainer').classList.add('hidden');
   document.getElementById('authOverlay').classList.remove('hidden');
+  const fab=document.getElementById('aiFab');if(fab)fab.classList.add('hidden');
+  const panel=document.getElementById('aiPanel');if(panel)panel.classList.add('hidden');
   showSignIn();
 }
 
@@ -2149,15 +2151,8 @@ function saveAIKey(){
 
 function initAIFab(){
   const fab=document.getElementById('aiFab');
+  if(fab)fab.classList.remove('hidden');
   const model=document.getElementById('settAIModel');
-  const modelLabel=document.getElementById('settAIModel');
-  if(!fab)return;
-  if(getAIKey()){
-    fab.classList.remove('hidden');
-    // Populate settings fields if open
-    const keyEl=document.getElementById('settAIKey');
-    if(keyEl&&!keyEl.value)keyEl.value='••••••••••••';
-  }
   if(model){model.value=getAIModel();}
   const panelModel=document.getElementById('aiPanelModel');
   if(panelModel){

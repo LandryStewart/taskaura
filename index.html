@@ -908,6 +908,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
     <input type="file" accept=".json" onchange="importTasksFromJSON(this)" style="display:none">
   </label>
   <button onclick="exportTasksJSON()" style="padding:7px 14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text)">Export JSON</button>
+  <button onclick="deleteAllTasksConfirm()" style="padding:7px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:#dc2626">Delete All Tasks</button>
 </div>
 <div id="importPreview" style="margin-top:10px;font-size:11px;color:var(--text2)"></div>
 </div>
@@ -2300,7 +2301,9 @@ function confirmFullRestore(){
   window._pendingWSImport=null;
   const prev=document.getElementById('importPreview');
   if(prev)prev.innerHTML='';
-  closeSettings();
+  // Close settings overlay directly — do NOT call closeSettings() which
+  // would read the stale DOM bucket inputs and overwrite the imported buckets
+  document.getElementById('settingsOverlay').classList.remove('show');
   render();
   showToast('Workspace restored — '+state.tasks.length+' tasks loaded.');
 }
@@ -2308,19 +2311,31 @@ function confirmFullRestore(){
 function confirmMergeImport(){
   const ws=window._pendingWSImport;
   if(!ws||!ws.tasks)return;
-  // Merge tasks only — remap IDs to avoid conflicts
+  // Add any new buckets/labels first so tasks map correctly
+  (ws.buckets||[]).forEach(b=>{if(!state.buckets.includes(b))state.buckets.push(b);});
+  (ws.labels||[]).forEach(l=>{if(!state.labels.find(x=>x.name===l.name))state.labels.push(l);});
+  // Remap IDs to avoid conflicts, preserve all other fields (bucket, due, priority, etc.)
   const offset=state.nextId;
   const merged=ws.tasks.map(t=>({...t,id:t.id+offset}));
   state.tasks.push(...merged);
   state.nextId=offset+((ws.nextId||ws.tasks.length)+1);
-  // Also merge any new buckets/labels not already present
-  (ws.buckets||[]).forEach(b=>{if(!state.buckets.includes(b))state.buckets.push(b);});
-  (ws.labels||[]).forEach(l=>{if(!state.labels.find(x=>x.name===l.name))state.labels.push(l);});
   window._pendingWSImport=null;
   const prev=document.getElementById('importPreview');
   if(prev)prev.innerHTML='';
+  // Close settings overlay directly to avoid DOM overwriting imported buckets
+  document.getElementById('settingsOverlay').classList.remove('show');
   render();
   showToast(merged.length+' tasks merged into current workspace.');
+}
+
+function deleteAllTasksConfirm(){
+  const count=state.tasks.length;
+  if(!count){showToast('No tasks to delete.');return;}
+  if(!confirm('Delete all '+count+' task'+(count>1?'s':'')+' in your Work workspace?\n\nThis cannot be undone.')){return;}
+  state.tasks=[];
+  state.nextId=1;
+  render();
+  showToast('All tasks deleted.');
 }
 
 function exportTasksJSON(){

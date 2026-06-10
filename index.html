@@ -6,25 +6,25 @@
 <title>TaskAura</title>
 <style>
 :root{
- --pri:#2563eb;--pri-d:#1e40af;--pri-l:#eff6ff;
- --bg:#f0f4f8;--card:#fff;--text:#0f172a;--text2:#475569;--border:#cbd5e1;
+ --pri:#f97316;--pri-d:#ea580c;--pri-l:#fff7ed;
+ --bg:#f8fafc;--card:#fff;--text:#0f172a;--text2:#475569;--border:#e2e8f0;
  --shadow:0 2px 8px rgba(0,0,0,.08);
- --crit:#dc2626;--high:#ea580c;--med:#7c3aed;--low:#16a34a;
+ --crit:#dc2626;--high:#f97316;--med:#7c3aed;--low:#16a34a;
  --hdr:48px;--radius:8px;
- --accent:#2563eb;--muted:#94a3b8;
+ --accent:#f97316;--muted:#94a3b8;
  --sidebar-w:230px;--sidebar-coll:50px;
 }
 [data-theme="dark"]{
- --bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--text2:#94a3b8;--border:#334155;
- --shadow:0 2px 12px rgba(0,0,0,.4);--pri-l:#1e3a8a;
- --accent:#3b82f6;--muted:#64748b;
+ --bg:#0d1117;--card:#161b22;--text:#e6edf3;--text2:#7d8590;--border:#21262d;
+ --shadow:0 2px 12px rgba(0,0,0,.5);--pri-l:#431407;
+ --accent:#fb923c;--muted:#484f58;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;display:flex;flex-direction:column;}
 #appContainer{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
 button{cursor:pointer;font-family:inherit;}
 input,select,textarea{font-family:inherit;color:var(--text);}
-.auth-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 40%,#2563eb 100%);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s,visibility .5s;}
+.auth-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#0d1117 0%,#1a0a00 50%,#7c2d12 100%);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s,visibility .5s;}
 .auth-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none;}
 .auth-card{background:#fff;border-radius:16px;padding:40px 36px;width:400px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center;}
 .auth-card .auth-icon{font-size:48px;margin-bottom:12px;}
@@ -366,18 +366,18 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .card-filepath:hover{color:var(--accent,#3b82f6);}
 
 /* ── Workspace Tab Bar ── */
-.workspace-tabs{display:flex;align-items:center;background:#0f172a;padding:0 18px;gap:4px;height:38px;border-bottom:1px solid #1e40af;flex-shrink:0;}
-.workspace-tab{display:flex;align-items:center;gap:6px;padding:6px 18px;font-size:13px;font-weight:600;color:#93c5fd;cursor:pointer;border-radius:6px 6px 0 0;border:1px solid transparent;border-bottom:none;transition:background .15s,color .15s;user-select:none;position:relative;top:1px;background:transparent;}
-.workspace-tab:hover{background:rgba(255,255,255,.09);color:#fff;}
-.workspace-tab.active{background:#1e3a8a;color:#fff;border-color:#3b82f6;}
+.workspace-tabs{display:flex;align-items:center;background:#161b22;padding:0 18px;gap:4px;height:38px;border-bottom:1px solid #21262d;flex-shrink:0;}
+.workspace-tab{display:flex;align-items:center;gap:6px;padding:6px 18px;font-size:13px;font-weight:600;color:#7d8590;cursor:pointer;border-radius:6px 6px 0 0;border:1px solid transparent;border-bottom:none;transition:background .15s,color .15s;user-select:none;position:relative;top:1px;background:transparent;}
+.workspace-tab:hover{background:rgba(255,255,255,.07);color:#e6edf3;}
+.workspace-tab.active{background:#21262d;color:#e6edf3;border-color:#f97316;}
 .workspace-tab .tab-icon{font-size:15px;}
 .workspace-tab .tab-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-left:2px;}
-.workspace-tab.active .tab-dot{background:#60a5fa;}
-[data-theme="dark"] .workspace-tabs{background:#020617;border-bottom-color:#1e3a8a;}
-[data-theme="dark"] .workspace-tab{color:#64748b;}
-[data-theme="dark"] .workspace-tab:hover{background:rgba(255,255,255,.06);color:#cbd5e1;}
-[data-theme="dark"] .workspace-tab.active{background:#1e3a8a;color:#fff;border-color:#3b82f6;}
-[data-theme="dark"] .workspace-tab.active .tab-dot{background:#60a5fa;}
+.workspace-tab.active .tab-dot{background:#f97316;}
+[data-theme="dark"] .workspace-tabs{background:#010409;border-bottom-color:#21262d;}
+[data-theme="dark"] .workspace-tab{color:#484f58;}
+[data-theme="dark"] .workspace-tab:hover{background:rgba(255,255,255,.05);color:#e6edf3;}
+[data-theme="dark"] .workspace-tab.active{background:#21262d;color:#e6edf3;border-color:#f97316;}
+[data-theme="dark"] .workspace-tab.active .tab-dot{background:#f97316;}
 
 /* ── Mobile Hamburger & Backdrop ── */
 .mobile-hamburger{display:none;background:none;border:none;color:#fff;font-size:22px;padding:4px 8px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;}
@@ -616,6 +616,76 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .dash-kpi.danger .dash-kpi-val{color:var(--crit);}
 .dash-kpi.success .dash-kpi-val{color:var(--low);}
 .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+
+/* ── Personal Dashboard Artistic Theme ── */
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+@keyframes ringDraw{from{stroke-dashoffset:251.2;}to{stroke-dashoffset:var(--ring-offset);}}
+@keyframes countUp{from{opacity:0;transform:scale(.7);}to{opacity:1;transform:scale(1);}}
+.pd-hero{border-radius:20px;padding:32px 32px 28px;background:linear-gradient(135deg,#0d1117 0%,#1a0a00 50%,#431407 100%);position:relative;overflow:hidden;animation:fadeSlideUp .4s ease both;}
+.pd-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 20%,rgba(249,115,22,.2) 0%,transparent 60%),radial-gradient(ellipse at 15% 85%,rgba(234,88,12,.15) 0%,transparent 50%);pointer-events:none;}
+.pd-hero-grid{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;position:relative;z-index:1;}
+.pd-greeting{font-size:13px;font-weight:600;color:rgba(148,163,184,.8);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;}
+.pd-name{font-size:28px;font-weight:900;color:#fff;line-height:1.1;margin-bottom:10px;letter-spacing:-.5px;}
+.pd-tagline{font-size:13px;color:rgba(148,163,184,.7);font-weight:400;}
+.pd-ring-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;}
+.pd-ring{width:88px;height:88px;filter:drop-shadow(0 0 12px rgba(99,102,241,.5));}
+.pd-ring-track{fill:none;stroke:rgba(255,255,255,.1);stroke-width:9;}
+.pd-ring-fill{fill:none;stroke:url(#ringGradOrange);stroke-width:9;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;animation:ringDraw .9s cubic-bezier(.4,0,.2,1) .3s both;}
+.pd-ring-label{font-size:9px;font-weight:700;color:rgba(148,163,184,.7);letter-spacing:.5px;text-transform:uppercase;}
+.pd-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;animation:fadeSlideUp .4s ease .1s both;}
+@media(max-width:700px){.pd-kpi-row{grid-template-columns:repeat(2,1fr);}.pd-hero-grid{grid-template-columns:1fr;}.pd-ring-wrap{display:none;}}
+.pd-kpi{border-radius:12px;padding:20px 18px 16px;cursor:pointer;position:relative;background:var(--card);border:1px solid var(--border);border-top-width:3px;transition:transform .18s,box-shadow .18s;box-shadow:var(--shadow);}
+.pd-kpi:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.12);}
+.pd-kpi-blue{border-top-color:#f97316;}
+.pd-kpi-violet{border-top-color:#7c3aed;}
+.pd-kpi-red{border-top-color:#dc2626;}
+.pd-kpi-amber{border-top-color:#d97706;}
+.pd-kpi-num{font-size:32px;font-weight:900;color:var(--text);line-height:1;letter-spacing:-1px;animation:countUp .4s ease both;}
+.pd-kpi-blue .pd-kpi-num{color:#f97316;}
+.pd-kpi-title{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-top:6px;}
+.pd-kpi-hint{font-size:10px;color:var(--muted);margin-top:3px;}
+.pd-panels{display:grid;grid-template-columns:1fr 1fr;gap:14px;animation:fadeSlideUp .4s ease .2s both;}
+@media(max-width:700px){.pd-panels{grid-template-columns:1fr;}}
+.pd-panel{background:var(--card);border-radius:16px;padding:18px 20px;border:1px solid var(--border);box-shadow:var(--shadow);}
+.pd-panel-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.pd-panel-title span{font-size:15px;}
+.pd-task-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;transition:background .15s;margin-bottom:4px;border-left:3px solid transparent;}
+.pd-task-row:hover{background:var(--bg);}
+.pd-task-name{flex:1;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pd-task-ws{font-size:10px;font-weight:700;background:var(--pri-l);color:var(--pri);padding:2px 8px;border-radius:8px;white-space:nowrap;flex-shrink:0;}
+.pd-task-date{font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+.pd-empty{text-align:center;padding:20px 10px;color:var(--muted);font-size:13px;}
+.pd-ws-bar{display:flex;flex-direction:column;gap:8px;}
+.pd-ws-row{display:grid;grid-template-columns:80px 1fr 28px;align-items:center;gap:8px;}
+.pd-ws-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pd-ws-track{height:6px;background:var(--border);border-radius:10px;overflow:hidden;}
+.pd-ws-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,#ea580c,#f97316);transition:width .6s cubic-bezier(.4,0,.2,1);}
+.pd-ws-count{font-size:11px;font-weight:700;color:var(--text2);text-align:right;}
+.pd-actions{display:flex;flex-direction:column;gap:8px;}
+.pd-action-btn{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;text-align:left;}
+.pd-action-btn.primary{background:linear-gradient(135deg,#c2410c,#f97316);color:#fff;box-shadow:0 3px 10px rgba(249,115,22,.3);}
+.pd-action-btn.primary:hover{box-shadow:0 6px 18px rgba(249,115,22,.45);transform:translateY(-1px);}
+.pd-action-btn.secondary{background:var(--bg);color:var(--text);border:1px solid var(--border);}
+.pd-action-btn.secondary:hover{background:var(--card);border-color:var(--pri);color:var(--pri);}
+.pd-streak{display:flex;gap:3px;align-items:flex-end;height:32px;}
+.pd-streak-bar{width:14px;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#818cf8,#2563eb);opacity:.3;transition:all .4s;}
+.pd-streak-bar.active{opacity:1;}
+/* Analytics-style heatmap */
+.pd-heatmap{display:flex;gap:3px;flex-wrap:nowrap;overflow-x:auto;}
+.pd-heatmap-col{display:flex;flex-direction:column;gap:3px;}
+.pd-heatmap-cell{width:11px;height:11px;border-radius:2px;background:var(--border);transition:transform .1s;}
+.pd-heatmap-cell:hover{transform:scale(1.3);}
+.pd-heatmap-cell.h1{background:rgba(249,115,22,.3);}
+.pd-heatmap-cell.h2{background:rgba(249,115,22,.55);}
+.pd-heatmap-cell.h3{background:rgba(249,115,22,.8);}
+.pd-heatmap-cell.h4{background:#f97316;}
+.pd-heatmap-labels{display:flex;gap:3px;margin-bottom:4px;}
+.pd-heatmap-month{font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.3px;}
+.pd-day-labels{display:flex;flex-direction:column;gap:3px;margin-right:4px;padding-top:18px;}
+.pd-day-label{height:11px;font-size:9px;color:var(--muted);line-height:11px;}
+.pd-chart-bar{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;}
+.pd-chart-bar-fill{width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#f97316,#ea580c);min-height:2px;transition:height .5s cubic-bezier(.4,0,.2,1);}
+.pd-chart-bar-label{font-size:9px;color:var(--muted);white-space:nowrap;}
 @media(max-width:768px){.dash-grid{grid-template-columns:1fr;}}
 .dash-panel{background:var(--card);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);border:1px solid var(--border);}
 .dash-panel h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:14px;}
@@ -669,7 +739,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 </div>
 <div id="appContainer" class="hidden">
 <div class="workspace-tabs" id="workspaceTabs">
-<div class="workspace-tab active" data-ws="work" onclick="switchWorkspace('work')"><span class="tab-icon">💼</span> Work <span class="tab-dot"></span></div>
+<div class="workspace-tab active" data-ws="work" onclick="switchWorkspace('work')">Work <span class="tab-dot"></span></div>
 </div>
 <div class="topbar">
  <button class="mobile-hamburger" id="mobileHamburger" onclick="toggleMobileSidebar()">☰</button>
@@ -678,11 +748,11 @@ input,select,textarea{font-family:inherit;color:var(--text);}
  <div class="topbar-search"><span>🔍</span><input type="search" id="searchBox" placeholder="Search tasks..." oninput="applyFilters()"></div>
  <div class="spacer"></div>
  <span id="todayBadge" class="today-badge" title="Tasks due today">0 today</span>
- <button class="dark-toggle" id="darkToggleBtn" onclick="toggleDarkQuick()" title="Toggle dark mode">🌙</button>
+ <button class="dark-toggle" id="darkToggleBtn" onclick="toggleDarkQuick()" title="Toggle dark mode">◐</button>
  <button class="top-btn accent" onclick="openNewTask()">＋ New Task</button>
  <button class="top-btn" onclick="openSettings()">⚙</button>
  <button class="top-btn" onclick="openShortcuts()" title="Keyboard shortcuts">?</button>
- <button class="top-btn logout" onclick="doLogout()">🚪</button>
+ <button class="top-btn logout" onclick="doLogout()" title="Sign out">⏻</button>
 </div>
 <div class="app-body">
  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
@@ -692,12 +762,12 @@ input,select,textarea{font-family:inherit;color:var(--text);}
   </div>
   <div class="sidebar-section">
    <div class="sidebar-section-title">Views</div>
-   <div class="nav-item" id="navDashboard" onclick="setView('dashboard')"><span class="nav-icon">📊</span><span>Dashboard</span></div>
-   <div class="nav-item active" id="navBoard" onclick="setView('board')"><span class="nav-icon">📋</span><span>Board</span></div>
-   <div class="nav-item" id="navList" onclick="setView('list')"><span class="nav-icon">📄</span><span>List</span></div>
-   <div class="nav-item" id="navCalendar" onclick="setView('calendar')"><span class="nav-icon">📅</span><span>Calendar</span></div>
-   <div class="nav-item" id="navNotes" onclick="setView('notes')"><span class="nav-icon">📝</span><span>Notes</span></div>
-   <div class="nav-item" id="navSchedules" onclick="setView('schedules')"><span class="nav-icon">📅</span><span>Schedules</span></div>
+   <div class="nav-item" id="navDashboard" onclick="setView('dashboard')"><span class="nav-icon">◈</span><span>Dashboard</span></div>
+   <div class="nav-item active" id="navBoard" onclick="setView('board')"><span class="nav-icon">⊞</span><span>Board</span></div>
+   <div class="nav-item" id="navList" onclick="setView('list')"><span class="nav-icon">≡</span><span>List</span></div>
+   <div class="nav-item" id="navCalendar" onclick="setView('calendar')"><span class="nav-icon">◻</span><span>Calendar</span></div>
+   <div class="nav-item" id="navNotes" onclick="setView('notes')"><span class="nav-icon">◱</span><span>Notes</span></div>
+   <div class="nav-item" id="navSchedules" onclick="setView('schedules')"><span class="nav-icon">◫</span><span>Schedules</span></div>
 </div>
   <div class="sidebar-section">
    <div class="sidebar-section-title">Filters</div>
@@ -773,7 +843,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 <div class="modal-row"><div><label>Assignee</label><input type="text" id="mAssignee" placeholder="Name" list="assigneeList" autocomplete="off"></div><div><label>Bucket</label><select id="mBucket"></select></div></div><div class="modal-row"><div><label>Due Date</label><input type="date" id="mDue"></div><div><label>Priority</label><select id="mPriority"><option value="Medium">Medium</option><option value="Critical">Critical</option><option value="High">High</option><option value="Low">Low</option></select></div></div><div class="modal-row"><div><label>% Complete</label><div style="display:flex;align-items:center;gap:10px"><input type="range" id="mPct" min="0" max="100" value="0" oninput="document.getElementById('mPctVal').textContent=this.value+'%'" style="flex:1"><span id="mPctVal" style="font-size:13px;font-weight:600;min-width:36px">0%</span></div></div></div><div><label>Labels</label><div class="label-chips" id="mLabels"></div></div><div><label>Description / Notes</label><textarea id="mNotes" placeholder="Add details..."></textarea></div><div><label>FILE PATH</label>
 <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">
 <input id="mFilePath" class="form-control" placeholder="e.g. R:\DFW\b. Active\Saddleside..." style="flex:1;">
-<button type="button" class="btn-fp" onclick="copyFilePath()" title="Copy to clipboard">📋 Copy</button>
+<button type="button" class="btn-fp" onclick="copyFilePath()" title="Copy to clipboard">Copy</button>
 </div></div>
 <div><label>Checklist</label><div class="checklist" id="mChecklist"></div><button class="cl-add" onclick="addChecklistItem()">+ Add checklist item</button></div>
 <div id="mLinkedNotesSection"></div></div><div class="modal-footer"><button class="btn-delete hidden" id="btnDeleteTask" onclick="deleteTask()">Delete</button><button class="btn-cancel" onclick="closeTaskModal()">Cancel</button><button class="btn-save" onclick="saveTask()">Save Task</button></div></div></div>
@@ -812,7 +882,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 <div class="team-panel-overlay" id="teamPanelOverlay">
  <div class="team-panel">
   <div class="team-panel-hdr">
-   <h2>👥 Team Workspaces</h2>
+   <h2>Team Workspaces</h2>
    <button class="modal-close" onclick="closeTeamPanel()" style="font-size:20px">×</button>
   </div>
   <div class="team-panel-section" id="teamPanelList">
@@ -1044,10 +1114,10 @@ async function switchToTeamWorkspace(id){
 function renderWorkspaceTabs(){
   const tabs=document.getElementById('workspaceTabs');if(!tabs)return;
   const isWork=!currentTeamWorkspaceId&&currentWorkspace==='work';
-  let html='<div class="workspace-tab '+(isWork?'active':'')+'" onclick="switchWorkspace(\'work\')"><span class="tab-icon">💼</span> Work <span class="tab-dot"></span></div>';
+  let html='<div class="workspace-tab '+(isWork?'active':'')+'" onclick="switchWorkspace(\'work\')">Work <span class="tab-dot"></span></div>';
   teamWorkspaces.forEach(function(tw){
     var active=currentTeamWorkspaceId===tw.id;
-    html+='<div class="workspace-tab team-tab '+(active?'active':'')+'" onclick="switchToTeamWorkspace(\''+tw.id+'\')"><span class="tab-icon">👥</span> '+esc(tw.name)+' <span class="tab-dot"></span></div>';
+    html+='<div class="workspace-tab team-tab '+(active?'active':'')+'" onclick="switchToTeamWorkspace(\''+tw.id+'\')">'+esc(tw.name)+' <span class="tab-dot"></span></div>';
   });
   html+='<div class="workspace-tab add-team-tab" onclick="openTeamPanel()">＋ Team</div>';
   tabs.innerHTML=html;
@@ -1256,52 +1326,148 @@ function renderDashboard(){
 function renderPersonalDashboard(el){
   const myName=(state.myName||'').trim();
   if(!myName){
-    el.innerHTML='<div style="padding:60px 20px;text-align:center"><div style="font-size:52px;margin-bottom:16px">👤</div><h2 style="color:var(--text);margin-bottom:8px">Set your name to unlock your personal dashboard</h2><p style="color:var(--text2);margin-bottom:24px">Your personal dashboard tracks tasks assigned to you across every workspace.</p><button class="team-panel-btn" style="max-width:260px;margin:0 auto;display:block" onclick="openSettings()">⚙ Set My Name in Settings</button></div>';
+    el.innerHTML=
+      '<div style="padding:60px 20px;text-align:center;animation:fadeSlideUp .4s ease both">'+
+        '<div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1d4ed8,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 20px;box-shadow:0 8px 24px rgba(37,99,235,.3)">👤</div>'+
+        '<h2 style="color:var(--text);margin-bottom:8px;font-size:20px;font-weight:800">Set your name to unlock your dashboard</h2>'+
+        '<p style="color:var(--text2);margin-bottom:24px;font-size:14px">Your personal dashboard tracks tasks assigned to you across every workspace.</p>'+
+        '<button class="pd-action-btn primary" style="max-width:220px;margin:0 auto;justify-content:center" onclick="openSettings()">⚙ Set My Name in Settings</button>'+
+      '</div>';
     return;
   }
+
   const myTasks=getPersonalTasks();
   const today=todayStr();
   const weekEnd=new Date();weekEnd.setDate(weekEnd.getDate()+7);
   const weekEndStr=weekEnd.toISOString().split('T')[0];
-  const openTasks=myTasks.filter(t=>(t.pct||0)<100);
-  const total=openTasks.length;
+  const total=myTasks.filter(t=>(t.pct||0)<100).length;
   const overdueCount=myTasks.filter(t=>isOverdue(t)).length;
   const dueToday=myTasks.filter(t=>t.due===today&&(t.pct||0)<100).length;
-  const donePct=myTasks.length?Math.round(myTasks.filter(t=>t.pct>=100).length/myTasks.length*100):0;
+  const doneCount=myTasks.filter(t=>(t.pct||0)>=100).length;
+  const donePct=myTasks.length?Math.round(doneCount/myTasks.length*100):0;
 
-  // By workspace
+  // Time-based greeting
+  const hr=new Date().getHours();
+  const greeting=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+
+  // Tagline based on state
+  const tagline=overdueCount>0?overdueCount+' task'+(overdueCount>1?'s':'')+' need your attention':
+    dueToday>0?dueToday+' task'+(dueToday>1?'s':'')+' due today':
+    total===0?'All clear — nothing on your plate right now':
+    'You have '+total+' open task'+(total>1?'s':'')+' across your workspaces';
+
+  // SVG ring
+  const circ=251.2;
+  const offset=circ*(1-donePct/100);
+  const ringHTML=
+    '<svg class="pd-ring" viewBox="0 0 100 100">'+
+      '<defs><linearGradient id="ringGradOrange" x1="0%" y1="0%" x2="100%" y2="100%">'+
+        '<stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#f97316"/>'+
+      '</linearGradient></defs>'+
+      '<circle class="pd-ring-track" cx="50" cy="50" r="40"/>'+
+      '<circle class="pd-ring-fill" cx="50" cy="50" r="40" style="--ring-offset:'+offset+';stroke-dasharray:'+circ+';stroke-dashoffset:'+offset+'"/>'+
+      '<text x="50" y="46" text-anchor="middle" font-size="18" font-weight="900" fill="white">'+donePct+'</text>'+
+      '<text x="50" y="58" text-anchor="middle" font-size="9" fill="rgba(148,163,184,.8)">% done</text>'+
+    '</svg>';
+
+  // Workspace breakdown
   const wsList=[{name:'Work',id:null},...teamWorkspaces.map(tw=>({name:tw.name,id:tw.id}))];
   const maxWs=Math.max(1,...wsList.map(w=>myTasks.filter(t=>t._wsName===w.name).length));
-  const wsBreakHTML=wsList.map(w=>{
+  const wsHTML=wsList.map(w=>{
     const cnt=myTasks.filter(t=>t._wsName===w.name).length;
-    return'<div class="db-row"><span class="db-name">'+esc(w.name)+'</span><div class="db-bar-bg"><div class="db-bar-fill" style="width:'+Math.round(cnt/maxWs*100)+'%"></div></div><span class="db-count">'+cnt+'</span></div>';
+    const pct=Math.round(cnt/maxWs*100);
+    return'<div class="pd-ws-row">'+
+      '<span class="pd-ws-name">'+esc(w.name)+'</span>'+
+      '<div class="pd-ws-track"><div class="pd-ws-fill" style="width:'+pct+'%"></div></div>'+
+      '<span class="pd-ws-count">'+cnt+'</span>'+
+    '</div>';
   }).join('');
 
-  // Upcoming (today + next 7 days)
-  const upcoming=myTasks.filter(t=>t.due&&t.due>=today&&t.due<=weekEndStr&&(t.pct||0)<100).sort((a,b)=>a.due>b.due?1:-1).slice(0,8);
-  const upcomingHTML=upcoming.length?upcoming.map(t=>'<div class="dash-overdue-item" onclick="jumpToTask(\''+t._wsId+'\','+t.id+')" style="border-left-color:'+priColor(t.priority)+'"><div class="dash-overdue-title">'+esc(t.title)+'</div><span style="background:var(--pri-l);color:var(--pri);padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700;flex-shrink:0">'+esc(t._wsName)+'</span><span class="dash-overdue-due">'+fmtDate(t.due)+'</span></div>').join(''):'<div class="dash-empty">Nothing due this week 🎉</div>';
 
-  const overdueItems=myTasks.filter(t=>isOverdue(t)).sort((a,b)=>a.due>b.due?1:-1).slice(0,8);
-  const overdueHTML=overdueItems.length?overdueItems.map(t=>'<div class="dash-overdue-item" onclick="jumpToTask(\''+t._wsId+'\','+t.id+')" style="border-left-color:var(--crit)"><div class="dash-overdue-title">'+esc(t.title)+'</div><span style="background:#fef2f2;color:var(--crit);padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700;flex-shrink:0">'+esc(t._wsName)+'</span><span class="dash-overdue-due" style="color:var(--crit)">'+fmtDate(t.due)+'</span></div>').join(''):'<div class="dash-empty" style="color:var(--low)">✓ Nothing overdue!</div>';
+  // Upcoming this week
+  const upcoming=myTasks.filter(t=>t.due&&t.due>=today&&t.due<=weekEndStr&&(t.pct||0)<100).sort((a,b)=>a.due>b.due?1:-1).slice(0,6);
+  const upcomingHTML=upcoming.length?upcoming.map(t=>{
+    const isToday=t.due===today;
+    const borderColor=priColor(t.priority);
+    return'<div class="pd-task-row" onclick="jumpToTask(\''+t._wsId+'\','+t.id+')" style="border-left-color:'+borderColor+'">'+
+      '<span class="pd-task-name">'+esc(t.title)+'</span>'+
+      '<span class="pd-task-ws">'+esc(t._wsName)+'</span>'+
+      '<span class="pd-task-date" style="'+(isToday?'color:var(--high);font-weight:700':'')+'">'+
+        (isToday?'Today':fmtDate(t.due))+
+      '</span>'+
+    '</div>';
+  }).join(''):'<div class="pd-empty">🎉 Nothing due this week</div>';
+
+  // Overdue
+  const overdueItems=myTasks.filter(t=>isOverdue(t)).sort((a,b)=>a.due>b.due?1:-1).slice(0,6);
+  const overdueHTML=overdueItems.length?overdueItems.map(t=>
+    '<div class="pd-task-row" onclick="jumpToTask(\''+t._wsId+'\','+t.id+')" style="border-left-color:var(--crit)">'+
+      '<span class="pd-task-name">'+esc(t.title)+'</span>'+
+      '<span class="pd-task-ws" style="background:#fef2f2;color:var(--crit)">'+esc(t._wsName)+'</span>'+
+      '<span class="pd-task-date" style="color:var(--crit);font-weight:700">'+fmtDate(t.due)+'</span>'+
+    '</div>'
+  ).join(''):'<div class="pd-empty" style="color:var(--low)">✓ Nothing overdue!</div>';
 
   el.innerHTML=
-    '<div class="dash-header"><div><h2>My Overview</h2><div class="dash-ws-name">Personal dashboard · '+esc(myName)+'</div></div><span class="dash-role-badge" style="background:#7c3aed">PERSONAL</span></div>'+
-    '<div id="dashDetailPanel" style="display:none" class="dash-detail-panel"></div>'+
-    '<div class="dash-kpi-row">'+
-      '<div class="dash-kpi dash-kpi-click" onclick="showPersonalDetail(\'all\')" title="View all open tasks"><div class="dash-kpi-label">My Open Tasks</div><div class="dash-kpi-val">'+total+'</div><div class="dash-kpi-sub">click to expand ↓</div></div>'+
-      '<div class="dash-kpi dash-kpi-click success" onclick="showPersonalDetail(\'done\')" title="Completion rate"><div class="dash-kpi-label">Completion</div><div class="dash-kpi-val">'+donePct+'%</div><div class="dash-kpi-sub">across all workspaces</div></div>'+
-      '<div class="dash-kpi dash-kpi-click'+(overdueCount?' danger':'')+'" onclick="showPersonalDetail(\'overdue\')" title="View overdue"><div class="dash-kpi-label">Overdue</div><div class="dash-kpi-val" style="'+(overdueCount?'color:var(--crit)':'')+'">'+overdueCount+'</div><div class="dash-kpi-sub">click to expand ↓</div></div>'+
-      '<div class="dash-kpi dash-kpi-click" onclick="showPersonalDetail(\'today\')" title="Due today"><div class="dash-kpi-label">Due Today</div><div class="dash-kpi-val" style="'+(dueToday?'color:var(--high)':'')+'">'+dueToday+'</div><div class="dash-kpi-sub">click to expand ↓</div></div>'+
+    // Hero
+    '<div class="pd-hero">'+
+      '<div class="pd-hero-grid">'+
+        '<div>'+
+          '<div class="pd-greeting">'+greeting+'</div>'+
+          '<div class="pd-name">'+esc(myName)+'</div>'+
+          '<div class="pd-tagline">'+esc(tagline)+'</div>'+
+        '</div>'+
+        '<div class="pd-ring-wrap">'+ringHTML+'<div class="pd-ring-label">Completion</div></div>'+
+      '</div>'+
     '</div>'+
-    '<div class="dash-grid">'+
-      '<div class="dash-panel"><h3>Tasks by Workspace</h3><div class="dash-bucket-bar">'+wsBreakHTML+'</div></div>'+
-      '<div class="dash-panel"><h3>Upcoming This Week</h3><div class="dash-overdue-list">'+upcomingHTML+'</div></div>'+
-      '<div class="dash-panel"><h3>Overdue</h3><div class="dash-overdue-list">'+overdueHTML+'</div></div>'+
-      '<div class="dash-panel"><h3>Quick Actions</h3>'+
-        '<div style="display:flex;flex-direction:column;gap:8px">'+
-        '<button class="team-panel-btn" onclick="openNewTask()">＋ New Task</button>'+
-        '<button class="team-panel-btn secondary" onclick="openTeamPanel()">👥 Create / Join Team</button>'+
-        '<button class="team-panel-btn secondary" onclick="generatePDFReport()">📄 Export PDF Report</button>'+
+
+    // Detail panel (collapsible)
+    '<div id="dashDetailPanel" style="display:none" class="dash-detail-panel"></div>'+
+
+    // KPI cards
+    '<div class="pd-kpi-row">'+
+      '<div class="pd-kpi pd-kpi-blue" onclick="showPersonalDetail(\'all\')" title="View all open tasks">'+
+        '<div class="pd-kpi-num">'+total+'</div>'+
+        '<div class="pd-kpi-title">Open Tasks</div>'+
+        '<div class="pd-kpi-hint">tap to expand</div>'+
+      '</div>'+
+      '<div class="pd-kpi pd-kpi-violet" onclick="showPersonalDetail(\'done\')" title="Completion rate">'+
+        '<div class="pd-kpi-num" style="color:#7c3aed">'+donePct+'%</div>'+
+        '<div class="pd-kpi-title">Completed</div>'+
+        '<div class="pd-kpi-hint">'+doneCount+' of '+myTasks.length+' tasks</div>'+
+      '</div>'+
+      '<div class="pd-kpi pd-kpi-red" onclick="showPersonalDetail(\'overdue\')" title="View overdue">'+
+        '<div class="pd-kpi-num" style="'+(overdueCount?'color:#dc2626':'')+'">'+overdueCount+'</div>'+
+        '<div class="pd-kpi-title">Overdue</div>'+
+        '<div class="pd-kpi-hint">'+(overdueCount?'needs attention':'all clear')+'</div>'+
+      '</div>'+
+      '<div class="pd-kpi pd-kpi-amber" onclick="showPersonalDetail(\'today\')" title="Due today">'+
+        '<div class="pd-kpi-num" style="'+(dueToday?'color:#d97706':'')+'">'+dueToday+'</div>'+
+        '<div class="pd-kpi-title">Due Today</div>'+
+        '<div class="pd-kpi-hint">'+(dueToday?'on your plate':'nothing today')+'</div>'+
+      '</div>'+
+    '</div>'+
+
+    // Data panels
+    '<div class="pd-panels">'+
+      '<div class="pd-panel">'+
+        '<div class="pd-panel-title">By Workspace</div>'+
+        '<div class="pd-ws-bar">'+wsHTML+'</div>'+
+      '</div>'+
+      '<div class="pd-panel">'+
+        '<div class="pd-panel-title">Upcoming This Week</div>'+
+        upcomingHTML+
+      '</div>'+
+      '<div class="pd-panel">'+
+        '<div class="pd-panel-title">Overdue</div>'+
+        overdueHTML+
+      '</div>'+
+      '<div class="pd-panel">'+
+        '<div class="pd-panel-title">Quick Actions</div>'+
+        '<div class="pd-actions">'+
+          '<button class="pd-action-btn primary" onclick="openNewTask()">+ New Task</button>'+
+          '<button class="pd-action-btn secondary" onclick="openTeamPanel()">Create / Join Team</button>'+
+          '<button class="pd-action-btn secondary" onclick="generatePDFReport()">Export PDF Report</button>'+
         '</div>'+
       '</div>'+
     '</div>';

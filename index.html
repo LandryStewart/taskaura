@@ -900,6 +900,17 @@ input,select,textarea{font-family:inherit;color:var(--text);}
   <option value="claude-opus-4-6">Claude Opus (most capable)</option>
 </select>
 </div>
+<div class="settings-section"><h3>Import / Export</h3>
+<p style="font-size:11px;color:var(--text2);margin-bottom:10px">Import tasks from a JSON file. Supports most common field names (title, name, due_date, assignee, priority, etc.).</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+  <label style="padding:7px 14px;background:var(--pri);color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">
+    Import JSON
+    <input type="file" accept=".json" onchange="importTasksFromJSON(this)" style="display:none">
+  </label>
+  <button onclick="exportTasksJSON()" style="padding:7px 14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text)">Export JSON</button>
+</div>
+<div id="importPreview" style="margin-top:10px;font-size:11px;color:var(--text2)"></div>
+</div>
 <div class="settings-section"><h3>Sync Status</h3><p style="font-size:11px;color:var(--text2);margin-bottom:8px">Your data syncs automatically across all devices. <span class="sync-indicator"></span><span style="font-size:11px;color:#22c55e">Live sync active</span></p><p style="font-size:11px;color:var(--text2)">Team workspaces update in real time for all members. Use the <b>+ Team</b> tab to create or join a shared workspace.</p></div>
 
 
@@ -2133,6 +2144,130 @@ function deleteScheduleTask(){
   showToast('Task "'+removed.name+'" deleted',function(){proj.tasks.splice(idx,0,removed);save();renderSchedules();});
 }
 
+
+/* ── Import / Export ── */
+function importTasksFromJSON(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    let raw;
+    try{raw=JSON.parse(e.target.result);}
+    catch(err){showToast('Invalid JSON file.');return;}
+
+    // Accept array directly, or common wrappers: {tasks:[...]}, {data:[...]}, {items:[...]}
+    let arr=Array.isArray(raw)?raw:
+      (raw.tasks||raw.data||raw.items||raw.issues||raw.cards||raw.records||null);
+    if(!arr||!arr.length){showToast('No tasks found in JSON.');return;}
+
+    // Flexible field mapper
+    function pick(obj,...keys){for(const k of keys){if(obj[k]!=null&&obj[k]!=='')return obj[k];}return undefined;}
+    function mapPriority(v){
+      if(!v)return'medium';
+      const s=String(v).toLowerCase();
+      if(s.includes('crit')||s==='p0'||s==='urgent'||s==='1')return'critical';
+      if(s.includes('high')||s==='p1'||s==='2')return'high';
+      if(s.includes('low')||s==='p3'||s==='4'||s==='minor')return'low';
+      return'medium';
+    }
+    function mapDate(v){
+      if(!v)return'';
+      // Already YYYY-MM-DD
+      if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;
+      // Try parsing
+      try{
+        const d=new Date(v);
+        if(!isNaN(d))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      }catch(ex){}
+      return'';
+    }
+    function mapPct(v,status){
+      if(v!=null&&!isNaN(Number(v)))return Math.min(100,Math.max(0,Math.round(Number(v))));
+      if(status){
+        const s=String(status).toLowerCase();
+        if(s.includes('done')||s.includes('complet')||s.includes('closed')||s.includes('resolved'))return 100;
+        if(s.includes('progress')||s.includes('doing')||s.includes('active'))return 50;
+      }
+      return 0;
+    }
+    function mapBucket(v){
+      if(!v)return state.buckets[0]||'To Do';
+      const s=String(v);
+      // Try exact match first
+      const exact=state.buckets.find(b=>b.toLowerCase()===s.toLowerCase());
+      if(exact)return exact;
+      // Partial match
+      const partial=state.buckets.find(b=>b.toLowerCase().includes(s.toLowerCase())||s.toLowerCase().includes(b.toLowerCase()));
+      if(partial)return partial;
+      return state.buckets[0]||'To Do';
+    }
+
+    let imported=0,skipped=0;
+    const newTasks=[];
+    arr.forEach(function(obj){
+      if(typeof obj!=='object'||!obj)return;
+      const title=pick(obj,'title','name','task_name','subject','summary','task','label','heading');
+      if(!title){skipped++;return;}
+      const status=pick(obj,'status','state','column','stage');
+      const pctRaw=pick(obj,'pct','progress','percent','completion','percent_complete','percentage');
+      const task={
+        id:state.nextId++,
+        title:String(title).trim(),
+        assignee:String(pick(obj,'assignee','assigned_to','owner','member','user','responsible','')||'').trim(),
+        bucket:mapBucket(pick(obj,'bucket','list','column','status','state','section','category','')),
+        due:mapDate(pick(obj,'due','due_date','dueDate','deadline','end_date','endDate','due_on','')),
+        priority:mapPriority(pick(obj,'priority','importance','severity','urgency','')),
+        pct:mapPct(pctRaw,status),
+        notes:String(pick(obj,'notes','description','body','content','details','comment','')||'').trim(),
+        filePath:String(pick(obj,'filePath','file_path','path','')||'').trim(),
+        labels:[],
+        checklist:[],
+        created:mapDate(pick(obj,'created','created_at','createdAt','date_created','')||new Date().toISOString())
+      };
+      newTasks.push(task);
+      imported++;
+    });
+
+    if(!imported){showToast('No valid tasks found — check field names.');return;}
+
+    // Show preview before committing
+    const prev=document.getElementById('importPreview');
+    if(prev){
+      prev.innerHTML='<strong style="color:var(--low)">Ready to import '+imported+' task'+(imported>1?'s':'')+'</strong>'+(skipped?' ('+skipped+' skipped — no title)':'')+
+        '<br><span style="color:var(--muted)">Sample: "'+esc(newTasks[0].title)+'" · due '+( newTasks[0].due||'none')+' · '+newTasks[0].priority+' priority</span>'+
+        '<br><div style="margin-top:8px;display:flex;gap:6px">'+
+        '<button onclick="confirmImport()" style="padding:5px 12px;background:var(--low);color:#fff;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer">Confirm Import</button>'+
+        '<button onclick="document.getElementById(\'importPreview\').innerHTML=\'\'" style="padding:5px 10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;font-size:11px;cursor:pointer">Cancel</button>'+
+        '</div>';
+    }
+    // Store pending tasks in a temp variable
+    window._pendingImport=newTasks;
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
+function confirmImport(){
+  const tasks=window._pendingImport;
+  if(!tasks||!tasks.length)return;
+  state.tasks.push(...tasks);
+  window._pendingImport=null;
+  const prev=document.getElementById('importPreview');
+  if(prev)prev.innerHTML='';
+  render();
+  showToast(tasks.length+' task'+(tasks.length>1?'s':'')+' imported.');
+}
+
+function exportTasksJSON(){
+  const data=JSON.stringify(state.tasks,null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='taskaura-tasks-'+todayStr()+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Tasks exported.');
+}
 
 /* ── AI Assistant ── */
 let aiChatHistory=[];

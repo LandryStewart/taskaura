@@ -1187,7 +1187,7 @@ async function switchToTeamWorkspace(id){
 function renderWorkspaceTabs(){
   const tabs=document.getElementById('workspaceTabs');if(!tabs)return;
   const isWork=!currentTeamWorkspaceId&&currentWorkspace==='work';
-  let html='<div class="workspace-tab '+(isWork?'active':'')+'" onclick="switchWorkspace(\'work\')">Work <span class="tab-dot"></span></div>';
+  let html='<div class="workspace-tab '+(isWork?'active':'')+'" onclick="switchWorkspace(\'work\')">Personal Dashboard <span class="tab-dot"></span></div>';
   teamWorkspaces.forEach(function(tw){
     var active=currentTeamWorkspaceId===tw.id;
     html+='<div class="workspace-tab team-tab '+(active?'active':'')+'" onclick="switchToTeamWorkspace(\''+tw.id+'\')">'+esc(tw.name)+' <span class="tab-dot"></span></div>';
@@ -2870,7 +2870,7 @@ function generatePDFReport(){
 </script>
 
 <!-- AI Assistant -->
-<button class="ai-fab hidden" id="aiFab" onclick="toggleAIChat()" title="AI Assistant">AI</button>
+<button class="ai-fab" id="aiFab" onclick="toggleAIChat()" title="AI Assistant">AI</button>
 <div class="ai-panel hidden" id="aiPanel">
   <div class="ai-panel-hdr">
     <div class="ai-panel-dot"></div>

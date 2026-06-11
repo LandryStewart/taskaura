@@ -339,8 +339,8 @@
     <span class="nav-logo-text">Task<span>Aura</span></span>
   </div>
   <div class="nav-links">
-    <a onclick="scrollTo('features')">Features</a>
-    <a onclick="scrollTo('pricing')">Pricing</a>
+    <a onclick="scrollToSection('features')">Features</a>
+    <a onclick="scrollToSection('pricing')">Pricing</a>
     <a onclick="openModal('modal-signin')">Sign in</a>
     <a onclick="openModal('modal-signup')" class="btn-nav">Get started</a>
   </div>
@@ -354,7 +354,7 @@
     <p class="hero-sub">TaskAura gives your team one place to assign work, track progress, and ship faster — without the spreadsheet chaos or the $30/seat overhead.</p>
     <div class="hero-ctas">
       <button class="btn-primary" onclick="openModal('modal-signup')">Start free trial</button>
-      <button class="btn-ghost" onclick="scrollTo('features')">See features →</button>
+      <button class="btn-ghost" onclick="scrollToSection('features')">See features →</button>
     </div>
   </div>
   <div class="preview">
@@ -612,7 +612,7 @@ async function signInWithGoogle() {
   if (error) showToast(error.message, 'error');
 }
 
-function scrollTo(id) {
+function scrollToSection(id) {
   const el = document.getElementById(id);
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }

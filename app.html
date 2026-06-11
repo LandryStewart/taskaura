@@ -622,7 +622,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 @keyframes fadeSlideUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
 @keyframes ringDraw{from{stroke-dashoffset:251.2;}to{stroke-dashoffset:var(--ring-offset);}}
 @keyframes countUp{from{opacity:0;transform:scale(.7);}to{opacity:1;transform:scale(1);}}
-.pd-hero{border-radius:20px;padding:32px 32px 28px;background:linear-gradient(135deg,#0d1117 0%,#1a0a00 50%,#431407 100%);position:relative;overflow:hidden;animation:fadeSlideUp .4s ease both;}
+.pd-hero{border-radius:20px;padding:32px 32px 28px;background:linear-gradient(135deg,#0d1117 0%,#1a0a00 50%,#431407 100%);position:relative;overflow:visible;animation:fadeSlideUp .4s ease both;}
 .pd-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 20%,rgba(249,115,22,.2) 0%,transparent 60%),radial-gradient(ellipse at 15% 85%,rgba(234,88,12,.15) 0%,transparent 50%);pointer-events:none;}
 .pd-hero-grid{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;position:relative;z-index:1;}
 .pd-greeting{font-size:13px;font-weight:600;color:rgba(148,163,184,.8);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;}
@@ -633,8 +633,8 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .pd-ring-track{fill:none;stroke:rgba(255,255,255,.1);stroke-width:9;}
 .pd-ring-fill{fill:none;stroke:url(#ringGradOrange);stroke-width:9;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;animation:ringDraw .9s cubic-bezier(.4,0,.2,1) .3s both;}
 .pd-ring-label{font-size:9px;font-weight:700;color:rgba(148,163,184,.7);letter-spacing:.5px;text-transform:uppercase;}
-.pd-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;animation:fadeSlideUp .4s ease .1s both;}
-@media(max-width:700px){.pd-kpi-row{grid-template-columns:repeat(2,1fr);}.pd-hero-grid{grid-template-columns:1fr;}.pd-ring-wrap{display:none;}}
+.pd-kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;animation:fadeSlideUp .4s ease .1s both;}
+@media(max-width:700px){.pd-kpi-row{grid-template-columns:1fr;}.pd-hero-grid{grid-template-columns:1fr;}.pd-ring-wrap{display:none;}}
 .pd-kpi{border-radius:12px;padding:20px 18px 16px;cursor:pointer;position:relative;background:var(--card);border:1px solid var(--border);border-top-width:3px;transition:transform .18s,box-shadow .18s;box-shadow:var(--shadow);}
 .pd-kpi:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.12);}
 .pd-kpi-blue{border-top-color:#f97316;}
@@ -1546,16 +1546,24 @@ function renderPersonalDashboard(el){
     '</div>';
   }).join(''):'<div class="pd-empty">🎉 Nothing due this week</div>';
 
-  // Overdue
-  const overdueItems=myTasks.filter(t=>isOverdue(t)).sort((a,b)=>a.due>b.due?1:-1).slice(0,6);
-  const overdueHTML=overdueItems.length?overdueItems.map(t=>{
+  // My Priorities — Critical and High priority open tasks
+  const priorityTasks=myTasks.filter(t=>(t.pct||0)<100&&(t.priority==='Critical'||t.priority==='High')).sort((a,b)=>{
+    const rank={Critical:0,High:1};
+    if(rank[a.priority]!==rank[b.priority])return rank[a.priority]-rank[b.priority];
+    if(a.due&&b.due)return a.due>b.due?1:-1;
+    return a.due?-1:1;
+  }).slice(0,6);
+  const prioritiesHTML=priorityTasks.length?priorityTasks.map(t=>{
     const wsIdArg2=t._wsId?'\''+t._wsId+'\'':'null';
-    return'<div class="pd-task-row" onclick="jumpToTask('+wsIdArg2+','+t.id+')" style="border-left-color:var(--crit)">'+
+    const borderColor=priColor(t.priority);
+    const priLabel=t.priority==='Critical'?'CRIT':'HIGH';
+    const priStyle=t.priority==='Critical'?'background:#fef2f2;color:var(--crit)':'background:#fefce8;color:var(--high)';
+    return'<div class="pd-task-row" onclick="jumpToTask('+wsIdArg2+','+t.id+')" style="border-left-color:'+borderColor+'">'+
       '<span class="pd-task-name">'+esc(t.title)+'</span>'+
-      '<span class="pd-task-ws" style="background:#fef2f2;color:var(--crit)">'+esc(t._wsName)+'</span>'+
-      '<span class="pd-task-date" style="color:var(--crit);font-weight:700">'+fmtDate(t.due)+'</span>'+
+      '<span class="pd-task-ws" style="'+priStyle+'">'+priLabel+'</span>'+
+      (t.due?'<span class="pd-task-date"'+(isOverdue(t)?' style="color:var(--crit);font-weight:700"':'')+'>'+fmtDate(t.due)+'</span>':'')+
     '</div>';
-  }).join(''):'<div class="pd-empty" style="color:var(--low)">✓ Nothing overdue!</div>';
+  }).join(''):'<div class="pd-empty" style="color:var(--low)">No high-priority tasks right now</div>';
 
   el.innerHTML=
     // Hero
@@ -1579,11 +1587,6 @@ function renderPersonalDashboard(el){
         '<div class="pd-kpi-num">'+total+'</div>'+
         '<div class="pd-kpi-title">Open Tasks</div>'+
         '<div class="pd-kpi-hint">tap to expand</div>'+
-      '</div>'+
-      '<div class="pd-kpi pd-kpi-violet" onclick="showPersonalDetail(\'done\')" title="Completion rate">'+
-        '<div class="pd-kpi-num" style="color:#7c3aed">'+donePct+'%</div>'+
-        '<div class="pd-kpi-title">Completed</div>'+
-        '<div class="pd-kpi-hint">'+doneCount+' of '+myTasks.length+' tasks</div>'+
       '</div>'+
       '<div class="pd-kpi pd-kpi-red" onclick="showPersonalDetail(\'overdue\')" title="View overdue">'+
         '<div class="pd-kpi-num" style="'+(overdueCount?'color:#dc2626':'')+'">'+overdueCount+'</div>'+
@@ -1618,8 +1621,8 @@ function renderPersonalDashboard(el){
         upcomingHTML+
       '</div>'+
       '<div class="pd-panel">'+
-        '<div class="pd-panel-title">Overdue</div>'+
-        overdueHTML+
+        '<div class="pd-panel-title">My Priorities</div>'+
+        prioritiesHTML+
       '</div>'+
       '<div class="pd-panel">'+
         '<div class="pd-panel-title">Quick Actions</div>'+

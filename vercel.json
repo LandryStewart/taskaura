@@ -3,6 +3,7 @@
   "outputDirectory": ".",
   "routes": [
     { "handle": "filesystem" },
+    { "src": "/app", "dest": "/app.html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

@@ -242,14 +242,27 @@
     .footer-links a { color: var(--muted); text-decoration: none; }
     .footer-links a:hover { color: var(--text); }
 
+    /* ── Mobile Nav Toggle ── */
+    .mobile-nav-toggle { display: none; background: none; border: none; color: var(--gold); font-size: 24px; cursor: pointer; padding: 4px 8px; }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 768px) {
+      nav { flex-wrap: wrap; padding: 0.8rem 5%; }
+      .nav-links { display: none; flex-direction: column; width: 100%; gap: 0.5rem; padding-top: 0.8rem; border-top: 1px solid rgba(201,146,42,.2); }
+      .nav-links.mobile-open { display: flex; }
+      .mobile-nav-toggle { display: block; }
       .hero { grid-template-columns: 1fr; padding-top: 4rem; }
+      .hero h1 { font-size: 2.5rem; }
+      .hero p { font-size: 1rem; }
+      .hero-ctas { flex-direction: column; gap: 0.8rem; }
+      .hero-ctas .btn-ghost { width: 100%; text-align: center; }
       .preview { display: none; }
       .feat-grid { grid-template-columns: 1fr; }
       .ai-section { grid-template-columns: 1fr; padding: 2.5rem 5%; }
       .pricing-grid { grid-template-columns: 1fr; }
-      .nav-links { gap: 1rem; }
+      .section-title { font-size: 2rem; }
+      .footer-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+      .modal { width: 95vw; max-width: 95vw; }
     }
   </style>
 </head>
@@ -338,11 +351,12 @@
   <div class="nav-logo" onclick="scrollToTop()">
     <span class="nav-logo-text">Task<span>Aura</span></span>
   </div>
+  <button class="mobile-nav-toggle" onclick="this.nextElementSibling.classList.toggle('mobile-open')">&#9776;</button>
   <div class="nav-links">
-    <a onclick="scrollToSection('features')">Features</a>
-    <a onclick="scrollToSection('pricing')">Pricing</a>
-    <a onclick="openModal('modal-signin')">Sign in</a>
-    <a onclick="openModal('modal-signup')" class="btn-nav">Get started</a>
+    <a onclick="scrollToSection('features');document.querySelector('.nav-links').classList.remove('mobile-open')">Features</a>
+    <a onclick="scrollToSection('pricing');document.querySelector('.nav-links').classList.remove('mobile-open')">Pricing</a>
+    <a onclick="openModal('modal-signin');document.querySelector('.nav-links').classList.remove('mobile-open')">Sign in</a>
+    <a onclick="openModal('modal-signup');document.querySelector('.nav-links').classList.remove('mobile-open')" class="btn-nav">Get started</a>
   </div>
 </nav>
 

@@ -1248,7 +1248,7 @@ function load(){var allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}'
 let syncTimer=null,teamWorkspaces=[],currentTeamWorkspaceId=null,realtimeChannel=null;
 
 async function syncToCloud(){
-  if(!currentUser)return;
+  if(!currentUser||!_cloudLoaded)return;
   try{
     if(currentTeamWorkspaceId){
       await _supabase.from('team_workspaces').update({data:state,updated_at:new Date().toISOString()}).eq('id',currentTeamWorkspaceId);
@@ -1261,7 +1261,7 @@ function debouncedCloudSave(){if(syncTimer)clearTimeout(syncTimer);syncTimer=set
 
 // Beacon-based save that survives page unload (fetch gets killed, sendBeacon doesn't)
 function beaconSave(){
-  if(!currentUser)return;
+  if(!currentUser||!_cloudLoaded)return;
   try{
     var session=null;
     var raw=localStorage.getItem('sb-kxidfwesywhhdifekkqo-auth-token');
@@ -1295,30 +1295,31 @@ window.addEventListener('pagehide',flushPendingSave);
 async function loadFromCloud(){
   if(!currentUser)return;
   try{
-    const{data:blobs}=await _supabase.from('workspace_blobs').select('workspace_key,data').eq('user_id',currentUser.id);
+    const{data:blobs,error:blobErr}=await _supabase.from('workspace_blobs').select('workspace_key,data').eq('user_id',currentUser.id);
+    console.log('[TaskAura] loadFromCloud — blobs:',blobs?.length||0,'error:',blobErr,'tasks per blob:',blobs?.map(b=>b.workspace_key+':'+((b.data&&b.data.tasks)?b.data.tasks.length:0)));
     if(blobs&&blobs.length){
       let allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');
       let changed=false;
       blobs.forEach(b=>{
         if(!b.data)return;
         const local=allWs[b.workspace_key];
-        const localTime=local&&local._lastSaved?new Date(local._lastSaved).getTime():0;
-        const cloudTime=b.data._lastSaved?new Date(b.data._lastSaved).getTime():0;
-        // If local has a real timestamp and cloud doesn't, keep local (local is newer)
-        if(localTime>0&&cloudTime<=0){/* keep local */}
-        // If local has a newer timestamp than cloud, keep local
-        else if(localTime>0&&cloudTime>0&&localTime>cloudTime){/* keep local */}
-        // All other cases: prefer cloud data (it's newer, same age, or neither has timestamps)
+        const localHasTasks=local&&local.tasks&&local.tasks.length>0;
+        const cloudHasTasks=b.data.tasks&&b.data.tasks.length>0;
+        // If local has real tasks but cloud is empty, keep local (cloud was likely corrupted)
+        if(localHasTasks&&!cloudHasTasks){/* keep local */}
+        // If cloud has tasks, always use cloud (it's the source of truth)
+        else if(cloudHasTasks){allWs[b.workspace_key]=b.data;changed=true;}
+        // Neither has tasks — prefer cloud (might have other settings)
         else{allWs[b.workspace_key]=b.data;changed=true;}
       });
       if(changed){localStorage.setItem('wm_workspaces',JSON.stringify(allWs));load();}
     }else{
       // First login — push local state up to Supabase for both workspaces
       const curWs=currentWorkspace;
-      await syncToCloud();
+      await _supabase.from('workspace_blobs').upsert({user_id:currentUser.id,workspace_key:currentWorkspace,data:state,updated_at:new Date().toISOString()},{onConflict:'user_id,workspace_key'});
       currentWorkspace=(curWs==='work'?'personal':'work');
       load();
-      await syncToCloud();
+      await _supabase.from('workspace_blobs').upsert({user_id:currentUser.id,workspace_key:currentWorkspace,data:state,updated_at:new Date().toISOString()},{onConflict:'user_id,workspace_key'});
       currentWorkspace=curWs;
       load();
     }
@@ -1329,8 +1330,9 @@ async function loadFromCloud(){
 async function loadTeamWorkspaces(){
   if(!currentUser)return;
   try{
-    const{data:owned}=await _supabase.from('team_workspaces').select('id,name,code,data,owner_id').eq('owner_id',currentUser.id);
-    const{data:members}=await _supabase.from('team_workspace_members').select('workspace_id').eq('user_id',currentUser.id);
+    const{data:owned,error:ownedErr}=await _supabase.from('team_workspaces').select('id,name,code,data,owner_id').eq('owner_id',currentUser.id);
+    const{data:members,error:membersErr}=await _supabase.from('team_workspace_members').select('workspace_id').eq('user_id',currentUser.id);
+    console.log('[TaskAura] loadTeamWorkspaces — owned:',owned?.length||0,'members:',members?.length||0,'errors:',ownedErr,membersErr);
     let allTeams=[...(owned||[])];
     const ownedIds=new Set(allTeams.map(t=>t.id));
     const memberIds=(members||[]).map(m=>m.workspace_id).filter(id=>!ownedIds.has(id));
@@ -1339,8 +1341,9 @@ async function loadTeamWorkspaces(){
       if(memberWs)allTeams=[...allTeams,...memberWs];
     }
     teamWorkspaces=allTeams;
+    console.log('[TaskAura] Total teams loaded:',teamWorkspaces.length,teamWorkspaces.map(t=>t.name));
     renderWorkspaceTabs();
-  }catch(e){}
+  }catch(e){console.error('[TaskAura] loadTeamWorkspaces error:',e);}
 }
 
 // ── Team Workspace Functions (Phase 3) ───────────────────────────────────────

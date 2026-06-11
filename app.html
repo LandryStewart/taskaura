@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=5.0,user-scalable=yes">
 <title>TaskAura</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&display=swap" rel="stylesheet">
 <style>
@@ -382,28 +382,30 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 
 /* ── Mobile Hamburger & Backdrop ── */
 .mobile-hamburger{display:none;background:none;border:none;color:#fff;font-size:22px;padding:4px 8px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;}
+.sidebar-mobile-actions{display:none;margin-top:auto;}
 .sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:85;opacity:0;transition:opacity .25s;}
 .sidebar-backdrop.show{display:block;opacity:1;}
 
 @media(max-width:768px){
   /* Workspace tabs — horizontally scrollable */
-  .workspace-tabs{padding:0 4px;height:40px;justify-content:flex-start;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-shrink:0;}
+  .workspace-tabs{padding:0 4px;padding-top:env(safe-area-inset-top,0);height:40px;justify-content:flex-start;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-shrink:0;}
   .workspace-tabs::-webkit-scrollbar{display:none;}
   .workspace-tab{padding:7px 14px;font-size:12px;border-radius:8px 8px 0 0;white-space:nowrap;flex-shrink:0;}
-  /* Topbar — show only essentials */
-  .topbar{padding:0 8px;height:52px;flex-wrap:nowrap;gap:6px;overflow:hidden;}
-  .topbar .logo{font-size:13px;letter-spacing:0;white-space:nowrap;}
+  /* Topbar — minimal on mobile: hamburger + logo + add button */
+  .topbar{padding:0 10px;height:48px;flex-wrap:nowrap;gap:8px;overflow:visible;}
+  .topbar .logo{font-size:15px;letter-spacing:-.01em;white-space:nowrap;flex:1;}
   .proj-name{display:none;}
   .topbar-search{display:none;}
   .topbar .spacer{display:none;}
   .today-badge{display:none;}
   .dark-toggle{display:none;}
   .sync-status{display:none;}
-  /* Hide non-essential topbar buttons on mobile */
-  #syncBtn,.top-btn[onclick*="exportJSON"],.top-btn[onclick*="importFile"],.top-btn[onclick*="openShortcuts"],.top-btn[onclick*="showMyTasks"],.top-btn[onclick*="exportOutlookCSV"],.top-btn[onclick*="openSettings"],.legal-tracker-btn{display:none;}
+  /* Hide all non-essential topbar buttons on mobile */
+  #syncBtn,.top-btn[onclick*="exportJSON"],.top-btn[onclick*="importFile"],.top-btn[onclick*="openShortcuts"],.top-btn[onclick*="showMyTasks"],.top-btn[onclick*="exportOutlookCSV"],.top-btn[onclick*="openSettings"],.top-btn.logout,.legal-tracker-btn{display:none;}
   .mobile-hamburger{display:flex;order:0;}
+  .sidebar-mobile-actions{display:block;border-top:1px solid var(--border);}
   .top-btn{padding:6px 10px;font-size:12px;}
-  .top-btn.accent{padding:7px 12px;font-size:13px;font-weight:700;}
+  .top-btn.accent{padding:8px 14px;font-size:13px;font-weight:700;border-radius:10px;}
   .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:90;width:85vw!important;max-width:320px;min-width:0!important;transform:translateX(-100%);transition:transform .28s ease;box-shadow:none;border-right:none;}
   .sidebar.mobile-open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.25);}
   .sidebar.collapsed{width:0!important;min-width:0!important;transform:translateX(-100%);}
@@ -491,6 +493,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
   .nav-item{padding:12px 12px;font-size:14px;min-height:44px;}
   .mobile-bottom-nav{display:flex;}
   .main-content{padding-bottom:60px;}
+  body{overflow:auto;-webkit-overflow-scrolling:touch;}
   .pd-panels{grid-template-columns:1fr;}
   .pd-kpi-row{grid-template-columns:1fr !important;}
   .schedules-view{padding:8px;}
@@ -921,6 +924,10 @@ input,select,textarea{font-family:inherit;color:var(--text);}
    <div class="sidebar-section-title">Saved Filters</div>
    <div id="presetList"></div>
    <button class="save-preset-btn" onclick="saveFilterPreset()">💾 Save Current Filter</button>
+  </div>
+  <div class="sidebar-section sidebar-mobile-actions">
+   <div class="nav-item" onclick="openSettings();closeMobileSidebar()"><span class="nav-icon">⚙</span><span>Settings</span></div>
+   <div class="nav-item" onclick="doLogout()" style="color:var(--crit)"><span class="nav-icon">⏻</span><span>Sign Out</span></div>
   </div>
  </div>
  <div class="main-content">

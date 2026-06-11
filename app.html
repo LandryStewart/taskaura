@@ -1248,9 +1248,39 @@ async function syncToCloud(){
   }catch(e){}
 }
 function debouncedCloudSave(){if(syncTimer)clearTimeout(syncTimer);syncTimer=setTimeout(syncToCloud,500);}
-function flushPendingSave(){if(syncTimer){clearTimeout(syncTimer);syncTimer=null;syncToCloud();}}
+
+// Beacon-based save that survives page unload (fetch gets killed, sendBeacon doesn't)
+function beaconSave(){
+  if(!currentUser)return;
+  try{
+    var session=null;
+    var raw=localStorage.getItem('sb-kxidfwesywhhdifekkqo-auth-token');
+    if(raw){try{var parsed=JSON.parse(raw);session=parsed.access_token||((parsed.currentSession||{}).access_token);if(!session&&parsed.session)session=parsed.session.access_token;}catch(e){}}
+    if(!session)return;
+    var url,body;
+    if(currentTeamWorkspaceId){
+      url=SUPABASE_URL+'/rest/v1/team_workspaces?id=eq.'+currentTeamWorkspaceId;
+      body=JSON.stringify({data:state,updated_at:new Date().toISOString()});
+    }else{
+      url=SUPABASE_URL+'/rest/v1/workspace_blobs?on_conflict=user_id,workspace_key';
+      body=JSON.stringify({user_id:currentUser.id,workspace_key:currentWorkspace,data:state,updated_at:new Date().toISOString()});
+    }
+    var headers={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+session,'Prefer':'resolution=merge-duplicates'};
+    // Try fetch with keepalive first (more reliable than sendBeacon for auth headers)
+    if(typeof fetch!=='undefined'){
+      fetch(url,{method:currentTeamWorkspaceId?'PATCH':'POST',headers:headers,body:body,keepalive:true}).catch(function(){});
+    }
+  }catch(e){}
+}
+
+function flushPendingSave(){
+  if(syncTimer){clearTimeout(syncTimer);syncTimer=null;}
+  beaconSave();
+}
 window.addEventListener('beforeunload',flushPendingSave);
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')flushPendingSave();});
+// Also save immediately on pagehide (iOS Safari doesn't always fire beforeunload)
+window.addEventListener('pagehide',flushPendingSave);
 
 async function loadFromCloud(){
   if(!currentUser)return;
@@ -1264,8 +1294,12 @@ async function loadFromCloud(){
         const local=allWs[b.workspace_key];
         const localTime=local&&local._lastSaved?new Date(local._lastSaved).getTime():0;
         const cloudTime=b.data._lastSaved?new Date(b.data._lastSaved).getTime():0;
-        // Only overwrite local if cloud data is newer or same age
-        if(cloudTime>=localTime){allWs[b.workspace_key]=b.data;changed=true;}
+        // Only overwrite local if cloud data is strictly newer
+        // If neither has timestamps (legacy data), prefer cloud to bootstrap
+        // If local has a timestamp but cloud doesn't, keep local (it's newer code)
+        if(localTime>0&&cloudTime<=0){/* keep local */}
+        else if(cloudTime>localTime){allWs[b.workspace_key]=b.data;changed=true;}
+        else if(localTime===0&&cloudTime===0&&!local){allWs[b.workspace_key]=b.data;changed=true;}
       });
       if(changed){localStorage.setItem('wm_workspaces',JSON.stringify(allWs));load();}
     }else{

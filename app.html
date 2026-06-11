@@ -2680,50 +2680,77 @@ function showAIWelcome(){
 
 function buildSystemPrompt(){
   const today=todayStr();
-  const tasks=state.tasks||[];
   const myName=(state.myName||'').trim();
   const wsName=currentTeamWorkspaceId
     ?(teamWorkspaces.find(w=>w.id===currentTeamWorkspaceId)||{}).name||'Team'
     :'Work';
 
-  const overdue=tasks.filter(t=>isOverdue(t));
-  const dueToday=tasks.filter(t=>t.due===today&&(t.pct||0)<100);
-  const open=tasks.filter(t=>(t.pct||0)<100);
-  const done=tasks.filter(t=>(t.pct||0)>=100);
+  // Gather tasks from ALL workspaces
+  const allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');
+  const allTasks=[];
 
-  const taskList=tasks.slice(0,40).map(t=>
-    `- [${(t.pct||0)>=100?'Done':(t.due&&t.due<today?'OVERDUE':t.due===today?'Due Today':'Open')}] `+
-    `"${t.title}" | Priority: ${t.priority||'medium'} | Due: ${t.due||'none'} | `+
-    `Bucket: ${t.bucket||'—'} | Assignee: ${t.assignee||'—'} | Progress: ${t.pct||0}%`
-  ).join('\n');
+  // Personal workspace
+  const personalTasks=(allWs.work||{}).tasks||[];
+  personalTasks.forEach(t=>allTasks.push({...t,_ws:'Work'}));
+
+  // All team workspaces
+  teamWorkspaces.forEach(tw=>{
+    ((tw.data||{}).tasks||[]).forEach(t=>allTasks.push({...t,_ws:tw.name}));
+  });
+
+  const overdue=allTasks.filter(t=>isOverdue(t));
+  const dueToday=allTasks.filter(t=>t.due===today&&(t.pct||0)<100);
+  const open=allTasks.filter(t=>(t.pct||0)<100);
+  const done=allTasks.filter(t=>(t.pct||0)>=100);
+
+  // Build per-workspace task lists
+  const workspaces=[{name:'Work',tasks:personalTasks},...teamWorkspaces.map(tw=>({name:tw.name,tasks:(tw.data||{}).tasks||[]}))];
+  let taskListStr='';
+  let count=0;
+  for(const ws of workspaces){
+    if(!ws.tasks.length)continue;
+    taskListStr+=`\n[${ws.name}]\n`;
+    for(const t of ws.tasks){
+      if(count>=80)break;
+      taskListStr+=`- [${(t.pct||0)>=100?'Done':(t.due&&t.due<today?'OVERDUE':t.due===today?'Due Today':'Open')}] `+
+        `"${t.title}" | Priority: ${t.priority||'medium'} | Due: ${t.due||'none'} | `+
+        `Bucket: ${t.bucket||'—'} | Assignee: ${t.assignee||'—'} | Progress: ${t.pct||0}%\n`;
+      count++;
+    }
+  }
 
   const teams=teamWorkspaces.map(tw=>tw.name).join(', ')||'none';
 
-  return `You are an intelligent AI assistant embedded in TaskAura, a task management app. You help users manage tasks, prioritize work, draft task descriptions, and stay organized.
+  // Notes from current workspace
+  const notes=(state.notes||[]).slice(0,10).map(n=>`- "${n.title||'Untitled'}"`).join('\n');
+
+  return `You are an intelligent AI assistant embedded in TaskAura, a task management app. You help users manage tasks, prioritize work, draft task descriptions, and stay organized. You have visibility into ALL of the user's workspaces — personal and team.
 
 Today's date: ${today}
 User: ${myName||'(name not set)'}
 Current workspace: ${wsName}
 Team workspaces: ${teams}
 
-Task Summary:
-- Total tasks: ${tasks.length}
+Global Task Summary (across all workspaces):
+- Total tasks: ${allTasks.length}
 - Open: ${open.length}
 - Completed: ${done.length}
 - Overdue: ${overdue.length}
 - Due today: ${dueToday.length}
 
-Task List (up to 40 most recent):
-${taskList||'No tasks yet.'}
+Tasks by Workspace (up to 80):
+${taskListStr||'No tasks yet.'}
 
-Buckets: ${(state.buckets||[]).join(', ')||'none'}
+Current Workspace Buckets: ${(state.buckets||[]).join(', ')||'none'}
+${notes?`\nNotes in current workspace:\n${notes}`:''}
 
 Instructions:
 - Be concise but helpful. Use markdown formatting (bold, bullets) where it aids clarity.
-- When referencing specific tasks, use their exact title.
-- If asked to prioritize, consider due dates, overdue status, and priority level.
+- When referencing specific tasks, include which workspace they belong to.
+- If asked to prioritize, consider due dates, overdue status, and priority level across all workspaces.
 - If the user asks to create or update a task, explain that they'll need to do that themselves in the app (you can't modify tasks directly).
-- Keep responses focused on task management and productivity.`;
+- Keep responses focused on task management and productivity.
+- You can answer questions about any workspace, not just the current one.`;
 }
 
 function appendAIMessage(role,text){

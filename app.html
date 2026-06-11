@@ -1232,7 +1232,7 @@ function getDefaultState(){return {projectName:'My Project',buckets:[...DEFAULT_
 let currentWorkspace='work';
 function migrateWorkspaces(){let allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'null');if(!allWs){allWs={};let legacy=localStorage.getItem('wm_state');if(legacy){try{allWs['work']=JSON.parse(legacy);}catch(e){allWs['work']=getDefaultState();}}else{allWs['work']=getDefaultState();}allWs['personal']=getDefaultState();localStorage.setItem('wm_workspaces',JSON.stringify(allWs));}}
 let state=getDefaultState();
-function save(){state.projectName=document.getElementById('projName').value;let allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');allWs[currentWorkspace]=state;localStorage.setItem('wm_workspaces',JSON.stringify(allWs));localStorage.setItem('wm_state',JSON.stringify(state));if(currentTeamWorkspaceId){const tw=teamWorkspaces.find(w=>w.id===currentTeamWorkspaceId);if(tw)tw.data=JSON.parse(JSON.stringify(state));}debouncedCloudSave();}
+function save(){state.projectName=document.getElementById('projName').value;state._lastSaved=new Date().toISOString();let allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');allWs[currentWorkspace]=state;localStorage.setItem('wm_workspaces',JSON.stringify(allWs));localStorage.setItem('wm_state',JSON.stringify(state));if(currentTeamWorkspaceId){const tw=teamWorkspaces.find(w=>w.id===currentTeamWorkspaceId);if(tw)tw.data=JSON.parse(JSON.stringify(state));}debouncedCloudSave();}
 function load(){var allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');if(allWs[currentWorkspace]){state=JSON.parse(JSON.stringify(allWs[currentWorkspace]));}else{state=getDefaultState();}if(!state.notes)state.notes=[];if(!state.nextNoteId)state.nextNoteId=1;if(!state.folders)state.folders=[];if(!state.nextFolderId)state.nextFolderId=1;if(!state.filterPresets)state.filterPresets=[];if(state.sidebarCollapsed===undefined)state.sidebarCollapsed=false;if(!state.scheduleProjects)state.scheduleProjects=[];if(!state.nextProjectId)state.nextProjectId=1;if(!state.nextScheduleTaskId)state.nextScheduleTaskId=1;if(!state.teamMembers)state.teamMembers=[];if(!state.collapsedBuckets)state.collapsedBuckets=[];if(!state.chatMessages)state.chatMessages=[];if(state.scheduleItems&&state.scheduleItems.length){var migProj={id:state.nextProjectId++,name:"Imported Schedule",color:"#2563eb",collapsed:false,tasks:state.scheduleItems.map(function(si){return{id:si.id,name:si.name,startDate:si.startDate,endDate:si.endDate,color:si.color,progress:si.progress||0};})};state.scheduleProjects.push(migProj);delete state.scheduleItems;}state.notes.forEach(n=>{if(n.folderId===undefined)n.folderId=null;if(n.linkedTaskId===undefined)n.linkedTaskId=null;});document.getElementById('projName').value=state.projectName||'My Project';if(state.darkMode)document.documentElement.setAttribute('data-theme','dark');else document.documentElement.removeAttribute('data-theme');document.getElementById('togDark').checked=!!state.darkMode;document.getElementById('togCompact').checked=!!state.compact;document.getElementById('settMyName').value=state.myName||'';const sb=document.getElementById('sidebar');if(state.sidebarCollapsed)sb.classList.add('collapsed');else sb.classList.remove('collapsed');}
 // ── Supabase Data Sync (Phase 2) ─────────────────────────────────────────────
 let syncTimer=null,teamWorkspaces=[],currentTeamWorkspaceId=null,realtimeChannel=null;
@@ -1247,7 +1247,10 @@ async function syncToCloud(){
     }
   }catch(e){}
 }
-function debouncedCloudSave(){if(syncTimer)clearTimeout(syncTimer);syncTimer=setTimeout(syncToCloud,2000);}
+function debouncedCloudSave(){if(syncTimer)clearTimeout(syncTimer);syncTimer=setTimeout(syncToCloud,500);}
+function flushPendingSave(){if(syncTimer){clearTimeout(syncTimer);syncTimer=null;syncToCloud();}}
+window.addEventListener('beforeunload',flushPendingSave);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')flushPendingSave();});
 
 async function loadFromCloud(){
   if(!currentUser)return;
@@ -1255,9 +1258,16 @@ async function loadFromCloud(){
     const{data:blobs}=await _supabase.from('workspace_blobs').select('workspace_key,data').eq('user_id',currentUser.id);
     if(blobs&&blobs.length){
       let allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');
-      blobs.forEach(b=>{if(b.data)allWs[b.workspace_key]=b.data;});
-      localStorage.setItem('wm_workspaces',JSON.stringify(allWs));
-      load();
+      let changed=false;
+      blobs.forEach(b=>{
+        if(!b.data)return;
+        const local=allWs[b.workspace_key];
+        const localTime=local&&local._lastSaved?new Date(local._lastSaved).getTime():0;
+        const cloudTime=b.data._lastSaved?new Date(b.data._lastSaved).getTime():0;
+        // Only overwrite local if cloud data is newer or same age
+        if(cloudTime>=localTime){allWs[b.workspace_key]=b.data;changed=true;}
+      });
+      if(changed){localStorage.setItem('wm_workspaces',JSON.stringify(allWs));load();}
     }else{
       // First login — push local state up to Supabase for both workspaces
       const curWs=currentWorkspace;

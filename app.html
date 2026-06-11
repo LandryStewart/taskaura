@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>TaskAura</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&display=swap" rel="stylesheet">
 <style>
 :root{
  --pri:#f97316;--pri-d:#ea580c;--pri-l:#fff7ed;
@@ -829,11 +830,11 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 </div>
 <div class="topbar">
  <button class="mobile-hamburger" id="mobileHamburger" onclick="toggleMobileSidebar()">☰</button>
- <div class="logo">TaskAura</div>
- <input class="proj-name" id="projName" placeholder="Project Name..." value="My Project">
+ <div class="logo" style="font-family:'Syne',sans-serif;font-weight:800;letter-spacing:-0.02em;">Task<span style="color:#e8b84b;">Aura</span></div>
+ <input type="hidden" id="projName" value="My Project">
  <div class="topbar-search"><span>🔍</span><input type="search" id="searchBox" placeholder="Search tasks..." oninput="applyFilters()"></div>
  <div class="spacer"></div>
- <span id="todayBadge" class="today-badge" title="Tasks due today">0 today</span>
+ <span id="todayBadge" class="today-badge" style="display:none;" title="Tasks due today">0 today</span>
  <button class="top-btn accent" onclick="openNewTask()">＋ New Task</button>
  <button class="top-btn" onclick="openSettings()">⚙</button>
  <button class="top-btn" onclick="openShortcuts()" title="Keyboard shortcuts">?</button>

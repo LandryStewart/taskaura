@@ -780,6 +780,22 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .chat-header h3{font-size:14px;font-weight:700;flex:1;}
 .chat-header .chat-member-count{font-size:11px;color:var(--muted);}
 .chat-no-team{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);font-size:14px;gap:12px;padding:40px;text-align:center;}
+.chat-msg-wrap{position:relative;}
+.chat-msg-actions{display:none;position:absolute;top:-6px;gap:2px;z-index:2;}
+.chat-msg-wrap.mine .chat-msg-actions{right:0;}
+.chat-msg-wrap.theirs .chat-msg-actions{left:0;}
+.chat-msg-wrap:hover .chat-msg-actions{display:flex;}
+.chat-action-btn{width:26px;height:26px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text2);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;padding:0;line-height:1;}
+.chat-action-btn:hover{background:var(--pri);color:#fff;border-color:var(--pri);}
+.chat-reply-banner{padding:8px 14px;background:var(--card);border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text2);flex-shrink:0;}
+.chat-reply-banner .chat-reply-preview{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chat-reply-banner .chat-reply-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px;}
+.chat-reply-banner .chat-reply-close:hover{color:var(--text);}
+.chat-reply-ref{font-size:11px;color:var(--muted);padding:4px 10px;margin-bottom:2px;border-left:2px solid var(--pri);cursor:pointer;border-radius:0 6px 6px 0;background:rgba(249,115,22,.06);}
+.chat-reply-ref:hover{background:rgba(249,115,22,.12);}
+.chat-reply-ref strong{color:var(--text2);font-weight:700;}
+.chat-msg-edited{font-size:9px;color:var(--muted);font-style:italic;padding:0 4px;margin-top:1px;}
+.chat-msg-wrap.mine .chat-msg-edited{text-align:right;}
 
 /* ── Bucket collapse ── */
 .bucket-collapse-btn{background:none;border:none;color:var(--text2);font-size:11px;padding:2px 5px;cursor:pointer;border-radius:4px;transition:all .12s;line-height:1;flex-shrink:0;}
@@ -1445,21 +1461,30 @@ function renderDashboard(){
     return'<div class="dash-member-row" style="cursor:pointer" onclick="document.getElementById(\'filterAssignee\').value=\''+escAttr(a)+'\';setView(\'list\')" title="View '+esc(a)+'\'s tasks"><div class="dash-member-avatar" style="background:'+avatarColor(a)+'">'+initials(a)+'</div><div class="dash-member-info"><div class="dash-member-name">'+esc(a)+'</div><div class="dash-member-tasks">'+aTasks.length+' tasks'+(aOverdue?' · <span style="color:var(--crit)">'+aOverdue+' overdue</span>':'')+'</div></div><span class="dash-member-pct">'+pct+'%</span></div>';
   }).join(''):'<div class="dash-empty">No assigned tasks yet</div>';
 
-  const overdueItems=tasks.filter(t=>isOverdue(t)).slice(0,8);
-  const overdueHTML=overdueItems.length?overdueItems.map(t=>'<div class="dash-overdue-item" onclick="openEditTask('+t.id+')"><div class="dash-overdue-title">'+esc(t.title)+'</div><span class="dash-overdue-who">'+(t.assignee?esc(t.assignee):'Unassigned')+'</span><span class="dash-overdue-due">'+fmtDate(t.due)+'</span></div>').join(''):'<div class="dash-empty" style="color:var(--low)">✓ No overdue tasks!</div>';
+  // Team priorities — Critical and High priority open tasks
+  const teamPriorityTasks=tasks.filter(t=>(t.pct||0)<100&&(t.priority==='Critical'||t.priority==='High')).sort((a,b)=>{
+    const rank={Critical:0,High:1};
+    if(rank[a.priority]!==rank[b.priority])return rank[a.priority]-rank[b.priority];
+    if(a.due&&b.due)return a.due>b.due?1:-1;
+    return a.due?-1:1;
+  }).slice(0,8);
+  const teamPrioritiesHTML=teamPriorityTasks.length?teamPriorityTasks.map(t=>{
+    const priLabel=t.priority==='Critical'?'CRIT':'HIGH';
+    const priStyle=t.priority==='Critical'?'background:#fef2f2;color:var(--crit)':'background:#fefce8;color:var(--high)';
+    return'<div class="dash-overdue-item" onclick="openEditTask('+t.id+')"><div class="dash-overdue-title">'+esc(t.title)+'</div><span class="dash-overdue-who" style="'+priStyle+'">'+priLabel+'</span>'+(t.assignee?'<span class="dash-overdue-due">'+esc(t.assignee)+'</span>':'')+'</div>';
+  }).join(''):'<div class="dash-empty" style="color:var(--low)">No high-priority tasks right now</div>';
 
   el.innerHTML=
     '<div class="dash-header"><div><h2>'+esc(wsName)+' Dashboard</h2><div class="dash-ws-name">Team workspace · '+(org?'Organizer':'Member')+' view</div></div>'+roleBadge+'</div>'+
     '<div class="dash-kpi-row">'+
       '<div class="dash-kpi dash-kpi-click" onclick="dashGoFilter(\'total\')" title="View all tasks"><div class="dash-kpi-label">Total Tasks</div><div class="dash-kpi-val">'+total+'</div><div class="dash-kpi-sub">click to view list ↗</div></div>'+
-      '<div class="dash-kpi dash-kpi-click success" onclick="dashGoFilter(\'completed\')" title="View completed"><div class="dash-kpi-label">Completed</div><div class="dash-kpi-val">'+completedPct+'%</div><div class="dash-kpi-sub">'+completed+' of '+total+' tasks ↗</div></div>'+
       '<div class="dash-kpi dash-kpi-click danger" onclick="dashGoFilter(\'overdue\')" title="View overdue"><div class="dash-kpi-label">Overdue</div><div class="dash-kpi-val">'+overdueCount+'</div><div class="dash-kpi-sub">click to view list ↗</div></div>'+
       '<div class="dash-kpi dash-kpi-click" onclick="dashGoFilter(\'thisweek\')" title="Due this week"><div class="dash-kpi-label">Due This Week</div><div class="dash-kpi-val">'+dueWeek+'</div><div class="dash-kpi-sub">click to view list ↗</div></div>'+
     '</div>'+
     '<div class="dash-grid">'+
       '<div class="dash-panel"><h3>Tasks by Stage</h3><div class="dash-bucket-bar">'+(bucketHTML||'<div class="dash-empty">No tasks yet</div>')+'</div></div>'+
       '<div class="dash-panel"><h3>Team Members <span style="font-size:10px;color:var(--muted);font-weight:400">— click to filter</span></h3><div class="dash-member-list">'+memberHTML+'</div></div>'+
-      '<div class="dash-panel"><h3>Overdue Tasks</h3><div class="dash-overdue-list">'+overdueHTML+'</div></div>'+
+      '<div class="dash-panel"><h3>My Priorities</h3><div class="dash-overdue-list">'+teamPrioritiesHTML+'</div></div>'+
       '<div class="dash-panel"><h3>Quick Actions</h3>'+
         '<div style="display:flex;flex-direction:column;gap:8px">'+
         '<button class="team-panel-btn" onclick="openNewTask()">＋ New Task</button>'+
@@ -2829,12 +2854,35 @@ function renderChat(){
 
   const msgsHTML=messages.length?messages.map(m=>{
     const isMine=m.sender===myName;
-    return'<div class="chat-msg-wrap '+(isMine?'mine':'theirs')+'">'+
+    // Reply reference
+    let replyHTML='';
+    if(m.replyTo){
+      const orig=messages.find(x=>x.id===m.replyTo);
+      if(orig){
+        replyHTML='<div class="chat-reply-ref" onclick="scrollToChatMsg('+m.replyTo+')"><strong>'+esc(orig.sender)+':</strong> '+esc((orig.text||'').slice(0,60))+(orig.text.length>60?'…':'')+'</div>';
+      }
+    }
+    // Action buttons
+    const actions='<div class="chat-msg-actions">'+
+      '<button class="chat-action-btn" onclick="chatReplyTo('+m.id+')" title="Reply">↩</button>'+
+      (isMine?'<button class="chat-action-btn" onclick="chatEditMsg('+m.id+')" title="Edit">✎</button>'+
+      '<button class="chat-action-btn" onclick="chatDeleteMsg('+m.id+')" title="Delete">✕</button>':'')+
+    '</div>';
+    return'<div class="chat-msg-wrap '+(isMine?'mine':'theirs')+'" data-msgid="'+m.id+'">'+
+      actions+
       '<div class="chat-msg-sender">'+esc(m.sender)+'</div>'+
+      replyHTML+
       '<div class="chat-bubble">'+esc(m.text)+'</div>'+
-      '<div class="chat-msg-time">'+fmtTime(m.ts)+'</div>'+
+      '<div class="chat-msg-time">'+fmtTime(m.ts)+(m.edited?' · edited':'')+'</div>'+
     '</div>';
   }).join(''):'<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;font-style:italic">No messages yet — say hello! 👋</div>';
+
+  const replyBanner=chatReplyingTo?
+    (function(){const orig=messages.find(x=>x.id===chatReplyingTo);if(!orig)return'';return'<div class="chat-reply-banner" id="chatReplyBanner">'+
+      '<span>↩ Replying to <strong>'+esc(orig.sender)+'</strong></span>'+
+      '<span class="chat-reply-preview">'+esc((orig.text||'').slice(0,50))+'</span>'+
+      '<button class="chat-reply-close" onclick="chatCancelReply()">✕</button>'+
+    '</div>';})():'';
 
   el.innerHTML=
     '<div class="chat-header">'+
@@ -2842,6 +2890,7 @@ function renderChat(){
       '<span class="chat-member-count">'+members+' member'+(members!==1?'s':'')+'</span>'+
     '</div>'+
     '<div class="chat-messages" id="chatMessages">'+msgsHTML+'</div>'+
+    replyBanner+
     '<div class="chat-footer">'+
       '<textarea class="chat-input" id="chatInput" placeholder="Message '+esc(wsName)+'..." rows="1"'+
         ' onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"'+
@@ -2854,6 +2903,9 @@ function renderChat(){
   if(msgBox)setTimeout(()=>{msgBox.scrollTop=msgBox.scrollHeight;},50);
 }
 
+let chatReplyingTo=null;
+let chatEditingId=null;
+
 function sendChatMessage(){
   if(!currentTeamWorkspaceId){showToast('Join a team to chat.');return;}
   const input=document.getElementById('chatInput');
@@ -2861,11 +2913,58 @@ function sendChatMessage(){
   if(!text)return;
   const myName=(state.myName||'').trim()||(currentUser?(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0]:'Me');
   if(!state.chatMessages)state.chatMessages=[];
-  state.chatMessages.push({id:Date.now(),sender:myName,text:text,ts:new Date().toISOString()});
-  // Keep last 500 messages
+
+  if(chatEditingId){
+    const msg=state.chatMessages.find(m=>m.id===chatEditingId);
+    if(msg&&msg.sender===myName){msg.text=text;msg.edited=true;}
+    chatEditingId=null;
+  } else {
+    const newMsg={id:Date.now(),sender:myName,text:text,ts:new Date().toISOString()};
+    if(chatReplyingTo)newMsg.replyTo=chatReplyingTo;
+    state.chatMessages.push(newMsg);
+  }
+  chatReplyingTo=null;
   if(state.chatMessages.length>500)state.chatMessages=state.chatMessages.slice(-500);
   if(input){input.value='';input.style.height='auto';}
   save();renderChat();
+}
+
+function chatReplyTo(msgId){
+  chatReplyingTo=msgId;
+  chatEditingId=null;
+  renderChat();
+  const input=document.getElementById('chatInput');
+  if(input)input.focus();
+}
+
+function chatCancelReply(){
+  chatReplyingTo=null;
+  renderChat();
+}
+
+function chatEditMsg(msgId){
+  const myName=(state.myName||'').trim()||(currentUser?(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0]:'');
+  const msg=(state.chatMessages||[]).find(m=>m.id===msgId);
+  if(!msg||msg.sender!==myName)return;
+  chatEditingId=msgId;
+  chatReplyingTo=null;
+  renderChat();
+  const input=document.getElementById('chatInput');
+  if(input){input.value=msg.text;input.focus();input.style.height='auto';input.style.height=Math.min(input.scrollHeight,100)+'px';}
+}
+
+function chatDeleteMsg(msgId){
+  const myName=(state.myName||'').trim()||(currentUser?(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0]:'');
+  const msg=(state.chatMessages||[]).find(m=>m.id===msgId);
+  if(!msg||msg.sender!==myName)return;
+  state.chatMessages=state.chatMessages.filter(m=>m.id!==msgId);
+  save();renderChat();
+  showToast('Message deleted');
+}
+
+function scrollToChatMsg(msgId){
+  const el=document.querySelector('[data-msgid="'+msgId+'"]');
+  if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.background='rgba(249,115,22,.12)';setTimeout(()=>{el.style.background='';},1500);}
 }
 
 // ── PDF Report Generator ──────────────────────────────────────────────────────

@@ -1101,16 +1101,18 @@ const SUPABASE_URL = 'https://kxidfwesywhhdifekkqo.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Mpf3fQxq5253lluxVGdXxA_Se4rBp9z';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null;
+let _unlockingApp = false;
 
 function initSupabaseAuth() {
   _supabase.auth.onAuthStateChange(function(event, session) {
     if (session && session.user) {
       currentUser = session.user;
-      if (document.getElementById('authOverlay').classList.contains('hidden') === false) {
+      if (document.getElementById('authOverlay').classList.contains('hidden') === false && !_unlockingApp) {
         unlockApp();
       }
     } else {
       currentUser = null;
+      _unlockingApp = false;
       showLoginScreen();
     }
   });
@@ -1118,7 +1120,9 @@ function initSupabaseAuth() {
   _supabase.auth.getSession().then(function(result) {
     if (result.data && result.data.session) {
       currentUser = result.data.session.user;
-      unlockApp();
+      if (!_unlockingApp && document.getElementById('authOverlay').classList.contains('hidden') === false) {
+        unlockApp();
+      }
     } else {
       showLoginScreen();
     }
@@ -1186,10 +1190,12 @@ function showPendingApproval(){
 }
 
 async function unlockApp() {
+  if(_unlockingApp)return;
+  _unlockingApp=true;
   // Check approval before showing the app (admin always gets in)
   if(currentUser && currentUser.email !== 'landrystewart@live.com'){
     const{data:profile}=await _supabase.from('profiles').select('approved').eq('user_id',currentUser.id).single();
-    if(!profile||!profile.approved){showPendingApproval();return;}
+    if(!profile||!profile.approved){_unlockingApp=false;showPendingApproval();return;}
   }
   document.getElementById('authOverlay').classList.add('hidden');
   document.getElementById('pendingOverlay').classList.add('hidden');
@@ -1212,6 +1218,8 @@ async function unlockApp() {
   }
   setView('dashboard');
   updateDarkIcon();
+  renderWorkspaceTabs();
+  _unlockingApp=false;
   if (!localStorage.getItem('wm_tour_done')) setTimeout(startTour, 800);
   initAIFab();
 }
@@ -1294,12 +1302,12 @@ async function loadFromCloud(){
         const local=allWs[b.workspace_key];
         const localTime=local&&local._lastSaved?new Date(local._lastSaved).getTime():0;
         const cloudTime=b.data._lastSaved?new Date(b.data._lastSaved).getTime():0;
-        // Only overwrite local if cloud data is strictly newer
-        // If neither has timestamps (legacy data), prefer cloud to bootstrap
-        // If local has a timestamp but cloud doesn't, keep local (it's newer code)
+        // If local has a real timestamp and cloud doesn't, keep local (local is newer)
         if(localTime>0&&cloudTime<=0){/* keep local */}
-        else if(cloudTime>localTime){allWs[b.workspace_key]=b.data;changed=true;}
-        else if(localTime===0&&cloudTime===0&&!local){allWs[b.workspace_key]=b.data;changed=true;}
+        // If local has a newer timestamp than cloud, keep local
+        else if(localTime>0&&cloudTime>0&&localTime>cloudTime){/* keep local */}
+        // All other cases: prefer cloud data (it's newer, same age, or neither has timestamps)
+        else{allWs[b.workspace_key]=b.data;changed=true;}
       });
       if(changed){localStorage.setItem('wm_workspaces',JSON.stringify(allWs));load();}
     }else{

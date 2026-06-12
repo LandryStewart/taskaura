@@ -2897,6 +2897,7 @@ function initAIFab(){
 }
 
 function toggleAIChat(){
+  try{
   if(!hasTeamPlan()){showToast('🔒 The AI assistant is a Team plan feature.');return;}
   const panel=document.getElementById('aiPanel');
   const fab=document.getElementById('aiFab');
@@ -2916,6 +2917,7 @@ function toggleAIChat(){
     if(aiChatHistory.length===0)showAIWelcome();
     document.getElementById('aiInput').focus();
   }
+  }catch(e){console.error('[TaskAura] toggleAIChat:',e);try{showToast('⚠ AI panel error: '+e.message);}catch(_){alert('AI panel error: '+e.message);}}
 }
 
 function showAIWelcome(){

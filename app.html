@@ -1274,7 +1274,7 @@ function doLogout() {
 }
 const DEFAULT_BUCKETS=['To Do','In Progress','Under Review','Complete'];
 const DEFAULT_LABELS=[{name:'Entitlements',color:'#8b5cf6'},{name:'Development',color:'#0891b2'},{name:'Design',color:'#ec4899'},{name:'Engineering',color:'#f97316'},{name:'Admin',color:'#6b7280'}];
-function getDefaultState(){return {projectName:'My Project',buckets:[...DEFAULT_BUCKETS],labels:JSON.parse(JSON.stringify(DEFAULT_LABELS)),tasks:[],notes:[],folders:[],nextId:1,nextNoteId:1,nextFolderId:1,darkMode:true,compact:false,myName:'',filterPresets:[],sidebarCollapsed:false,scheduleProjects:[],nextProjectId:1,nextScheduleTaskId:1,teamMembers:[],collapsedBuckets:[],chatMessages:[]};}
+function getDefaultState(){return {projectName:'My Project',buckets:[...DEFAULT_BUCKETS],labels:JSON.parse(JSON.stringify(DEFAULT_LABELS)),tasks:[],notes:[],folders:[],nextId:1,nextNoteId:1,nextFolderId:1,darkMode:true,compact:false,myName:'',filterPresets:[],sidebarCollapsed:false,scheduleProjects:[],nextProjectId:1,nextScheduleTaskId:1,teamMembers:[],memberIds:{},collapsedBuckets:[],chatMessages:[]};}
 let currentWorkspace='work';
 function migrateWorkspaces(){let allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'null');if(!allWs){allWs={};let legacy=localStorage.getItem('wm_state');if(legacy){try{allWs['work']=JSON.parse(legacy);}catch(e){allWs['work']=getDefaultState();}}else{allWs['work']=getDefaultState();}allWs['personal']=getDefaultState();localStorage.setItem('wm_workspaces',JSON.stringify(allWs));}}
 let state=getDefaultState();
@@ -1378,6 +1378,8 @@ async function loadTeamWorkspaces(){
       if(memberWs)allTeams=[...allTeams,...memberWs];
     }
     teamWorkspaces=allTeams;
+    // Backfill assigneeId on legacy name-only tasks (persists next time workspace data is saved)
+    teamWorkspaces.forEach(function(tw){var d=tw.data;if(!d||!d.tasks)return;var ids=d.memberIds||{};d.tasks.forEach(function(t){if(!t.assigneeId&&t.assignee&&ids[t.assignee])t.assigneeId=ids[t.assignee];});});
     console.log('[TaskAura] Total teams loaded:',teamWorkspaces.length,teamWorkspaces.map(t=>t.name));
     renderWorkspaceTabs();
   }catch(e){console.error('[TaskAura] loadTeamWorkspaces error:',e);}
@@ -1393,6 +1395,12 @@ async function switchToTeamWorkspace(id){
   const tw=teamWorkspaces.find(w=>w.id===id);
   if(tw&&tw.data&&tw.data.tasks){state=tw.data;}
   else{state=getDefaultState();if(tw)state.projectName=tw.name;await syncToCloud();}
+  // Ensure my name→userId mapping exists in this workspace (for ID-based assignee matching)
+  if(currentUser){
+    var _mn=(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];
+    if(!state.memberIds)state.memberIds={};
+    if(_mn&&state.memberIds[_mn]!==currentUser.id){state.memberIds[_mn]=currentUser.id;}
+  }
   document.getElementById('projName').value=state.projectName||(tw?tw.name:'Team');
   if(state.darkMode)document.documentElement.setAttribute('data-theme','dark');
   else document.documentElement.removeAttribute('data-theme');
@@ -1472,6 +1480,8 @@ async function createTeamWorkspace(){
     var initState=getDefaultState();initState.projectName=name;
     var myDisplayName=state.myName||(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];
     if(myDisplayName&&!initState.teamMembers.includes(myDisplayName))initState.teamMembers.push(myDisplayName);
+    if(!initState.memberIds)initState.memberIds={};
+    if(myDisplayName)initState.memberIds[myDisplayName]=currentUser.id;
     var{data:ws,error}=await _supabase.from('team_workspaces').insert({name:name,code:code,owner_id:currentUser.id,data:initState}).select('id,name,code,data,owner_id').single();
     if(error){showToast('Error: '+error.message);if(btn){btn.disabled=false;btn.textContent='Create Workspace';}return;}
     await _supabase.from('team_workspace_members').insert({workspace_id:ws.id,user_id:currentUser.id});
@@ -1503,8 +1513,11 @@ async function joinTeamWorkspace(){
       await _supabase.from('team_workspace_members').insert({workspace_id:ws.id,user_id:currentUser.id});
       // Register this member's name in the shared workspace data
       var myDisplayName=state.myName||(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];
-      var wData=ws.data||getDefaultState();if(!wData.teamMembers)wData.teamMembers=[];
-      if(myDisplayName&&!wData.teamMembers.includes(myDisplayName)){wData.teamMembers.push(myDisplayName);await _supabase.from('team_workspaces').update({data:wData}).eq('id',ws.id);ws.data=wData;}
+      var wData=ws.data||getDefaultState();if(!wData.teamMembers)wData.teamMembers=[];if(!wData.memberIds)wData.memberIds={};
+      var needsWsUpdate=false;
+      if(myDisplayName&&!wData.teamMembers.includes(myDisplayName)){wData.teamMembers.push(myDisplayName);needsWsUpdate=true;}
+      if(myDisplayName&&wData.memberIds[myDisplayName]!==currentUser.id){wData.memberIds[myDisplayName]=currentUser.id;needsWsUpdate=true;}
+      if(needsWsUpdate){await _supabase.from('team_workspaces').update({data:wData}).eq('id',ws.id);ws.data=wData;}
       teamWorkspaces.push(ws);
       renderWorkspaceTabs();renderTeamPanel();
     }
@@ -1528,13 +1541,15 @@ function isOrganizer(){
 // ── Personal Tasks Aggregator ─────────────────────────────────────────────────
 function getPersonalTasks(){
   const myName=(state.myName||'').trim();
-  if(!myName)return[];
+  const myId=currentUser?currentUser.id:null;
+  if(!myName&&!myId)return[];
   const allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');
   const all=[];
   // Work is a personal workspace — show all tasks regardless of assignee
   ((allWs.work||{}).tasks||[]).forEach(t=>all.push({...t,_wsName:'Work',_wsId:null}));
-  // Team workspaces — only show tasks assigned to you
-  teamWorkspaces.forEach(tw=>{((tw.data||{}).tasks||[]).filter(t=>t.assignee===myName).forEach(t=>all.push({...t,_wsName:tw.name,_wsId:tw.id}));});
+  // Team workspaces — only show tasks assigned to you (match by user ID first; fall back to name for legacy tasks)
+  const isMine=t=>t.assigneeId?(myId&&t.assigneeId===myId):(myName&&t.assignee===myName);
+  teamWorkspaces.forEach(tw=>{((tw.data||{}).tasks||[]).filter(isMine).forEach(t=>all.push({...t,_wsName:tw.name,_wsId:tw.id}));});
   return all;
 }
 
@@ -1648,19 +1663,24 @@ function renderDashboard(){
 }
 
 function renderPersonalDashboard(el){
-  const myName=(state.myName||'').trim();
-  if(!myName){
+  const myName=(state.myName||'').trim()||(currentUser&&((currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0]))||'';
+
+  const myTasks=getPersonalTasks();
+
+  // First-run: brand-new user with no tasks and no teams yet
+  if(myTasks.length===0&&(!teamWorkspaces||teamWorkspaces.length===0)){
     el.innerHTML=
       '<div style="padding:60px 20px;text-align:center;animation:fadeSlideUp .4s ease both">'+
-        '<div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1d4ed8,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 20px;box-shadow:0 8px 24px rgba(37,99,235,.3)">👤</div>'+
-        '<h2 style="color:var(--text);margin-bottom:8px;font-size:20px;font-weight:800">Set your name to unlock your dashboard</h2>'+
-        '<p style="color:var(--text2);margin-bottom:24px;font-size:14px">Your personal dashboard tracks tasks assigned to you across every workspace.</p>'+
-        '<button class="pd-action-btn primary" style="max-width:220px;margin:0 auto;justify-content:center" onclick="openSettings()">⚙ Set My Name in Settings</button>'+
+        '<div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#c2410c,#f97316);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 20px;box-shadow:0 8px 24px rgba(249,115,22,.3)">👋</div>'+
+        '<h2 style="color:var(--text);margin-bottom:8px;font-size:20px;font-weight:800">Welcome'+(myName?', '+esc(myName.split(' ')[0]):'')+'!</h2>'+
+        '<p style="color:var(--text2);margin-bottom:24px;font-size:14px;max-width:420px;margin-left:auto;margin-right:auto">This dashboard tracks your tasks across every workspace. Create your first task to get started, or join your team with an invite code.</p>'+
+        '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'+
+          '<button class="pd-action-btn primary" style="max-width:220px;justify-content:center" onclick="setView(\'board\');openNewTask()">＋ Create your first task</button>'+
+          '<button class="pd-action-btn" style="max-width:220px;justify-content:center" onclick="openTeamPanel()">👥 Join a team</button>'+
+        '</div>'+
       '</div>';
     return;
   }
-
-  const myTasks=getPersonalTasks();
   const today=todayStr();
   const weekEnd=new Date();weekEnd.setDate(weekEnd.getDate()+7);
   const weekEndStr=weekEnd.toISOString().split('T')[0];
@@ -2116,9 +2136,9 @@ if(lnSec){
   }else{lnSec.innerHTML='';}
 }}
 function addChecklistItem(text,done){const cl=document.getElementById('mChecklist'),div=document.createElement('div');div.className='cl-item';const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!done;const inp=document.createElement('input');inp.type='text';inp.value=text||'';inp.placeholder='Checklist item...';const rm=document.createElement('button');rm.className='cl-rm';rm.innerHTML='×';rm.onclick=()=>div.remove();div.appendChild(cb);div.appendChild(inp);div.appendChild(rm);cl.appendChild(div);}
-function saveTask(){const title=document.getElementById('mTitle').value.trim();if(!title){showToast('Task title is required.');return;}const data={title,assignee:document.getElementById('mAssignee').value.trim(),bucket:document.getElementById('mBucket').value,due:document.getElementById('mDue').value,priority:document.getElementById('mPriority').value,pct:parseInt(document.getElementById('mPct').value)||0,notes:document.getElementById('mNotes').value,filePath:document.getElementById('mFilePath').value.trim(),labels:[...document.querySelectorAll('#mLabels .label-chip.selected')].map(e=>e.dataset.label),checklist:[...document.querySelectorAll('#mChecklist .cl-item')].map(e=>({text:e.querySelector('input[type=text]').value,done:e.querySelector('input[type=checkbox]').checked}))};if(editingId!=null)Object.assign(state.tasks.find(x=>x.id===editingId),data);else{data.id=state.nextId++;data.created=new Date().toISOString().split('T')[0];state.tasks.push(data);}closeTaskModal();render();}
+function saveTask(){const title=document.getElementById('mTitle').value.trim();if(!title){showToast('Task title is required.');return;}const _assigneeName=document.getElementById('mAssignee').value.trim();const data={title,assignee:_assigneeName,assigneeId:(_assigneeName&&(state.memberIds||{})[_assigneeName])||null,bucket:document.getElementById('mBucket').value,due:document.getElementById('mDue').value,priority:document.getElementById('mPriority').value,pct:parseInt(document.getElementById('mPct').value)||0,notes:document.getElementById('mNotes').value,filePath:document.getElementById('mFilePath').value.trim(),labels:[...document.querySelectorAll('#mLabels .label-chip.selected')].map(e=>e.dataset.label),checklist:[...document.querySelectorAll('#mChecklist .cl-item')].map(e=>({text:e.querySelector('input[type=text]').value,done:e.querySelector('input[type=checkbox]').checked}))};if(editingId!=null)Object.assign(state.tasks.find(x=>x.id===editingId),data);else{data.id=state.nextId++;data.created=new Date().toISOString().split('T')[0];state.tasks.push(data);}closeTaskModal();render();}
 function deleteTask(){const t=state.tasks.find(x=>x.id===editingId);if(!t)return;const removed=t,idx=state.tasks.indexOf(t);state.tasks=state.tasks.filter(x=>x.id!==editingId);closeTaskModal();render();showToast('Task "'+removed.title+'" deleted',function(){state.tasks.splice(idx,0,removed);render();});}
-function completeTaskConfirm(){const t=state.tasks.find(x=>x.id===editingId);if(!t)return;if(!confirm('Mark "'+t.title+'" as complete?\n\nThis will move it to the Complete bucket and clear its due date, assignee, and labels.'))return;const completeBucket=state.buckets.find(b=>b.toLowerCase().includes('complet'))||state.buckets[state.buckets.length-1];const oldData={bucket:t.bucket,due:t.due,assignee:t.assignee,labels:t.labels?[...t.labels]:[],pct:t.pct};t.bucket=completeBucket;t.due='';t.assignee='';t.labels=[];t.pct=100;closeTaskModal();render();showToast('✅ "'+t.title+'" completed!',function(){t.bucket=oldData.bucket;t.due=oldData.due;t.assignee=oldData.assignee;t.labels=oldData.labels;t.pct=oldData.pct;render();});}
+function completeTaskConfirm(){const t=state.tasks.find(x=>x.id===editingId);if(!t)return;if(!confirm('Mark "'+t.title+'" as complete?\n\nThis will move it to the Complete bucket and clear its due date, assignee, and labels.'))return;const completeBucket=state.buckets.find(b=>b.toLowerCase().includes('complet'))||state.buckets[state.buckets.length-1];const oldData={bucket:t.bucket,due:t.due,assignee:t.assignee,assigneeId:t.assigneeId,labels:t.labels?[...t.labels]:[],pct:t.pct};t.bucket=completeBucket;t.due='';t.assignee='';t.assigneeId=null;t.labels=[];t.pct=100;closeTaskModal();render();showToast('✅ "'+t.title+'" completed!',function(){t.bucket=oldData.bucket;t.due=oldData.due;t.assignee=oldData.assignee;t.assigneeId=oldData.assigneeId;t.labels=oldData.labels;t.pct=oldData.pct;render();});}
 function openSettings(){
   // Populate AI key field placeholder and model
   const aiKeyEl=document.getElementById('settAIKey');

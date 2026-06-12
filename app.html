@@ -751,6 +751,12 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .ai-panel-model{font-size:10px;color:var(--muted);font-weight:500;}
 .ai-panel-close{background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1;padding:0 2px;}
 .ai-panel-close:hover{color:var(--text);}
+.ai-setup-note{margin:auto;text-align:center;padding:30px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--muted);font-size:13px;}
+.ai-setup-note p{max-width:240px;line-height:1.5;margin:0;}
+.ai-setup-note button{margin-top:4px;padding:9px 18px;border:none;border-radius:10px;background:linear-gradient(135deg,#ea580c,#f97316);color:#fff;font-size:13px;font-weight:600;cursor:pointer;}
+.ai-setup-note button:hover{opacity:.88;}
+.nav-unread{width:8px;height:8px;border-radius:50%;background:#f97316;margin-left:auto;flex-shrink:0;animation:chatPulse 2s ease-in-out infinite;}
+@media(prefers-reduced-motion:reduce){.nav-unread{animation:none;}}
 .ai-messages{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth;}
 .ai-messages::-webkit-scrollbar{width:4px;}
 .ai-messages::-webkit-scrollbar-track{background:transparent;}
@@ -931,7 +937,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
    <div class="nav-item" id="navCalendar" onclick="setView('calendar')"><span class="nav-icon">◻</span><span>Calendar</span></div>
    <div class="nav-item" id="navNotes" onclick="setView('notes')"><span class="nav-icon">◱</span><span>Notes</span></div>
    <div class="nav-item" id="navSchedules" onclick="setView('schedules')"><span class="nav-icon">◫</span><span>Schedules</span></div>
-   <div class="nav-item hidden" id="navChat" onclick="setView('chat')"><span class="nav-icon">💬</span><span>Team Chat</span></div>
+   <div class="nav-item hidden" id="navChat" onclick="setView('chat')"><span class="nav-icon">💬</span><span>Team Chat</span><span class="nav-unread hidden" id="chatUnreadDot"></span></div>
 </div>
   <div class="sidebar-section">
    <div class="sidebar-section-title">Filters</div>
@@ -1992,6 +1998,7 @@ let currentView='dashboard';
 function setView(v){if(v==='schedules'&&!hasTeamPlan()){showToast('🔒 Schedules is a Team plan feature.');return;}currentView=v;if(isMobile())closeMobileSidebar();['dashboard','board','list','calendar','notes','schedules','chat'].forEach(t=>{const el=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',v===t);});document.getElementById('dashboardView').style.display=v==='dashboard'?'flex':'none';document.getElementById('boardView').style.display=v==='board'?'flex':'none';document.getElementById('listView').style.display=v==='list'?'block':'none';document.getElementById('calendarView').style.display=v==='calendar'?'flex':'none';document.getElementById('notesView').style.display=v==='notes'?'flex':'none';document.getElementById('schedulesView').style.display=v==='schedules'?'flex':'none';document.getElementById('chatView').style.display=v==='chat'?'flex':'none';document.querySelectorAll('.mobile-bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));render();}
 function render(){document.querySelectorAll('.workspace-tab').forEach(t=>{t.classList.toggle('active',t.dataset.ws===currentWorkspace);});updateFilters();updateStats();updateFilterChips();updateTodayBadge();renderPresets();updateDashboardNav();// Show/hide chat nav item
 const chatNav=document.getElementById('navChat');if(chatNav){if(currentTeamWorkspaceId)chatNav.classList.remove('hidden');else{chatNav.classList.add('hidden');if(currentView==='chat'){currentView='dashboard';}}}
+updateChatUnread();
 if(currentView==='dashboard')renderDashboard();else if(currentView==='board')renderBoard();else if(currentView==='list')renderList();else if(currentView==='calendar')renderCalendar();else if(currentView==='notes')renderNotesView();else if(currentView==='schedules')renderSchedules();else if(currentView==='chat')renderChat();const _fab=document.getElementById('aiFab');if(_fab){if(hasTeamPlan())_fab.classList.remove('hidden');else _fab.classList.add('hidden');}save();}
 function updateDashboardNav(){const navEl=document.getElementById('navDashboard');if(navEl)navEl.classList.remove('hidden');}
 function switchWorkspace(ws){
@@ -2879,7 +2886,10 @@ function getAIModel(){return localStorage.getItem('taskaura_ai_model')||'claude-
 function saveAIKey(){
   const key=document.getElementById('settAIKey').value.trim();
   const model=document.getElementById('settAIModel').value;
-  if(key){localStorage.setItem('taskaura_ai_key',key);showToast('API key saved.');}
+  if(key){localStorage.setItem('taskaura_ai_key',key);showToast('API key saved.');
+    const note=document.getElementById('aiSetupNote');
+    if(note){note.remove();if(aiChatHistory.length===0)showAIWelcome();}
+  }
   localStorage.setItem('taskaura_ai_model',model);
   initAIFab();
 }
@@ -2907,14 +2917,23 @@ function toggleAIChat(){
     panel.classList.add('hidden');
     fab.textContent='AI';
   }else{
-    if(!getAIKey()){
-      showToast('Add your Anthropic API key in Settings first.');
-      openSettings();
-      return;
-    }
     panel.classList.remove('hidden');
     fab.textContent='×';
-    if(aiChatHistory.length===0)showAIWelcome();
+    if(!getAIKey()){
+      const box=document.getElementById('aiMessages');
+      if(box&&!document.getElementById('aiSetupNote')){
+        const note=document.createElement('div');
+        note.id='aiSetupNote';note.className='ai-setup-note';
+        note.innerHTML='<div style="font-size:26px">✦</div>'+
+          '<div style="font-weight:700;color:var(--text);font-size:14px">One quick step</div>'+
+          '<p>Add your Anthropic API key to start chatting with your assistant.</p>'+
+          '<button onclick="openSettings()">Open Settings</button>';
+        box.appendChild(note);
+      }
+    }else{
+      const stale=document.getElementById('aiSetupNote');if(stale)stale.remove();
+      if(aiChatHistory.length===0)showAIWelcome();
+    }
     document.getElementById('aiInput').focus();
   }
   }catch(e){console.error('[TaskAura] toggleAIChat:',e);try{showToast('⚠ AI panel error: '+e.message);}catch(_){alert('AI panel error: '+e.message);}}
@@ -3113,6 +3132,23 @@ function clearAIChat(){
 }
 
 // ── Team Chat ────────────────────────────────────────────────────────────────
+function chatLastReadKey(){return'taskaura_chat_read_'+currentTeamWorkspaceId;}
+function getMyChatName(){return(state.myName||'').trim()||(currentUser?(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0]:'');}
+function updateChatUnread(){
+  const dot=document.getElementById('chatUnreadDot');if(!dot)return;
+  if(!currentTeamWorkspaceId||currentView==='chat'){dot.classList.add('hidden');return;}
+  const myName=getMyChatName();
+  const lastRead=localStorage.getItem(chatLastReadKey())||'';
+  const unread=(state.chatMessages||[]).some(m=>m.sender!==myName&&(m.ts||'')>lastRead);
+  dot.classList.toggle('hidden',!unread);
+}
+function markChatRead(){
+  if(!currentTeamWorkspaceId)return;
+  const msgs=state.chatMessages||[];
+  const latest=msgs.length?msgs.reduce((a,m)=>(m.ts||'')>a?(m.ts||''):a,''):new Date().toISOString();
+  localStorage.setItem(chatLastReadKey(),latest);
+  updateChatUnread();
+}
 function renderChat(){
   const el=document.getElementById('chatView');if(!el)return;
   if(!currentTeamWorkspaceId){
@@ -3183,6 +3219,7 @@ function renderChat(){
   // Scroll to bottom
   const msgBox=document.getElementById('chatMessages');
   if(msgBox)setTimeout(()=>{msgBox.scrollTop=msgBox.scrollHeight;},50);
+  markChatRead();
 }
 
 let chatReplyingTo=null;

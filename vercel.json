@@ -1,9 +1,8 @@
 {
   "buildCommand": "",
   "outputDirectory": ".",
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/app", "dest": "/app.html" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/app", "destination": "/app.html" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

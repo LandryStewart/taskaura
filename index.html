@@ -181,18 +181,6 @@
     }
 
     /* ── LOGO CLOUD ── */
-    .proof { text-align: center; padding: 4.5rem 24px 1.5rem; }
-    .proof-label { font-size: .78rem; font-weight: 600; color: var(--faint); margin-bottom: 1.6rem; }
-    .proof-logos { display: flex; gap: 3rem; justify-content: center; flex-wrap: wrap; align-items: center; }
-    .proof-logo { font-weight: 700; font-size: 1rem; color: var(--faint); letter-spacing: -.01em; transition: color .2s; }
-    .proof-logo:hover { color: var(--muted); }
-
-    /* ── STATS BAND ── */
-    .stats { max-width: 1120px; margin: 3.5rem auto 0; padding: 0 24px; }
-    .stats-inner { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
-    .stat { background: var(--bg2); padding: 2rem 1.5rem; text-align: center; }
-    .stat-num { font-size: 2.1rem; font-weight: 800; letter-spacing: -.04em; background: linear-gradient(135deg, #fff 40%, var(--orange-lt)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-    .stat-label { font-size: .8rem; color: var(--muted); margin-top: .3rem; }
 
     /* ── SECTIONS ── */
     section { scroll-margin-top: 80px; }
@@ -212,20 +200,6 @@
     .feat-title { font-weight: 700; font-size: 1.04rem; margin-bottom: .45rem; letter-spacing: -.02em; }
     .feat-desc { font-size: .885rem; color: var(--muted); line-height: 1.65; }
 
-    /* ── TESTIMONIALS ── */
-    .testimonials { max-width: 1120px; margin: 0 auto; padding: 0 24px 6rem; }
-    .quote-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
-    .quote-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 18px; padding: 1.8rem; display: flex; flex-direction: column; gap: 1.2rem; transition: border-color .25s; }
-    .quote-card:hover { border-color: var(--border-lt); }
-    .quote-stars { color: var(--orange); font-size: .85rem; letter-spacing: 2px; }
-    .quote-text { font-size: .93rem; color: var(--text2); line-height: 1.7; flex: 1; }
-    .quote-person { display: flex; align-items: center; gap: .75rem; }
-    .quote-av { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .78rem; font-weight: 700; color: #fff; }
-    .qa1 { background: linear-gradient(135deg, #7c3aed, #a78bfa); }
-    .qa2 { background: linear-gradient(135deg, var(--orange-dk), var(--orange-lt)); }
-    .qa3 { background: linear-gradient(135deg, #0e7490, #22d3ee); }
-    .quote-name { font-size: .85rem; font-weight: 700; }
-    .quote-role { font-size: .76rem; color: var(--muted); }
 
     /* ── PRICING ── */
     .pricing { max-width: 880px; margin: 0 auto; padding: 0 24px 6.5rem; }
@@ -271,8 +245,6 @@
     @media (max-width: 900px) {
       .bento { grid-template-columns: 1fr 1fr; }
       .bento-card.wide { grid-column: span 2; }
-      .quote-grid { grid-template-columns: 1fr; }
-      .stats-inner { grid-template-columns: 1fr 1fr; }
       .footer-grid { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 640px) {
@@ -290,9 +262,6 @@
       .board-cols > div:nth-child(3) { display: none; }
       .bento { grid-template-columns: 1fr; }
       .bento-card.wide { grid-column: span 1; }
-      .stats-inner { grid-template-columns: 1fr 1fr; }
-      .stat { padding: 1.4rem 1rem; }
-      .stat-num { font-size: 1.6rem; }
       .pricing-grid { grid-template-columns: 1fr; }
       .footer-grid { grid-template-columns: 1fr; gap: 1.8rem; }
       .modal { padding: 1.8rem; }
@@ -385,7 +354,6 @@
   <button class="mobile-nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('mobile-open')" aria-label="Menu">&#9776;</button>
   <div class="nav-links">
     <a onclick="scrollToSection('features');closeMobileNav()">Features</a>
-    <a onclick="scrollToSection('customers');closeMobileNav()">Customers</a>
     <a onclick="scrollToSection('pricing');closeMobileNav()">Pricing</a>
     <a onclick="openModal('modal-signin');closeMobileNav()">Sign in</a>
     <a onclick="openModal('modal-signup');closeMobileNav()" class="btn-nav">Get started</a>
@@ -450,29 +418,6 @@
   </div>
 </section>
 
-<!-- LOGO CLOUD -->
-<div class="proof reveal">
-  <div class="proof-label">Trusted by fast-moving teams everywhere</div>
-  <div class="proof-logos">
-    <span class="proof-logo">Meridian&nbsp;Co.</span>
-    <span class="proof-logo">Redstone&nbsp;Labs</span>
-    <span class="proof-logo">Folio&nbsp;Group</span>
-    <span class="proof-logo">Hatch&nbsp;Studio</span>
-    <span class="proof-logo">Vantage&nbsp;Ops</span>
-    <span class="proof-logo">Northway</span>
-  </div>
-</div>
-
-<!-- STATS -->
-<div class="stats reveal">
-  <div class="stats-inner">
-    <div class="stat"><div class="stat-num">2M+</div><div class="stat-label">Tasks completed</div></div>
-    <div class="stat"><div class="stat-num">12k+</div><div class="stat-label">Active teams</div></div>
-    <div class="stat"><div class="stat-num">99.9%</div><div class="stat-label">Uptime</div></div>
-    <div class="stat"><div class="stat-num">4.8★</div><div class="stat-label">Average rating</div></div>
-  </div>
-</div>
-
 <!-- FEATURES (BENTO) -->
 <section class="features" id="features">
   <div class="section-head reveal">
@@ -505,41 +450,6 @@
       <div class="feat-icon">📊</div>
       <div class="feat-title">A dashboard that actually tells you something</div>
       <p class="feat-desc">Your personal command center aggregates every task assigned to you across all workspaces — priorities, deadlines, and progress at a glance, the moment you sign in.</p>
-    </div>
-  </div>
-</section>
-
-<!-- TESTIMONIALS -->
-<section class="testimonials" id="customers">
-  <div class="section-head reveal">
-    <div class="section-tag">Customers</div>
-    <h2>Teams switch. Teams stay.</h2>
-    <p class="section-sub">From two-person studios to 25-person departments, TaskAura keeps the work moving.</p>
-  </div>
-  <div class="quote-grid">
-    <div class="quote-card reveal">
-      <div class="quote-stars">★★★★★</div>
-      <p class="quote-text">"We replaced three tools with TaskAura in a week. The live sync alone ended our daily 'wait, which spreadsheet is current?' conversation forever."</p>
-      <div class="quote-person">
-        <div class="quote-av qa1">DM</div>
-        <div><div class="quote-name">Dana Morales</div><div class="quote-role">Operations Lead, Folio Group</div></div>
-      </div>
-    </div>
-    <div class="quote-card reveal">
-      <div class="quote-stars">★★★★★</div>
-      <p class="quote-text">"My Monday status updates come straight from actual task data on the dashboard. What used to take 40 minutes now takes a few — and it's more accurate."</p>
-      <div class="quote-person">
-        <div class="quote-av qa2">JK</div>
-        <div><div class="quote-name">James Kim</div><div class="quote-role">Engineering Manager, Redstone Labs</div></div>
-      </div>
-    </div>
-    <div class="quote-card reveal">
-      <div class="quote-stars">★★★★★</div>
-      <p class="quote-text">"Free was the unlock. We stopped doing seat math every time someone joined a project and just got everyone in the workspace."</p>
-      <div class="quote-person">
-        <div class="quote-av qa3">AP</div>
-        <div><div class="quote-name">Aisha Patel</div><div class="quote-role">Studio Director, Hatch Studio</div></div>
-      </div>
     </div>
   </div>
 </section>
@@ -595,7 +505,6 @@
     </div>
     <div class="footer-col">
       <h4>Company</h4>
-      <a onclick="scrollToSection('customers')">Customers</a>
       <a href="mailto:hello@taskaura.org">Contact</a>
       <a href="mailto:hello@taskaura.org">Support</a>
     </div>

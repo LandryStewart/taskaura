@@ -20,8 +20,8 @@
       --orange-dk: #c2410c;
       --text:      #fafafa;
       --text2:     #d4d4d8;
-      --muted:     #8b8b93;
-      --faint:     #55555e;
+      --muted:     #a1a1aa;
+      --faint:     #71717a;
       --border:    rgba(255,255,255,.08);
       --border-lt: rgba(255,255,255,.14);
       --error:     #f87171;
@@ -132,6 +132,52 @@
     .av1 { background: var(--orange-dk); } .av2 { background: #7c3aed; } .av3 { background: #0e7490; }
     .progress-bar { height: 3px; background: var(--surface2); border-radius: 99px; margin-top: .55rem; overflow: hidden; }
     .progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--orange-dk), var(--orange-lt)); }
+
+    /* ── LIVE DEMO LOOP (10s) ── */
+    .app-main { position: relative; }
+    .card.demo-a, .card.demo-b { overflow: hidden; }
+    .card.demo-a { animation: demoOutA 10s ease-in-out infinite; }
+    @keyframes demoOutA {
+      0%, 32%        { opacity: 1; transform: none; max-height: 90px; margin-bottom: .55rem; padding: .7rem .8rem; }
+      40%            { opacity: 0; transform: translateX(28px) scale(.95); max-height: 90px; margin-bottom: .55rem; padding: .7rem .8rem; }
+      46%, 93%       { opacity: 0; transform: translateX(28px) scale(.95); max-height: 0; margin-bottom: 0; padding: 0 .8rem; border-color: transparent; }
+      100%           { opacity: 1; transform: none; max-height: 90px; margin-bottom: .55rem; padding: .7rem .8rem; }
+    }
+    .card.demo-b { animation: demoInB 10s ease-in-out infinite; }
+    @keyframes demoInB {
+      0%, 42%        { opacity: 0; transform: translateX(-28px) scale(.95); max-height: 0; margin-bottom: 0; padding: 0 .8rem; border-color: transparent; }
+      50%            { opacity: 0; transform: translateX(-28px) scale(.95); max-height: 90px; margin-bottom: .55rem; padding: .7rem .8rem; }
+      57%, 91%       { opacity: 1; transform: none; max-height: 90px; margin-bottom: .55rem; padding: .7rem .8rem; }
+      97%, 100%      { opacity: 0; transform: translateX(-28px) scale(.95); max-height: 0; margin-bottom: 0; padding: 0 .8rem; border-color: transparent; }
+    }
+    .card.demo-b .progress-fill { animation: demoFillB 10s ease-out infinite; }
+    @keyframes demoFillB { 0%, 58% { width: 0; } 76%, 100% { width: 55%; } }
+    .progress-fill.fill-live { animation: fillLive 10s ease-in-out infinite; }
+    @keyframes fillLive { 0%, 100% { width: 60%; } 50% { width: 82%; } }
+    .board-col-count.swap { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 1.7em; height: 1.1rem; padding: .05rem 0; }
+    .board-col-count.swap .cnt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+    .swap .cnt-late { opacity: 0; }
+    .swap .cnt-early { animation: cntEarly 10s steps(1) infinite; }
+    .swap .cnt-late  { animation: cntLate  10s steps(1) infinite; }
+    @keyframes cntEarly { 0%, 43% { opacity: 1; } 44%, 95% { opacity: 0; } 96%, 100% { opacity: 1; } }
+    @keyframes cntLate  { 0%, 43% { opacity: 0; } 44%, 95% { opacity: 1; } 96%, 100% { opacity: 0; } }
+    .demo-cursor { position: absolute; z-index: 5; pointer-events: none; opacity: 0; width: 15px; height: 15px; animation: demoCursor 10s ease-in-out infinite; }
+    .demo-cursor svg { width: 100%; height: 100%; filter: drop-shadow(0 1px 3px rgba(0,0,0,.6)); }
+    @keyframes demoCursor {
+      0%, 16%   { opacity: 0; transform: translate(60px, 170px); }
+      24%       { opacity: 1; transform: translate(85px, 110px); }
+      31%       { transform: translate(85px, 110px) scale(.8); }
+      44%       { transform: translate(270px, 110px) scale(.8); }
+      50%       { opacity: 1; transform: translate(270px, 110px) scale(1); }
+      60%, 100% { opacity: 0; transform: translate(330px, 180px); }
+    }
+    @media (max-width: 720px) { .demo-cursor { display: none; } }
+    @media (prefers-reduced-motion: reduce) {
+      .card.demo-a, .card.demo-b, .card.demo-b .progress-fill, .progress-fill.fill-live, .swap .cnt, .demo-cursor { animation: none !important; }
+      .card.demo-b { display: none; }
+      .swap .cnt-late { opacity: 0 !important; }
+      .demo-cursor { opacity: 0 !important; }
+    }
 
     /* ── LOGO CLOUD ── */
     .proof { text-align: center; padding: 4.5rem 24px 1.5rem; }
@@ -395,15 +441,17 @@
           <div class="sb-item">💬 Chat</div>
         </div>
         <div class="app-main">
+          <div class="demo-cursor"><svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 8-6.5 1.5L10 19 5 3z" fill="#fafafa" stroke="#09090b" stroke-width="1.5"/></svg></div>
           <div class="board-cols">
             <div>
-              <div class="board-col-title">To Do <span class="board-col-count">3</span></div>
+              <div class="board-col-title">To Do <span class="board-col-count swap"><span class="cnt cnt-early">3</span><span class="cnt cnt-late">2</span></span></div>
               <div class="card"><div class="card-title">Set up onboarding email flow</div><div class="card-meta"><span class="tag tag-high">High</span><div class="avatar av1">JL</div></div><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
-              <div class="card"><div class="card-title">Design Q3 landing page</div><div class="card-meta"><span class="tag tag-med">Med</span><div class="avatar av2">SR</div></div><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
+              <div class="card demo-a"><div class="card-title">Design Q3 landing page</div><div class="card-meta"><span class="tag tag-med">Med</span><div class="avatar av2">SR</div></div><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
             </div>
             <div>
-              <div class="board-col-title">In Progress <span class="board-col-count">2</span></div>
-              <div class="card"><div class="card-title">Integrate Stripe billing</div><div class="card-meta"><span class="tag tag-high">High</span><div class="avatar av3">MK</div></div><div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div></div>
+              <div class="board-col-title">In Progress <span class="board-col-count swap"><span class="cnt cnt-early">2</span><span class="cnt cnt-late">3</span></span></div>
+              <div class="card"><div class="card-title">Integrate Stripe billing</div><div class="card-meta"><span class="tag tag-high">High</span><div class="avatar av3">MK</div></div><div class="progress-bar"><div class="progress-fill fill-live" style="width:60%"></div></div></div>
+              <div class="card demo-b"><div class="card-title">Design Q3 landing page</div><div class="card-meta"><span class="tag tag-med">Med</span><div class="avatar av2">SR</div></div><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
               <div class="card"><div class="card-title">Write API docs</div><div class="card-meta"><span class="tag tag-low">Low</span><div class="avatar av1">JL</div></div><div class="progress-bar"><div class="progress-fill" style="width:30%"></div></div></div>
             </div>
             <div>

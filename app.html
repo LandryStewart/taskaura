@@ -741,7 +741,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .ai-fab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#ea580c,#f97316);border:none;color:#fff;font-size:20px;cursor:pointer;z-index:8000;box-shadow:0 4px 18px rgba(249,115,22,.45);transition:transform .2s,box-shadow .2s;display:flex;align-items:center;justify-content:center;font-weight:700;letter-spacing:-.5px;font-size:13px;}
 .ai-fab:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(249,115,22,.55);}
 .ai-fab.has-key{animation:chatPulse 2.5s ease-in-out 1;}
-.ai-panel{position:fixed;top:0;right:0;bottom:0;width:400px;max-width:100vw;background:var(--card);border-left:1px solid var(--border);box-shadow:-16px 0 50px rgba(0,0,0,.3);z-index:8001;display:flex;flex-direction:column;overflow:hidden;animation:drawerIn .3s cubic-bezier(.22,.9,.3,1) both;}
+.ai-panel{position:fixed;top:0;right:0;bottom:0;width:400px;max-width:100vw;background:var(--card);border-left:1px solid var(--border);box-shadow:-16px 0 50px rgba(0,0,0,.3);z-index:10050;display:flex;flex-direction:column;overflow:hidden;animation:drawerIn .3s cubic-bezier(.22,.9,.3,1) both;}
 @keyframes drawerIn{from{transform:translateX(100%);}to{transform:translateX(0);}}
 @media(max-width:600px){.ai-panel{width:100vw;}}
 @media(prefers-reduced-motion:reduce){.ai-panel{animation:none;}}
@@ -3010,12 +3010,17 @@ function toggleAIChat(){
   const isOpen=!panel.classList.contains('hidden');
   if(isOpen){
     panel.classList.add('hidden');
-    fab.textContent='AI';
+    panel.style.display='';
+    if(fab)fab.textContent='AI';
   }else{
+    // Close settings if open so the drawer is never buried behind it
+    const so=document.getElementById('settingsOverlay');
+    if(so&&so.classList.contains('show'))closeSettings();
     panel.classList.remove('hidden');
-    fab.textContent='×';
+    panel.style.display='flex';
+    if(fab)fab.textContent='×';
     if(aiChatHistory.length===0)showAIWelcome();
-    document.getElementById('aiInput').focus();
+    const inp=document.getElementById('aiInput');if(inp)inp.focus();
   }
   }catch(e){console.error('[TaskAura] toggleAIChat:',e);try{showToast('⚠ AI panel error: '+e.message);}catch(_){alert('AI panel error: '+e.message);}}
 }

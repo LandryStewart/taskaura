@@ -7,6 +7,7 @@
   <meta name="description" content="TaskAura gives your team one place to plan, assign, and ship work — with real-time sync, an AI assistant, and zero per-seat pricing games." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://api.fontshare.com/v2/css?f[]=general-sans@600,700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -46,8 +47,8 @@
     @keyframes slideUp { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
     .modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.15rem; line-height: 1; padding: .3rem; border-radius: 6px; }
     .modal-close:hover { color: var(--text); background: var(--surface2); }
-    .modal-logo { margin-bottom: 1.5rem; font-weight: 800; font-size: 1.1rem; letter-spacing: -0.02em; }
-    .modal-logo span { color: var(--orange); }
+    .modal-logo { margin-bottom: 1.5rem; font-family: 'General Sans', 'Inter', sans-serif; font-weight: 700; font-size: 1.15rem; letter-spacing: -0.035em; }
+    .modal-logo span { color: var(--orange); font-weight: 600; letter-spacing: -0.12em; margin: 0 .05em; }
     .modal h2 { font-size: 1.45rem; margin-bottom: .4rem; }
     .modal-sub { font-size: .875rem; color: var(--muted); margin-bottom: 1.6rem; }
     .form-group { margin-bottom: 1rem; }
@@ -78,9 +79,9 @@
     .nav-wrap { position: sticky; top: 0; z-index: 100; background: rgba(9,9,11,.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
     nav { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 64px; }
     .nav-logo { display: flex; align-items: center; gap: .55rem; cursor: pointer; }
-    .logo-mark { width: 26px; height: 26px; border-radius: 7px; background: linear-gradient(135deg, var(--orange-dk), var(--orange-lt)); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .8rem; color: #fff; box-shadow: 0 2px 10px rgba(249,115,22,.4); }
-    .nav-logo-text { font-weight: 800; font-size: 1.05rem; letter-spacing: -0.02em; }
-    .nav-logo-text span { color: var(--orange); }
+    .logo-mark { width: 26px; height: 26px; border-radius: 7px; background: linear-gradient(135deg, var(--orange-dk), var(--orange-lt)); display: flex; align-items: center; justify-content: center; font-family: 'General Sans', 'Inter', sans-serif; font-weight: 600; font-size: .95rem; color: #fff; box-shadow: 0 2px 10px rgba(249,115,22,.4); }
+    .nav-logo-text { font-family: 'General Sans', 'Inter', sans-serif; font-weight: 700; font-size: 1.1rem; letter-spacing: -0.035em; }
+    .nav-logo-text span { color: var(--orange); font-weight: 600; letter-spacing: -0.12em; margin: 0 .05em; }
     .nav-links { display: flex; gap: 1.75rem; align-items: center; }
     .nav-links a { font-size: .875rem; font-weight: 500; color: var(--muted); text-decoration: none; transition: color .15s; cursor: pointer; }
     .nav-links a:hover { color: var(--text); }
@@ -320,7 +321,7 @@
 <div class="modal-overlay" id="modal-signin">
   <div class="modal" role="dialog" aria-modal="true" aria-label="Sign in">
     <button class="modal-close" onclick="closeModal('modal-signin')" aria-label="Close">✕</button>
-    <div class="modal-logo">Task<span>Aura</span></div>
+    <div class="modal-logo">Task<span>//</span>Aura</div>
     <h2>Welcome back</h2>
     <p class="modal-sub">Sign in to your TaskAura workspace.</p>
     <button class="btn-google" onclick="signInWithGoogle()">
@@ -352,7 +353,7 @@
 <div class="modal-overlay" id="modal-signup">
   <div class="modal" role="dialog" aria-modal="true" aria-label="Create account">
     <button class="modal-close" onclick="closeModal('modal-signup')" aria-label="Close">✕</button>
-    <div class="modal-logo">Task<span>Aura</span></div>
+    <div class="modal-logo">Task<span>//</span>Aura</div>
     <h2>Create your account</h2>
     <p class="modal-sub">Free to start. No credit card required.</p>
     <button class="btn-google" onclick="signInWithGoogle()">
@@ -394,8 +395,8 @@
 <div class="nav-wrap">
 <nav>
   <div class="nav-logo" onclick="scrollToTop()">
-    <div class="logo-mark">T</div>
-    <span class="nav-logo-text">Task<span>Aura</span></span>
+    <div class="logo-mark">/</div>
+    <span class="nav-logo-text">Task<span>//</span>Aura</span>
   </div>
   <button class="mobile-nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('mobile-open')" aria-label="Menu">&#9776;</button>
   <div class="nav-links">

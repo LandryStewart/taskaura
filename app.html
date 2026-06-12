@@ -737,36 +737,8 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .pd-chart-bar-fill{width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#f97316,#ea580c);min-height:2px;transition:height .5s cubic-bezier(.4,0,.2,1);}
 .pd-chart-bar-label{font-size:9px;color:var(--muted);white-space:nowrap;}
 
-/* ── AI Chat Assistant ── */
-@keyframes chatSlideUp{from{opacity:0;transform:translateY(20px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
 @keyframes chatPulse{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.4);}70%{box-shadow:0 0 0 8px rgba(249,115,22,0);}}
-.ai-fab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#ea580c,#f97316);border:none;color:#fff;font-size:20px;cursor:pointer;z-index:8000;box-shadow:0 4px 18px rgba(249,115,22,.45);transition:transform .2s,box-shadow .2s;display:flex;align-items:center;justify-content:center;font-weight:700;letter-spacing:-.5px;font-size:13px;}
-.ai-fab:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(249,115,22,.55);}
-.ai-fab.has-key{animation:chatPulse 2.5s ease-in-out 1;}
-.ai-panel{position:fixed;top:0;right:0;bottom:0;width:400px;max-width:100vw;background:var(--card);border-left:1px solid var(--border);box-shadow:-16px 0 50px rgba(0,0,0,.3);z-index:10050;display:flex;flex-direction:column;overflow:hidden;animation:drawerIn .3s cubic-bezier(.22,.9,.3,1) both;}
-@keyframes drawerIn{from{transform:translateX(100%);}to{transform:translateX(0);}}
-@media(max-width:600px){.ai-panel{width:100vw;}}
-@media(prefers-reduced-motion:reduce){.ai-panel{animation:none;}}
-.ai-panel-hdr{padding:14px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
-.ai-panel-dot{width:8px;height:8px;border-radius:50%;background:#f97316;flex-shrink:0;}
-.ai-panel-title{font-size:14px;font-weight:700;color:var(--text);flex:1;}
-.ai-panel-model{font-size:10px;color:var(--muted);font-weight:500;}
-.ai-panel-close{background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1;padding:0 2px;}
-.ai-panel-close:hover{color:var(--text);}
-/* ── Dashboard embedded AI assistant ── */
 .pd-panel.pd-span6{grid-column:span 6;}
-.pd-ai-card{display:flex;flex-direction:column;gap:10px;}
-.pd-ai-msgs{display:flex;flex-direction:column;gap:8px;min-height:140px;max-height:320px;overflow-y:auto;padding:4px 2px;}
-.pd-ai-inputrow{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--bg);border:1px solid var(--border);transition:border-color .2s,box-shadow .2s;}
-.pd-ai-inputrow:focus-within{border-color:rgba(249,115,22,.5);box-shadow:0 0 0 3px rgba(249,115,22,.1);}
-.pd-ai-input{flex:1;min-width:120px;border:none;background:transparent;color:var(--text);font-size:14px;outline:none;font-family:inherit;}
-.pd-ai-input::placeholder{color:var(--muted);}
-.pd-ai-send{width:34px;height:34px;border:none;border-radius:9px;background:linear-gradient(135deg,#ea580c,#f97316);color:#fff;font-size:13px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
-.pd-ai-send:hover{opacity:.88;}
-.pd-ai-send:disabled{opacity:.5;cursor:default;}
-.pd-ai-chips{display:flex;gap:6px;flex-wrap:wrap;width:100%;}
-.pd-ai-chip{padding:5px 12px;border:1px solid var(--border);border-radius:999px;background:transparent;color:var(--text2);font-size:11.5px;font-weight:600;cursor:pointer;transition:all .15s;}
-.pd-ai-chip:hover{border-color:rgba(249,115,22,.5);color:var(--pri);background:var(--pri-l);}
 .nav-unread{width:8px;height:8px;border-radius:50%;background:#f97316;margin-left:auto;flex-shrink:0;animation:chatPulse 2s ease-in-out infinite;}
 @media(prefers-reduced-motion:reduce){.nav-unread{animation:none;}}
 /* ── Team Invites ── */
@@ -786,26 +758,6 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .pd-invite-decline:hover{color:var(--text);border-color:var(--muted);}
 @media(max-width:600px){.pd-invite-banner{flex-wrap:wrap;}.pd-invite-actions{width:100%;justify-content:flex-end;}}
 @media(prefers-reduced-motion:reduce){.pd-invite-banner{animation:none;}}
-.ai-messages{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth;}
-.ai-messages::-webkit-scrollbar{width:4px;}
-.ai-messages::-webkit-scrollbar-track{background:transparent;}
-.ai-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-.ai-msg{max-width:88%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word;}
-.ai-msg.user{background:linear-gradient(135deg,#ea580c,#f97316);color:#fff;align-self:flex-end;border-radius:14px 14px 4px 14px;}
-.ai-msg.assistant{background:var(--bg);color:var(--text);align-self:flex-start;border-radius:14px 14px 14px 4px;border:1px solid var(--border);}
-.ai-msg.typing{opacity:.6;}
-.ai-msg.error{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;align-self:flex-start;}
-.ai-no-key{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;gap:12px;}
-.ai-no-key p{font-size:13px;color:var(--text2);line-height:1.5;}
-.ai-footer{padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;align-items:flex-end;}
-.ai-input{flex:1;padding:9px 13px;border:1px solid var(--border);border-radius:12px;font-size:13px;background:var(--bg);color:var(--text);resize:none;max-height:100px;line-height:1.4;outline:none;font-family:inherit;}
-.ai-input:focus{border-color:var(--pri);}
-.ai-send{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#ea580c,#f97316);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s;}
-.ai-send:hover{opacity:.85;}
-.ai-send:disabled{opacity:.4;cursor:default;}
-.ai-clear{background:none;border:none;font-size:11px;color:var(--muted);cursor:pointer;padding:2px 4px;flex-shrink:0;align-self:center;}
-.ai-clear:hover{color:var(--crit);}
-[data-theme="dark"] .ai-msg.error{background:#450a0a;color:#fca5a5;border-color:#7f1d1d;}
 @media(max-width:768px){.dash-grid{grid-template-columns:1fr;}}
 .dash-panel{background:var(--card);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);border:1px solid var(--border);}
 .dash-panel h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:14px;}
@@ -1065,14 +1017,6 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 <div class="settings-section"><h3>Buckets</h3><div class="sett-list" id="settBuckets"></div><button class="sett-add" onclick="addBucketSetting()">+ Add Bucket</button></div>
 <div class="settings-section"><h3>Labels</h3><div class="sett-list" id="settLabels"></div><button class="sett-add" onclick="addLabelSetting()">+ Add Label</button></div>
 <div class="settings-section"><h3>Preferences</h3><div class="toggle-row"><span>🌙 Dark Mode</span><label class="switch"><input type="checkbox" id="togDark" onchange="toggleDark()"><span class="slider"></span></label></div><div class="toggle-row"><span>📐 Compact Cards</span><label class="switch"><input type="checkbox" id="togCompact" onchange="toggleCompact()"><span class="slider"></span></label></div></div>
-<div class="settings-section"><h3>AI Assistant</h3>
-<p style="font-size:11px;color:var(--text2);margin-bottom:10px">The AI assistant is built in — no setup needed. It can see your tasks across all workspaces and helps you prioritize, summarize, and plan.</p>
-<label style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text2);display:block">Model</label>
-<select id="settAIModel" onchange="saveAIModel()" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg);margin-top:4px">
-  <option value="claude-haiku-4-5-20251001">Claude Haiku (fast)</option>
-  <option value="claude-sonnet-4-6">Claude Sonnet (balanced)</option>
-</select>
-</div>
 <div class="settings-section"><h3>Data</h3>
 <p style="font-size:11px;color:var(--text2);margin-bottom:10px">Your data syncs to the cloud automatically. You can still download a local backup anytime.</p>
 <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1241,7 +1185,6 @@ function applyPlanGates(){
   const teamOk=hasTeamPlan();
   const ns=document.getElementById('navSchedules');if(ns)ns.style.display=teamOk?'':'none';
   document.querySelectorAll('.mobile-bottom-nav button[data-view="schedules"]').forEach(b=>{b.style.display=teamOk?'':'none';});
-  const fab=document.getElementById('aiFab');if(fab&&!teamOk)fab.classList.add('hidden');
 }
 
 async function unlockApp() {
@@ -1296,7 +1239,6 @@ async function unlockApp() {
   renderWorkspaceTabs();
   _unlockingApp=false;
   if (!localStorage.getItem('wm_tour_done')) setTimeout(startTour, 800);
-  initAIFab();
 }
 
 function showLoginScreen() {
@@ -1996,21 +1938,6 @@ function renderPersonalDashboard(el){
 
     // Data panels (bento)
     '<div class="pd-panels">'+
-      // Embedded AI assistant — always visible, no drawer needed
-      (hasTeamPlan()?
-      '<div class="pd-panel pd-span6 pd-ai-card">'+
-        '<div class="pd-panel-title">✦ AI Assistant</div>'+
-        '<div class="pd-ai-msgs" id="pdAiMessages"></div>'+
-        '<div class="pd-ai-chips">'+
-          '<button class="pd-ai-chip" onclick="dashAIChip(\'What should I prioritize today?\')">Prioritize my day</button>'+
-          '<button class="pd-ai-chip" onclick="dashAIChip(\'Summarize my overdue tasks\')">Summarize overdue</button>'+
-          '<button class="pd-ai-chip" onclick="dashAIChip(\'What is on my plate this week?\')">This week</button>'+
-        '</div>'+
-        '<div class="pd-ai-inputrow">'+
-          '<input id="pdAiInput" class="pd-ai-input" placeholder="Ask anything about your tasks..." onkeydown="if(event.key===\'Enter\')sendAIMessage(\'pdAiInput\')">'+
-          '<button class="pd-ai-send" id="pdAiSend" onclick="sendAIMessage(\'pdAiInput\')">▶</button>'+
-        '</div>'+
-      '</div>':'')+
       '<div class="pd-panel pd-span4">'+
         '<div class="pd-panel-title">Upcoming This Week</div>'+
         upcomingHTML+
@@ -2021,7 +1948,6 @@ function renderPersonalDashboard(el){
           '<button class="pd-action-btn primary" onclick="openNewTask()">+ New Task</button>'+
           '<button class="pd-action-btn secondary" onclick="openTeamPanel()">Create / Join Team</button>'+
           '<button class="pd-action-btn secondary" onclick="generatePDFReport()">Export PDF Report</button>'+
-          (hasTeamPlan()?'<button class="pd-action-btn secondary" onclick="focusDashAI()">✦ Ask AI Assistant</button>':'')+
         '</div>'+
       '</div>'+
       '<div class="pd-panel pd-span2">'+
@@ -2041,7 +1967,6 @@ function renderPersonalDashboard(el){
       '</div>':'');
   animateKpiNums(el);
   startPdClock();
-  renderDashAIHistory();
   if(currentUser&&currentUser.email==='landrystewart@live.com')loadPendingUsers();
 }
 
@@ -2198,7 +2123,7 @@ function setView(v){if(v==='schedules'&&!hasTeamPlan()){showToast('🔒 Schedule
 function render(){document.querySelectorAll('.workspace-tab').forEach(t=>{t.classList.toggle('active',t.dataset.ws===currentWorkspace);});updateFilters();updateStats();updateFilterChips();updateTodayBadge();renderPresets();updateDashboardNav();// Show/hide chat nav item
 const chatNav=document.getElementById('navChat');if(chatNav){if(currentTeamWorkspaceId)chatNav.classList.remove('hidden');else{chatNav.classList.add('hidden');if(currentView==='chat'){currentView='dashboard';}}}
 updateChatUnread();
-if(currentView==='dashboard')renderDashboard();else if(currentView==='board')renderBoard();else if(currentView==='list')renderList();else if(currentView==='calendar')renderCalendar();else if(currentView==='notes')renderNotesView();else if(currentView==='schedules')renderSchedules();else if(currentView==='chat')renderChat();const _fab=document.getElementById('aiFab');if(_fab){if(hasTeamPlan())_fab.classList.remove('hidden');else _fab.classList.add('hidden');}save();}
+if(currentView==='dashboard')renderDashboard();else if(currentView==='board')renderBoard();else if(currentView==='list')renderList();else if(currentView==='calendar')renderCalendar();else if(currentView==='notes')renderNotesView();else if(currentView==='schedules')renderSchedules();else if(currentView==='chat')renderChat();save();}
 function updateDashboardNav(){const navEl=document.getElementById('navDashboard');if(navEl)navEl.classList.remove('hidden');}
 function switchWorkspace(ws){
   if(ws===currentWorkspace&&!currentTeamWorkspaceId)return;
@@ -2365,9 +2290,6 @@ function saveTask(){const title=document.getElementById('mTitle').value.trim();i
 function deleteTask(){const t=state.tasks.find(x=>x.id===editingId);if(!t)return;const removed=t,idx=state.tasks.indexOf(t);state.tasks=state.tasks.filter(x=>x.id!==editingId);closeTaskModal();render();showToast('Task "'+removed.title+'" deleted',function(){state.tasks.splice(idx,0,removed);render();});}
 function completeTaskConfirm(){const t=state.tasks.find(x=>x.id===editingId);if(!t)return;if(!confirm('Mark "'+t.title+'" as complete?\n\nThis will move it to the Complete bucket and clear its due date, assignee, and labels.'))return;const completeBucket=state.buckets.find(b=>b.toLowerCase().includes('complet'))||state.buckets[state.buckets.length-1];const oldData={bucket:t.bucket,due:t.due,assignee:t.assignee,assigneeId:t.assigneeId,labels:t.labels?[...t.labels]:[],pct:t.pct};t.bucket=completeBucket;t.due='';t.assignee='';t.assigneeId=null;t.labels=[];t.pct=100;closeTaskModal();render();showToast('✅ "'+t.title+'" completed!',function(){t.bucket=oldData.bucket;t.due=oldData.due;t.assignee=oldData.assignee;t.assigneeId=oldData.assigneeId;t.labels=oldData.labels;t.pct=oldData.pct;render();});}
 function openSettings(){
-  // Populate AI model selector
-  const aiModelEl=document.getElementById('settAIModel');
-  if(aiModelEl){aiModelEl.value=getAIModel();}
   document.getElementById('settBuckets').innerHTML=state.buckets.map((b,i)=>'<div class="sett-item"><input type="text" value="'+esc(b)+'" data-idx="'+i+'"><button class="sett-rm" onclick="removeBucket('+i+')">×</button></div>').join('');document.getElementById('settLabels').innerHTML=state.labels.map((l,i)=>'<div class="sett-item"><input type="color" value="'+l.color+'"><input type="text" value="'+esc(l.name)+'"><button class="sett-rm" onclick="removeLabel('+i+')">×</button></div>').join('');document.getElementById('settingsOverlay').classList.add('show');}
 function closeSettings(){const overlay=document.getElementById('settingsOverlay');if(!overlay||!overlay.classList.contains('show'))return;const bi=document.querySelectorAll('#settBuckets input[type=text]'),nb=[...bi].map(i=>i.value.trim()).filter(Boolean);bi.forEach(inp=>{const idx=parseInt(inp.dataset.idx);if(isNaN(idx))return;const old=state.buckets[idx],nw=inp.value.trim();if(old&&nw&&old!==nw)state.tasks.forEach(t=>{if(t.bucket===old)t.bucket=nw;});});state.buckets=nb.length?nb:[...DEFAULT_BUCKETS];state.tasks.forEach(t=>{if(!state.buckets.includes(t.bucket))t.bucket=state.buckets[0];});const ln=document.querySelectorAll('#settLabels input[type=text]'),lc=document.querySelectorAll('#settLabels input[type=color]');state.labels=[...ln].map((inp,i)=>({name:inp.value.trim(),color:lc[i].value})).filter(l=>l.name);document.getElementById('settingsOverlay').classList.remove('show');render();}
 function addBucketSetting(){const sb=document.getElementById('settBuckets'),div=document.createElement('div');div.className='sett-item';div.innerHTML='<input type="text" value="New Bucket" data-idx="'+sb.children.length+'"><button class="sett-rm" onclick="this.parentElement.remove()">×</button>';sb.appendChild(div);}
@@ -3074,279 +2996,6 @@ function exportTasksJSON(){
   showToast('Tasks exported.');
 }
 
-/* ── AI Assistant ── */
-let aiChatHistory=[];
-let aiStreaming=false;
-function getAIModel(){return localStorage.getItem('taskaura_ai_model')||'claude-haiku-4-5-20251001';}
-
-function saveAIModel(){
-  const model=document.getElementById('settAIModel').value;
-  localStorage.setItem('taskaura_ai_model',model);
-  initAIFab();
-  showToast('Model updated.');
-}
-
-function initAIFab(){
-  const fab=document.getElementById('aiFab');
-  if(fab){if(hasTeamPlan())fab.classList.remove('hidden');else fab.classList.add('hidden');}
-  const model=document.getElementById('settAIModel');
-  if(model){model.value=getAIModel();}
-  const panelModel=document.getElementById('aiPanelModel');
-  if(panelModel){
-    const m=getAIModel();
-    panelModel.textContent=m.includes('haiku')?'Claude Haiku':m.includes('sonnet')?'Claude Sonnet':'Claude Opus';
-  }
-}
-
-function toggleAIChat(){
-  try{
-  if(!hasTeamPlan()){showToast('🔒 The AI assistant is a Team plan feature.');return;}
-  const panel=document.getElementById('aiPanel');
-  const fab=document.getElementById('aiFab');
-  if(!panel)return;
-  const isOpen=!panel.classList.contains('hidden');
-  if(isOpen){
-    panel.classList.add('hidden');
-    panel.style.display='';
-    if(fab)fab.textContent='AI';
-  }else{
-    // Close settings if open so the drawer is never buried behind it
-    const so=document.getElementById('settingsOverlay');
-    if(so&&so.classList.contains('show'))closeSettings();
-    panel.classList.remove('hidden');
-    panel.style.display='flex';
-    if(fab)fab.textContent='×';
-    if(aiChatHistory.length===0)showAIWelcome();
-    const inp=document.getElementById('aiInput');if(inp)inp.focus();
-  }
-  }catch(e){console.error('[TaskAura] toggleAIChat:',e);try{showToast('⚠ AI panel error: '+e.message);}catch(_){alert('AI panel error: '+e.message);}}
-}
-
-function showAIWelcome(){
-  const myName=(state.myName||'').trim();
-  const today=todayStr();
-  const tasks=state.tasks||[];
-  const overdue=tasks.filter(t=>isOverdue(t)).length;
-  const dueToday=tasks.filter(t=>t.due===today&&(t.pct||0)<100).length;
-  const msg=`Hi${myName?' '+myName.split(' ')[0]:''}! I'm your TaskAura assistant. I can see your current tasks and workspace.`+
-    (overdue?`\n\nHeads up — you have **${overdue} overdue task${overdue>1?'s':''}**.`:'')+
-    (dueToday?`\n\n${dueToday} task${dueToday>1?'s are':' is'} due today.`:'')+
-    '\n\nAsk me anything — "What should I prioritize?", "Summarize my overdue tasks", or "Help me write a task description".';
-  appendAIMessage('assistant',msg);
-}
-
-function buildSystemPrompt(){
-  const today=todayStr();
-  const myName=(state.myName||'').trim();
-  const wsName=currentTeamWorkspaceId
-    ?(teamWorkspaces.find(w=>w.id===currentTeamWorkspaceId)||{}).name||'Team'
-    :'Work';
-
-  // Gather tasks from ALL workspaces
-  const allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');
-  const allTasks=[];
-
-  // Personal workspace
-  const personalTasks=(allWs.work||{}).tasks||[];
-  personalTasks.forEach(t=>allTasks.push({...t,_ws:'Work'}));
-
-  // All team workspaces
-  teamWorkspaces.forEach(tw=>{
-    ((tw.data||{}).tasks||[]).forEach(t=>allTasks.push({...t,_ws:tw.name}));
-  });
-
-  const overdue=allTasks.filter(t=>isOverdue(t));
-  const dueToday=allTasks.filter(t=>t.due===today&&(t.pct||0)<100);
-  const open=allTasks.filter(t=>(t.pct||0)<100);
-  const done=allTasks.filter(t=>(t.pct||0)>=100);
-
-  // Build per-workspace task lists
-  const workspaces=[{name:'Work',tasks:personalTasks},...teamWorkspaces.map(tw=>({name:tw.name,tasks:(tw.data||{}).tasks||[]}))];
-  let taskListStr='';
-  let count=0;
-  for(const ws of workspaces){
-    if(!ws.tasks.length)continue;
-    taskListStr+=`\n[${ws.name}]\n`;
-    for(const t of ws.tasks){
-      if(count>=80)break;
-      taskListStr+=`- [${(t.pct||0)>=100?'Done':(t.due&&t.due<today?'OVERDUE':t.due===today?'Due Today':'Open')}] `+
-        `"${t.title}" | Priority: ${t.priority||'medium'} | Due: ${t.due||'none'} | `+
-        `Bucket: ${t.bucket||'—'} | Assignee: ${t.assignee||'—'} | Progress: ${t.pct||0}%\n`;
-      count++;
-    }
-  }
-
-  const teams=teamWorkspaces.map(tw=>tw.name).join(', ')||'none';
-
-  // Notes from current workspace
-  const notes=(state.notes||[]).slice(0,10).map(n=>`- "${n.title||'Untitled'}"`).join('\n');
-
-  return `You are an intelligent AI assistant embedded in TaskAura, a task management app. You help users manage tasks, prioritize work, draft task descriptions, and stay organized. You have visibility into ALL of the user's workspaces — personal and team.
-
-Today's date: ${today}
-User: ${myName||'(name not set)'}
-Current workspace: ${wsName}
-Team workspaces: ${teams}
-
-Global Task Summary (across all workspaces):
-- Total tasks: ${allTasks.length}
-- Open: ${open.length}
-- Completed: ${done.length}
-- Overdue: ${overdue.length}
-- Due today: ${dueToday.length}
-
-Tasks by Workspace (up to 80):
-${taskListStr||'No tasks yet.'}
-
-Current Workspace Buckets: ${(state.buckets||[]).join(', ')||'none'}
-${notes?`\nNotes in current workspace:\n${notes}`:''}
-
-Instructions:
-- Be concise but helpful. Use markdown formatting (bold, bullets) where it aids clarity.
-- When referencing specific tasks, include which workspace they belong to.
-- If asked to prioritize, consider due dates, overdue status, and priority level across all workspaces.
-- If the user asks to create or update a task, explain that they'll need to do that themselves in the app (you can't modify tasks directly).
-- Keep responses focused on task management and productivity.
-- You can answer questions about any workspace, not just the current one.`;
-}
-
-function aiBoxes(){
-  return[document.getElementById('aiMessages'),document.getElementById('pdAiMessages')].filter(Boolean);
-}
-function appendAIMessage(role,text){
-  const divs=[];
-  aiBoxes().forEach(el=>{
-    const div=document.createElement('div');
-    div.className='ai-msg '+role;
-    div.textContent=text;
-    el.appendChild(div);
-    el.scrollTop=el.scrollHeight;
-    divs.push(div);
-  });
-  return divs;
-}
-function aiSendBtns(){
-  return[document.getElementById('aiSend'),document.getElementById('pdAiSend')].filter(Boolean);
-}
-
-async function sendAIMessage(srcId){
-  if(aiStreaming)return;
-  if(!hasTeamPlan()){showToast('🔒 The AI assistant is a Team plan feature.');return;}
-  const input=document.getElementById(srcId||'aiInput');
-  if(!input)return;
-  const text=(input.value||'').trim();
-  if(!text)return;
-
-  input.value='';
-  if(input.tagName==='TEXTAREA')input.style.height='auto';
-  appendAIMessage('user',text);
-  aiChatHistory.push({role:'user',content:text});
-
-  // Thinking indicator
-  const thinkEls=appendAIMessage('assistant','...');
-  thinkEls.forEach(el=>el.classList.add('typing'));
-  aiSendBtns().forEach(b=>b.disabled=true);
-  aiStreaming=true;
-
-  try{
-    // Attach the user's sign-in token — the server verifies it before spending AI credits
-    let aiToken='';
-    try{const s=await _supabase.auth.getSession();aiToken=(s.data&&s.data.session&&s.data.session.access_token)||'';}catch(_){}
-    const resp=await fetch('/api/ai',{
-      method:'POST',
-      headers:{'content-type':'application/json','authorization':'Bearer '+aiToken},
-      body:JSON.stringify({
-        model:getAIModel(),
-        system:buildSystemPrompt(),
-        messages:aiChatHistory
-      })
-    });
-
-    if(!resp.ok){
-      const err=await resp.json().catch(()=>({error:{message:'Request failed ('+resp.status+')'}}));
-      const msg=(err.error&&err.error.message)||'Request failed ('+resp.status+')';
-      thinkEls.forEach(el=>{el.textContent=msg;el.classList.remove('typing');el.classList.add('error');});
-      aiStreaming=false;
-      aiSendBtns().forEach(b=>b.disabled=false);
-      return;
-    }
-
-    const reader=resp.body.getReader();
-    const decoder=new TextDecoder();
-    let fullText='';
-    thinkEls.forEach(el=>{el.textContent='';el.classList.remove('typing');});
-
-    while(true){
-      const{done,value}=await reader.read();
-      if(done)break;
-      const lines=decoder.decode(value).split('\n');
-      for(const line of lines){
-        if(!line.startsWith('data: '))continue;
-        const data=line.slice(6).trim();
-        if(data==='[DONE]')break;
-        try{
-          const parsed=JSON.parse(data);
-          if(parsed.type==='content_block_delta'&&parsed.delta&&parsed.delta.text){
-            fullText+=parsed.delta.text;
-            thinkEls.forEach(el=>el.textContent=fullText);
-            aiBoxes().forEach(el=>el.scrollTop=el.scrollHeight);
-          }
-        }catch(e){}
-      }
-    }
-
-    aiChatHistory.push({role:'assistant',content:fullText});
-    // Keep history manageable (last 20 turns)
-    if(aiChatHistory.length>20)aiChatHistory=aiChatHistory.slice(-20);
-
-  }catch(e){
-    thinkEls.forEach(el=>{el.textContent='Network error: '+e.message;el.classList.remove('typing');el.classList.add('error');});
-  }
-
-  aiStreaming=false;
-  aiSendBtns().forEach(b=>b.disabled=false);
-  input.focus();
-}
-
-function clearAIChat(){
-  aiChatHistory=[];
-  aiBoxes().forEach(el=>el.innerHTML='');
-  showAIWelcome();
-}
-
-// Dashboard embedded AI helpers
-function dashAIChip(text){
-  const inp=document.getElementById('pdAiInput');
-  if(!inp)return;
-  inp.value=text;
-  sendAIMessage('pdAiInput');
-}
-function renderDashAIHistory(){
-  const el=document.getElementById('pdAiMessages');
-  if(!el)return;
-  el.innerHTML='';
-  if(aiChatHistory.length===0){
-    const div=document.createElement('div');
-    div.className='ai-msg assistant';
-    div.textContent='Hi! Ask me anything about your tasks — I can see all your workspaces.';
-    el.appendChild(div);
-    return;
-  }
-  aiChatHistory.forEach(m=>{
-    const div=document.createElement('div');
-    div.className='ai-msg '+(m.role==='assistant'?'assistant':'user');
-    div.textContent=m.content;
-    el.appendChild(div);
-  });
-  el.scrollTop=el.scrollHeight;
-}
-function focusDashAI(){
-  const card=document.querySelector('.pd-ai-card');
-  if(card)card.scrollIntoView({behavior:'smooth',block:'center'});
-  const inp=document.getElementById('pdAiInput');
-  if(inp)setTimeout(()=>inp.focus(),300);
-}
-
 // ── Team Chat ────────────────────────────────────────────────────────────────
 function chatLastReadKey(){return'taskaura_chat_read_'+currentTeamWorkspaceId;}
 function getMyChatName(){return(state.myName||'').trim()||(currentUser?(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0]:'');}
@@ -3729,23 +3378,5 @@ function generatePDFReport(){
 
 </script>
 
-<!-- AI Assistant -->
-<button class="ai-fab" id="aiFab" onclick="toggleAIChat()" title="AI Assistant">AI</button>
-<div class="ai-panel hidden" id="aiPanel">
-  <div class="ai-panel-hdr">
-    <div class="ai-panel-dot"></div>
-    <div class="ai-panel-title">AI Assistant</div>
-    <span class="ai-panel-model" id="aiPanelModel">Claude Haiku</span>
-    <button class="ai-clear" onclick="clearAIChat()" title="Clear chat">Clear</button>
-    <button class="ai-panel-close" onclick="toggleAIChat()">×</button>
-  </div>
-  <div class="ai-messages" id="aiMessages"></div>
-  <div class="ai-footer">
-    <textarea class="ai-input" id="aiInput" placeholder="Ask anything about your tasks..." rows="1"
-      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMessage();}
-      this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
-    <button class="ai-send" id="aiSend" onclick="sendAIMessage()" title="Send">▶</button>
-  </div>
-</div>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=5.0,user-scalable=yes">
-<title>MongoTask</title>
+<title>TaskAura</title>
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@600,700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -862,7 +862,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 <body>
 <div class="auth-overlay" id="authOverlay">
  <div class="auth-card">
-  <h1 style="font-family:'General Sans',sans-serif;font-weight:700;letter-spacing:-0.035em;">Mongo<span style="color:#f97316;font-weight:600;letter-spacing:-0.12em;margin:0 .05em">//</span>Task</h1>
+  <h1 style="font-family:'General Sans',sans-serif;font-weight:700;letter-spacing:-0.035em;">Task<span style="color:#f97316;font-weight:600;letter-spacing:-0.12em;margin:0 .05em">//</span>Aura</h1>
   <p class="auth-sub" id="authSub">Sign in to your account</p>
   <div class="auth-error" id="loginError"></div>
   <div id="authFormSignIn">
@@ -894,7 +894,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 </div>
 <div class="topbar">
  <button class="mobile-hamburger" id="mobileHamburger" onclick="toggleMobileSidebar()">☰</button>
- <div class="logo"><span class="logo-tile">/</span><span>Mongo<span class="logo-accent">//</span>Task</span></div>
+ <div class="logo"><span class="logo-tile">/</span><span>Task<span class="logo-accent">//</span>Aura</span></div>
  <input type="hidden" id="projName" value="My Project">
  <div class="topbar-search"><span>🔍</span><input type="search" id="searchBox" placeholder="Search tasks..." oninput="applyFilters()"></div>
  <div class="spacer"></div>
@@ -1087,8 +1087,8 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 </div>
 <script>
 // ── Supabase Configuration ────────────────────────────────────────────────────
-const SUPABASE_URL = 'https://twymhfwktpszoaftdyiv.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_p6PR4E-R1avcyARJ6s8UIw_j7Qzj7qy';
+const SUPABASE_URL = 'https://kxidfwesywhhdifekkqo.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Mpf3fQxq5253lluxVGdXxA_Se4rBp9z';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null;
 let _unlockingApp = false;
@@ -1280,7 +1280,7 @@ function beaconSave(){
   if(!currentUser||!_cloudLoaded)return;
   try{
     var session=null;
-    var raw=localStorage.getItem('sb-twymhfwktpszoaftdyiv-auth-token');
+    var raw=localStorage.getItem('sb-kxidfwesywhhdifekkqo-auth-token');
     if(raw){try{var parsed=JSON.parse(raw);session=parsed.access_token||((parsed.currentSession||{}).access_token);if(!session&&parsed.session)session=parsed.session.access_token;}catch(e){}}
     if(!session)return;
     var url,body;
@@ -1312,7 +1312,7 @@ async function loadFromCloud(){
   if(!currentUser)return;
   try{
     const{data:blobs,error:blobErr}=await _supabase.from('workspace_blobs').select('workspace_key,data').eq('user_id',currentUser.id);
-    console.log('[MongoTask] loadFromCloud — blobs:',blobs?.length||0,'error:',blobErr,'tasks per blob:',blobs?.map(b=>b.workspace_key+':'+((b.data&&b.data.tasks)?b.data.tasks.length:0)));
+    console.log('[TaskAura] loadFromCloud — blobs:',blobs?.length||0,'error:',blobErr,'tasks per blob:',blobs?.map(b=>b.workspace_key+':'+((b.data&&b.data.tasks)?b.data.tasks.length:0)));
     if(blobs&&blobs.length){
       let allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');
       let changed=false;
@@ -1350,7 +1350,7 @@ async function loadTeamWorkspaces(){
   try{
     const{data:owned,error:ownedErr}=await _supabase.from('team_workspaces').select('id,name,code,data,owner_id').eq('owner_id',currentUser.id);
     const{data:members,error:membersErr}=await _supabase.from('team_workspace_members').select('workspace_id').eq('user_id',currentUser.id);
-    console.log('[MongoTask] loadTeamWorkspaces — owned:',owned?.length||0,'members:',members?.length||0,'errors:',ownedErr,membersErr);
+    console.log('[TaskAura] loadTeamWorkspaces — owned:',owned?.length||0,'members:',members?.length||0,'errors:',ownedErr,membersErr);
     let allTeams=[...(owned||[])];
     const ownedIds=new Set(allTeams.map(t=>t.id));
     const memberIds=(members||[]).map(m=>m.workspace_id).filter(id=>!ownedIds.has(id));
@@ -1361,9 +1361,9 @@ async function loadTeamWorkspaces(){
     teamWorkspaces=allTeams;
     // Backfill assigneeId on legacy name-only tasks (persists next time workspace data is saved)
     teamWorkspaces.forEach(function(tw){var d=tw.data;if(!d||!d.tasks)return;var ids=d.memberIds||{};d.tasks.forEach(function(t){if(!t.assigneeId&&t.assignee&&ids[t.assignee])t.assigneeId=ids[t.assignee];});});
-    console.log('[MongoTask] Total teams loaded:',teamWorkspaces.length,teamWorkspaces.map(t=>t.name));
+    console.log('[TaskAura] Total teams loaded:',teamWorkspaces.length,teamWorkspaces.map(t=>t.name));
     renderWorkspaceTabs();
-  }catch(e){console.error('[MongoTask] loadTeamWorkspaces error:',e);}
+  }catch(e){console.error('[TaskAura] loadTeamWorkspaces error:',e);}
 }
 
 // ── Team Workspace Functions (Phase 3) ───────────────────────────────────────
@@ -1536,7 +1536,7 @@ async function loadJoinRequests(){
   if(!currentUser)return;
   try{
     var{data,error}=await _supabase.from('team_join_requests').select('*');
-    if(error){console.log('[MongoTask] join requests load:',error.message);return;}
+    if(error){console.log('[TaskAura] join requests load:',error.message);return;}
     var rows=data||[];
     var myOwnedIds=new Set(teamWorkspaces.filter(function(t){return t.owner_id===currentUser.id;}).map(function(t){return t.id;}));
     incomingJoinRequests=rows.filter(function(r){return r.status==='pending'&&r.user_id!==currentUser.id&&myOwnedIds.has(r.workspace_id);});
@@ -1550,7 +1550,7 @@ async function loadJoinRequests(){
     }
     if(resolved.some(function(r){return r.status==='approved';}))await loadTeamWorkspaces();
     if((incomingJoinRequests.length||myJoinRequests.length)&&currentView==='dashboard')render();
-  }catch(e){console.log('[MongoTask] join requests error:',e);}
+  }catch(e){console.log('[TaskAura] join requests error:',e);}
 }
 async function approveJoinRequest(reqId){
   var r=incomingJoinRequests.find(function(x){return x.id===reqId;});if(!r)return;
@@ -1610,11 +1610,11 @@ async function loadPendingInvites(){
   if(!currentUser)return;
   try{
     var{data,error}=await _supabase.from('team_invites').select('id,workspace_id,workspace_name,code,invited_by,created_at').eq('status','pending');
-    if(error){console.log('[MongoTask] invites load:',error.message);return;}
+    if(error){console.log('[TaskAura] invites load:',error.message);return;}
     var haveIds=new Set(teamWorkspaces.map(function(t){return t.id;}));
     pendingInvites=(data||[]).filter(function(i){return!haveIds.has(i.workspace_id);});
     if(pendingInvites.length&&currentView==='dashboard')render();
-  }catch(e){console.log('[MongoTask] invites error:',e);}
+  }catch(e){console.log('[TaskAura] invites error:',e);}
 }
 async function acceptInvite(inviteId){
   var inv=pendingInvites.find(function(i){return i.id===inviteId;});
@@ -2785,10 +2785,10 @@ function exportSchedulesPDF(){
     doc.setPage(i);const ph=doc.internal.pageSize.getHeight();
     doc.setFillColor(248,250,252);doc.rect(0,ph-8,pageW,8,'F');
     doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(100,116,139);
-    doc.text('MongoTask · '+wsName+' Schedules',margin,ph-2.5);
+    doc.text('TaskAura · '+wsName+' Schedules',margin,ph-2.5);
     doc.text('Page '+i+' of '+totalPages,pageW-margin,ph-2.5,'right');
   }
-  doc.save('mongotask-schedules-'+today+'.pdf');
+  doc.save('taskaura-schedules-'+today+'.pdf');
   showToast('Schedule PDF exported!');
 }
 
@@ -2801,7 +2801,7 @@ function importTasksFromJSON(input){
     try{raw=JSON.parse(e.target.result);}
     catch(err){showToast('Invalid JSON file.');return;}
 
-    // ── MongoTask full workspace export ──
+    // ── TaskAura full workspace export ──
     // Format: { workspaces: { work: { tasks, buckets, labels, notes, folders, ... } } }
     const wsData=raw.workspaces&&(raw.workspaces.work||raw.workspaces[Object.keys(raw.workspaces)[0]]);
     if(wsData&&wsData.tasks){
@@ -2810,7 +2810,7 @@ function importTasksFromJSON(input){
       const prev=document.getElementById('importPreview');
       if(prev){
         prev.innerHTML=
-          '<strong style="color:var(--low)">MongoTask export detected — ready to restore</strong>'+
+          '<strong style="color:var(--low)">TaskAura export detected — ready to restore</strong>'+
           '<br><span style="color:var(--muted)">'+taskCount+' tasks · '+(wsData.buckets||[]).length+' buckets · '+
           (wsData.labels||[]).length+' labels · '+noteCount+' notes · '+(wsData.folders||[]).length+' folders</span>'+
           '<br><span style="color:var(--crit);font-size:10px">This will replace your current Work workspace data.</span>'+
@@ -2990,14 +2990,14 @@ function exportTasksJSON(){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;
-  a.download='mongotask-tasks-'+todayStr()+'.json';
+  a.download='taskaura-tasks-'+todayStr()+'.json';
   a.click();
   URL.revokeObjectURL(url);
   showToast('Tasks exported.');
 }
 
 // ── Team Chat ────────────────────────────────────────────────────────────────
-function chatLastReadKey(){return'mongotask_chat_read_'+currentTeamWorkspaceId;}
+function chatLastReadKey(){return'taskaura_chat_read_'+currentTeamWorkspaceId;}
 function getMyChatName(){return(state.myName||'').trim()||(currentUser?(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0]:'');}
 function updateChatUnread(){
   const dot=document.getElementById('chatUnreadDot');if(!dot)return;
@@ -3218,7 +3218,7 @@ function generatePDFReport(){
     });
   });
 
-  // ── Brand: landing-page logo (orange tile with "/" + Mongo//Task wordmark) ──
+  // ── Brand: landing-page logo (orange tile with "/" + Task//Aura wordmark) ──
   function drawLogo(x,baseY,tile,fontSz){
     doc.setFillColor(...accentRGB);
     doc.roundedRect(x,baseY-tile*0.78,tile,tile,tile*0.28,tile*0.28,'F');
@@ -3228,9 +3228,9 @@ function generatePDFReport(){
     doc.text('/',x+tile/2,baseY-tile*0.78+tile*0.74,'center');
     let lx=x+tile+tile*0.4;
     doc.setFontSize(fontSz);
-    doc.setTextColor(...inkRGB);doc.text('Mongo',lx,baseY);lx+=doc.getTextWidth('Mongo');
+    doc.setTextColor(...inkRGB);doc.text('Task',lx,baseY);lx+=doc.getTextWidth('Task');
     doc.setTextColor(...accentRGB);doc.text('//',lx,baseY);lx+=doc.getTextWidth('//');
-    doc.setTextColor(...inkRGB);doc.text('Task',lx,baseY);
+    doc.setTextColor(...inkRGB);doc.text('Aura',lx,baseY);
   }
 
   // ── Centered watermark on every page ──
@@ -3246,11 +3246,11 @@ function generatePDFReport(){
     doc.setTextColor(255,255,255);
     doc.text('/',cx,cy-40+tile*0.74,'center');
     doc.setFontSize(44);
-    const total=doc.getTextWidth('Mongo')+doc.getTextWidth('//')+doc.getTextWidth('Task');
+    const total=doc.getTextWidth('Task')+doc.getTextWidth('//')+doc.getTextWidth('Aura');
     let x=cx-total/2;const y=cy+18;
-    doc.setTextColor(...inkRGB);doc.text('Mongo',x,y);x+=doc.getTextWidth('Mongo');
+    doc.setTextColor(...inkRGB);doc.text('Task',x,y);x+=doc.getTextWidth('Task');
     doc.setTextColor(...accentRGB);doc.text('//',x,y);x+=doc.getTextWidth('//');
-    doc.setTextColor(...inkRGB);doc.text('Task',x,y);
+    doc.setTextColor(...inkRGB);doc.text('Aura',x,y);
     doc.setGState(new doc.GState({opacity:1}));
   }
 
@@ -3365,14 +3365,14 @@ function generatePDFReport(){
     doc.setFont('helvetica','normal');
     doc.setFontSize(7.5);
     doc.setTextColor(...mutedRGB);
-    doc.text('MongoTask  ·  '+reportTitle,margin,pageH-7);
+    doc.text('TaskAura  ·  '+reportTitle,margin,pageH-7);
     doc.text(generatedDate,pageW/2,pageH-7,{align:'center'});
     doc.text('Page '+i+' of '+totalPages,pageW-margin,pageH-7,'right');
   }
 
   // Save
   const safeName=reportTitle.replace(/[^a-zA-Z0-9\s-]/g,'').replace(/\s+/g,'-').toLowerCase();
-  doc.save('mongotask-'+safeName+'-'+today+'.pdf');
+  doc.save('taskaura-'+safeName+'-'+today+'.pdf');
   showToast('PDF report generated!');
 }
 

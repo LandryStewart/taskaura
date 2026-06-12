@@ -497,6 +497,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
   .main-content{padding-bottom:60px;}
   body{overflow:auto;-webkit-overflow-scrolling:touch;}
   .pd-panels{grid-template-columns:1fr;}
+  .pd-panel.pd-span4,.pd-panel.pd-span2,.pd-panel.pd-span6{grid-column:span 1;}
   .pd-kpi-row{grid-template-columns:1fr !important;}
   .schedules-view{padding:8px;}
   .chat-msg-wrap{max-width:85%;}
@@ -676,7 +677,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .pd-panels{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;}
 .pd-panel.pd-span4{grid-column:span 4;}
 .pd-panel.pd-span2{grid-column:span 2;}
-@media(max-width:700px){.pd-panels{grid-template-columns:1fr;}.pd-panel.pd-span4,.pd-panel.pd-span2{grid-column:span 1;}}
+@media(max-width:700px){.pd-panels{grid-template-columns:1fr;}.pd-panel.pd-span4,.pd-panel.pd-span2,.pd-panel.pd-span6{grid-column:span 1;}}
 .pd-panel{background:var(--card);border-radius:18px;padding:18px 20px;border:1px solid var(--border);box-shadow:var(--shadow);transition:border-color .25s,box-shadow .25s;animation:fadeSlideUp .45s cubic-bezier(.22,.9,.3,1) both;}
 .pd-panels .pd-panel:nth-child(1){animation-delay:.3s;}
 .pd-panels .pd-panel:nth-child(2){animation-delay:.38s;}
@@ -751,18 +752,20 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .ai-panel-model{font-size:10px;color:var(--muted);font-weight:500;}
 .ai-panel-close{background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1;padding:0 2px;}
 .ai-panel-close:hover{color:var(--text);}
-/* ── Dashboard AI ask bar ── */
-.pd-ai-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;border-radius:16px;background:var(--card);border:1px solid var(--border);animation:fadeSlideUp .5s cubic-bezier(.22,.9,.3,1) .1s both;transition:border-color .2s,box-shadow .2s;}
-.pd-ai-bar:focus-within{border-color:rgba(249,115,22,.5);box-shadow:0 0 0 3px rgba(249,115,22,.1);}
-.pd-ai-spark{color:#f97316;font-size:18px;flex-shrink:0;}
-.pd-ai-input{flex:1;min-width:160px;border:none;background:transparent;color:var(--text);font-size:14px;outline:none;font-family:inherit;}
+/* ── Dashboard embedded AI assistant ── */
+.pd-panel.pd-span6{grid-column:span 6;}
+.pd-ai-card{display:flex;flex-direction:column;gap:10px;}
+.pd-ai-msgs{display:flex;flex-direction:column;gap:8px;min-height:140px;max-height:320px;overflow-y:auto;padding:4px 2px;}
+.pd-ai-inputrow{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--bg);border:1px solid var(--border);transition:border-color .2s,box-shadow .2s;}
+.pd-ai-inputrow:focus-within{border-color:rgba(249,115,22,.5);box-shadow:0 0 0 3px rgba(249,115,22,.1);}
+.pd-ai-input{flex:1;min-width:120px;border:none;background:transparent;color:var(--text);font-size:14px;outline:none;font-family:inherit;}
 .pd-ai-input::placeholder{color:var(--muted);}
-.pd-ai-go{padding:8px 18px;border:none;border-radius:10px;background:linear-gradient(135deg,#ea580c,#f97316);color:#fff;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;}
-.pd-ai-go:hover{opacity:.88;}
+.pd-ai-send{width:34px;height:34px;border:none;border-radius:9px;background:linear-gradient(135deg,#ea580c,#f97316);color:#fff;font-size:13px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.pd-ai-send:hover{opacity:.88;}
+.pd-ai-send:disabled{opacity:.5;cursor:default;}
 .pd-ai-chips{display:flex;gap:6px;flex-wrap:wrap;width:100%;}
 .pd-ai-chip{padding:5px 12px;border:1px solid var(--border);border-radius:999px;background:transparent;color:var(--text2);font-size:11.5px;font-weight:600;cursor:pointer;transition:all .15s;}
 .pd-ai-chip:hover{border-color:rgba(249,115,22,.5);color:var(--pri);background:var(--pri-l);}
-@media(prefers-reduced-motion:reduce){.pd-ai-bar{animation:none;}}
 .nav-unread{width:8px;height:8px;border-radius:50%;background:#f97316;margin-left:auto;flex-shrink:0;animation:chatPulse 2s ease-in-out infinite;}
 @media(prefers-reduced-motion:reduce){.nav-unread{animation:none;}}
 /* ── Team Invites ── */
@@ -1878,19 +1881,6 @@ function renderPersonalDashboard(el){
       '</div>'+
     '</div>'+
 
-    // AI ask bar
-    (hasTeamPlan()?
-    '<div class="pd-ai-bar">'+
-      '<span class="pd-ai-spark">✦</span>'+
-      '<input id="pdAiInput" class="pd-ai-input" placeholder="Ask AI about your tasks..." onkeydown="if(event.key===\'Enter\')askAIFromDash()">'+
-      '<button class="pd-ai-go" onclick="askAIFromDash()">Ask</button>'+
-      '<div class="pd-ai-chips">'+
-        '<button class="pd-ai-chip" onclick="askAIFromDash(\'What should I prioritize today?\')">Prioritize my day</button>'+
-        '<button class="pd-ai-chip" onclick="askAIFromDash(\'Summarize my overdue tasks\')">Summarize overdue</button>'+
-        '<button class="pd-ai-chip" onclick="askAIFromDash(\'What is on my plate this week?\')">This week</button>'+
-      '</div>'+
-    '</div>':'')+
-
     // Detail panel (collapsible)
     '<div id="dashDetailPanel" style="display:none" class="dash-detail-panel"></div>'+
 
@@ -1915,6 +1905,21 @@ function renderPersonalDashboard(el){
 
     // Data panels (bento)
     '<div class="pd-panels">'+
+      // Embedded AI assistant — always visible, no drawer needed
+      (hasTeamPlan()?
+      '<div class="pd-panel pd-span6 pd-ai-card">'+
+        '<div class="pd-panel-title">✦ AI Assistant</div>'+
+        '<div class="pd-ai-msgs" id="pdAiMessages"></div>'+
+        '<div class="pd-ai-chips">'+
+          '<button class="pd-ai-chip" onclick="dashAIChip(\'What should I prioritize today?\')">Prioritize my day</button>'+
+          '<button class="pd-ai-chip" onclick="dashAIChip(\'Summarize my overdue tasks\')">Summarize overdue</button>'+
+          '<button class="pd-ai-chip" onclick="dashAIChip(\'What is on my plate this week?\')">This week</button>'+
+        '</div>'+
+        '<div class="pd-ai-inputrow">'+
+          '<input id="pdAiInput" class="pd-ai-input" placeholder="Ask anything about your tasks..." onkeydown="if(event.key===\'Enter\')sendAIMessage(\'pdAiInput\')">'+
+          '<button class="pd-ai-send" id="pdAiSend" onclick="sendAIMessage(\'pdAiInput\')">▶</button>'+
+        '</div>'+
+      '</div>':'')+
       '<div class="pd-panel pd-span4">'+
         '<div class="pd-panel-title">Upcoming This Week</div>'+
         upcomingHTML+
@@ -1925,7 +1930,7 @@ function renderPersonalDashboard(el){
           '<button class="pd-action-btn primary" onclick="openNewTask()">+ New Task</button>'+
           '<button class="pd-action-btn secondary" onclick="openTeamPanel()">Create / Join Team</button>'+
           '<button class="pd-action-btn secondary" onclick="generatePDFReport()">Export PDF Report</button>'+
-          (hasTeamPlan()?'<button class="pd-action-btn secondary" onclick="toggleAIChat()">✦ Ask AI Assistant</button>':'')+
+          (hasTeamPlan()?'<button class="pd-action-btn secondary" onclick="focusDashAI()">✦ Ask AI Assistant</button>':'')+
         '</div>'+
       '</div>'+
       '<div class="pd-panel pd-span2">'+
@@ -1945,6 +1950,7 @@ function renderPersonalDashboard(el){
       '</div>':'');
   animateKpiNums(el);
   startPdClock();
+  renderDashAIHistory();
   if(currentUser&&currentUser.email==='landrystewart@live.com')loadPendingUsers();
 }
 
@@ -3025,17 +3031,6 @@ function toggleAIChat(){
   }catch(e){console.error('[TaskAura] toggleAIChat:',e);try{showToast('⚠ AI panel error: '+e.message);}catch(_){alert('AI panel error: '+e.message);}}
 }
 
-function askAIFromDash(presetText){
-  const inp=document.getElementById('pdAiInput');
-  const q=(presetText||(inp?inp.value.trim():'')||'').trim();
-  if(!q)return;
-  if(inp)inp.value='';
-  const panel=document.getElementById('aiPanel');
-  if(panel&&panel.classList.contains('hidden'))toggleAIChat();
-  const aiInp=document.getElementById('aiInput');
-  if(aiInp){aiInp.value=q;sendAIMessage();}
-}
-
 function showAIWelcome(){
   const myName=(state.myName||'').trim();
   const today=todayStr();
@@ -3124,31 +3119,42 @@ Instructions:
 - You can answer questions about any workspace, not just the current one.`;
 }
 
+function aiBoxes(){
+  return[document.getElementById('aiMessages'),document.getElementById('pdAiMessages')].filter(Boolean);
+}
 function appendAIMessage(role,text){
-  const el=document.getElementById('aiMessages');if(!el)return null;
-  const div=document.createElement('div');
-  div.className='ai-msg '+role;
-  div.textContent=text;
-  el.appendChild(div);
-  el.scrollTop=el.scrollHeight;
-  return div;
+  const divs=[];
+  aiBoxes().forEach(el=>{
+    const div=document.createElement('div');
+    div.className='ai-msg '+role;
+    div.textContent=text;
+    el.appendChild(div);
+    el.scrollTop=el.scrollHeight;
+    divs.push(div);
+  });
+  return divs;
+}
+function aiSendBtns(){
+  return[document.getElementById('aiSend'),document.getElementById('pdAiSend')].filter(Boolean);
 }
 
-async function sendAIMessage(){
+async function sendAIMessage(srcId){
   if(aiStreaming)return;
-  const input=document.getElementById('aiInput');
+  if(!hasTeamPlan()){showToast('🔒 The AI assistant is a Team plan feature.');return;}
+  const input=document.getElementById(srcId||'aiInput');
+  if(!input)return;
   const text=(input.value||'').trim();
   if(!text)return;
 
   input.value='';
-  input.style.height='auto';
+  if(input.tagName==='TEXTAREA')input.style.height='auto';
   appendAIMessage('user',text);
   aiChatHistory.push({role:'user',content:text});
 
   // Thinking indicator
-  const thinkEl=appendAIMessage('assistant','...');
-  thinkEl.classList.add('typing');
-  document.getElementById('aiSend').disabled=true;
+  const thinkEls=appendAIMessage('assistant','...');
+  thinkEls.forEach(el=>el.classList.add('typing'));
+  aiSendBtns().forEach(b=>b.disabled=true);
   aiStreaming=true;
 
   try{
@@ -3164,19 +3170,17 @@ async function sendAIMessage(){
 
     if(!resp.ok){
       const err=await resp.json().catch(()=>({error:{message:'Request failed ('+resp.status+')'}}));
-      thinkEl.textContent=(err.error&&err.error.message)||'Request failed ('+resp.status+')';
-      thinkEl.classList.remove('typing');
-      thinkEl.classList.add('error');
+      const msg=(err.error&&err.error.message)||'Request failed ('+resp.status+')';
+      thinkEls.forEach(el=>{el.textContent=msg;el.classList.remove('typing');el.classList.add('error');});
       aiStreaming=false;
-      document.getElementById('aiSend').disabled=false;
+      aiSendBtns().forEach(b=>b.disabled=false);
       return;
     }
 
     const reader=resp.body.getReader();
     const decoder=new TextDecoder();
     let fullText='';
-    thinkEl.textContent='';
-    thinkEl.classList.remove('typing');
+    thinkEls.forEach(el=>{el.textContent='';el.classList.remove('typing');});
 
     while(true){
       const{done,value}=await reader.read();
@@ -3190,8 +3194,8 @@ async function sendAIMessage(){
           const parsed=JSON.parse(data);
           if(parsed.type==='content_block_delta'&&parsed.delta&&parsed.delta.text){
             fullText+=parsed.delta.text;
-            thinkEl.textContent=fullText;
-            document.getElementById('aiMessages').scrollTop=999999;
+            thinkEls.forEach(el=>el.textContent=fullText);
+            aiBoxes().forEach(el=>el.scrollTop=el.scrollHeight);
           }
         }catch(e){}
       }
@@ -3202,21 +3206,51 @@ async function sendAIMessage(){
     if(aiChatHistory.length>20)aiChatHistory=aiChatHistory.slice(-20);
 
   }catch(e){
-    thinkEl.textContent='Network error: '+e.message;
-    thinkEl.classList.remove('typing');
-    thinkEl.classList.add('error');
+    thinkEls.forEach(el=>{el.textContent='Network error: '+e.message;el.classList.remove('typing');el.classList.add('error');});
   }
 
   aiStreaming=false;
-  document.getElementById('aiSend').disabled=false;
-  document.getElementById('aiInput').focus();
+  aiSendBtns().forEach(b=>b.disabled=false);
+  input.focus();
 }
 
 function clearAIChat(){
   aiChatHistory=[];
-  const el=document.getElementById('aiMessages');
-  if(el)el.innerHTML='';
+  aiBoxes().forEach(el=>el.innerHTML='');
   showAIWelcome();
+}
+
+// Dashboard embedded AI helpers
+function dashAIChip(text){
+  const inp=document.getElementById('pdAiInput');
+  if(!inp)return;
+  inp.value=text;
+  sendAIMessage('pdAiInput');
+}
+function renderDashAIHistory(){
+  const el=document.getElementById('pdAiMessages');
+  if(!el)return;
+  el.innerHTML='';
+  if(aiChatHistory.length===0){
+    const div=document.createElement('div');
+    div.className='ai-msg assistant';
+    div.textContent='Hi! Ask me anything about your tasks — I can see all your workspaces.';
+    el.appendChild(div);
+    return;
+  }
+  aiChatHistory.forEach(m=>{
+    const div=document.createElement('div');
+    div.className='ai-msg '+(m.role==='assistant'?'assistant':'user');
+    div.textContent=m.content;
+    el.appendChild(div);
+  });
+  el.scrollTop=el.scrollHeight;
+}
+function focusDashAI(){
+  const card=document.querySelector('.pd-ai-card');
+  if(card)card.scrollIntoView({behavior:'smooth',block:'center'});
+  const inp=document.getElementById('pdAiInput');
+  if(inp)setTimeout(()=>inp.focus(),300);
 }
 
 // ── Team Chat ────────────────────────────────────────────────────────────────

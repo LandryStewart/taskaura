@@ -757,6 +757,23 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .ai-setup-note button:hover{opacity:.88;}
 .nav-unread{width:8px;height:8px;border-radius:50%;background:#f97316;margin-left:auto;flex-shrink:0;animation:chatPulse 2s ease-in-out infinite;}
 @media(prefers-reduced-motion:reduce){.nav-unread{animation:none;}}
+/* ── Team Invites ── */
+.team-invite-row{display:flex;gap:8px;margin:-4px 0 10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:10px;}
+.team-invite-row input{flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--card);color:var(--text);outline:none;}
+.team-invite-row input:focus{border-color:var(--pri);}
+.team-invite-row button{padding:8px 14px;border:none;border-radius:8px;background:linear-gradient(135deg,#ea580c,#f97316);color:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.team-invite-row button:hover{opacity:.88;}
+.pd-invite-banner{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:14px;background:var(--card);border:1px solid rgba(249,115,22,.45);box-shadow:0 4px 16px rgba(249,115,22,.1);animation:fadeSlideUp .4s cubic-bezier(.22,.9,.3,1) both;}
+.pd-invite-icon{font-size:20px;flex-shrink:0;}
+.pd-invite-text{flex:1;font-size:13px;color:var(--text2);min-width:0;}
+.pd-invite-text strong{color:var(--text);}
+.pd-invite-actions{display:flex;gap:8px;flex-shrink:0;}
+.pd-invite-accept{padding:8px 16px;border:none;border-radius:8px;background:linear-gradient(135deg,#ea580c,#f97316);color:#fff;font-size:12px;font-weight:700;cursor:pointer;}
+.pd-invite-accept:hover{opacity:.88;}
+.pd-invite-decline{padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;}
+.pd-invite-decline:hover{color:var(--text);border-color:var(--muted);}
+@media(max-width:600px){.pd-invite-banner{flex-wrap:wrap;}.pd-invite-actions{width:100%;justify-content:flex-end;}}
+@media(prefers-reduced-motion:reduce){.pd-invite-banner{animation:none;}}
 .ai-messages{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth;}
 .ai-messages::-webkit-scrollbar{width:4px;}
 .ai-messages::-webkit-scrollbar-track{background:transparent;}
@@ -1376,6 +1393,7 @@ async function loadFromCloud(){
       load();
     }
     await loadTeamWorkspaces();
+    await loadPendingInvites();
   }catch(e){console.log('Cloud load error:',e);}
 }
 
@@ -1464,7 +1482,8 @@ function renderTeamPanel(){
   if(!teamWorkspaces.length){list.innerHTML='<div style="color:var(--muted);font-size:13px;font-style:italic">No team workspaces yet — create one below!</div>';return;}
   list.innerHTML='<h4 style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">Your Teams</h4>'+teamWorkspaces.map(function(tw){
     const canDelete=currentUser&&tw.owner_id===currentUser.id;
-    return'<div class="team-ws-item"><div style="min-width:0"><div class="team-ws-name">👥 '+esc(tw.name)+(canDelete?' <span style="font-size:10px;color:var(--pri);font-weight:600;background:var(--pri-l);padding:1px 6px;border-radius:10px;margin-left:4px">OWNER</span>':'')+'</div><div class="team-ws-code">Invite code: <code>'+esc(tw.code)+'</code> <button class="copy-code-btn" onclick="copyText(\''+esc(tw.code)+'\')">Copy</button></div></div><div style="display:flex;gap:6px;flex-shrink:0"><button class="team-ws-open" onclick="closeTeamPanel();switchToTeamWorkspace(\''+tw.id+'\')">Open →</button>'+(canDelete?'<button onclick="deleteTeamWorkspace(\''+tw.id+'\')" style="background:var(--crit);color:#fff;border:none;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer" title="Delete workspace">🗑</button>':'')+'</div></div>';
+    return'<div class="team-ws-item"><div style="min-width:0"><div class="team-ws-name">👥 '+esc(tw.name)+(canDelete?' <span style="font-size:10px;color:var(--pri);font-weight:600;background:var(--pri-l);padding:1px 6px;border-radius:10px;margin-left:4px">OWNER</span>':'')+'</div><div class="team-ws-code">Invite code: <code>'+esc(tw.code)+'</code> <button class="copy-code-btn" onclick="copyText(\''+esc(tw.code)+'\')">Copy</button></div></div><div style="display:flex;gap:6px;flex-shrink:0"><button class="team-ws-open" onclick="toggleInviteRow(\''+tw.id+'\')" title="Invite by email">✉ Invite</button><button class="team-ws-open" onclick="closeTeamPanel();switchToTeamWorkspace(\''+tw.id+'\')">Open →</button>'+(canDelete?'<button onclick="deleteTeamWorkspace(\''+tw.id+'\')" style="background:var(--crit);color:#fff;border:none;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer" title="Delete workspace">🗑</button>':'')+'</div></div>'+
+    '<div class="team-invite-row hidden" id="invRow_'+tw.id+'"><input type="email" id="invEmail_'+tw.id+'" placeholder="teammate@email.com" onkeydown="if(event.key===\'Enter\')sendTeamInvite(\''+tw.id+'\')"><button onclick="sendTeamInvite(\''+tw.id+'\')">Send Invite</button></div>';
   }).join('');
 }
 async function deleteTeamWorkspace(id){
@@ -1507,6 +1526,29 @@ async function createTeamWorkspace(){
   }catch(e){showToast('Error creating workspace.');}
   if(btn){btn.disabled=false;btn.textContent='Create Workspace';}
 }
+async function joinTeamByCode(code){
+  var{data:ws,error}=await _supabase.from('team_workspaces').select('id,name,code,data,owner_id').eq('code',code).single();
+  if(error||!ws)return{ok:false,msg:'Team not found. Check the code.'};
+  var already=teamWorkspaces.find(function(t){return t.id===ws.id;});
+  if(!already){
+    var memCount=((ws.data||{}).teamMembers||[]).length;
+    var memCap=hasTeamPlan()?25:3;
+    if(memCount>=memCap){
+      return{ok:false,msg:hasTeamPlan()?'This team is full (25 member limit).':'🔒 Free plan teams support up to 3 members. Upgrade to Team for up to 25.'};
+    }
+    await _supabase.from('team_workspace_members').insert({workspace_id:ws.id,user_id:currentUser.id});
+    // Register this member's name in the shared workspace data
+    var myDisplayName=state.myName||(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];
+    var wData=ws.data||getDefaultState();if(!wData.teamMembers)wData.teamMembers=[];if(!wData.memberIds)wData.memberIds={};
+    var needsWsUpdate=false;
+    if(myDisplayName&&!wData.teamMembers.includes(myDisplayName)){wData.teamMembers.push(myDisplayName);needsWsUpdate=true;}
+    if(myDisplayName&&wData.memberIds[myDisplayName]!==currentUser.id){wData.memberIds[myDisplayName]=currentUser.id;needsWsUpdate=true;}
+    if(needsWsUpdate){await _supabase.from('team_workspaces').update({data:wData}).eq('id',ws.id);ws.data=wData;}
+    teamWorkspaces.push(ws);
+    renderWorkspaceTabs();renderTeamPanel();
+  }
+  return{ok:true,ws:ws};
+}
 async function joinTeamWorkspace(){
   var codeEl=document.getElementById('joinTeamCode');
   var code=(codeEl?codeEl.value.trim().toUpperCase():'');
@@ -1514,34 +1556,67 @@ async function joinTeamWorkspace(){
   var btn=document.getElementById('joinTeamBtn');
   if(btn){btn.disabled=true;btn.textContent='Joining...';}
   try{
-    var{data:ws,error}=await _supabase.from('team_workspaces').select('id,name,code,data,owner_id').eq('code',code).single();
-    if(error||!ws){showToast('Team not found. Check the code.');if(btn){btn.disabled=false;btn.textContent='Join Workspace';}return;}
-    var already=teamWorkspaces.find(function(t){return t.id===ws.id;});
-    if(!already){
-      var memCount=((ws.data||{}).teamMembers||[]).length;
-      var memCap=hasTeamPlan()?25:3;
-      if(memCount>=memCap){
-        showToast(hasTeamPlan()?'This team is full (25 member limit).':'🔒 Free plan teams support up to 3 members. Upgrade to Team for up to 25.');
-        if(btn){btn.disabled=false;btn.textContent='Join Workspace';}
-        return;
-      }
-      await _supabase.from('team_workspace_members').insert({workspace_id:ws.id,user_id:currentUser.id});
-      // Register this member's name in the shared workspace data
-      var myDisplayName=state.myName||(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];
-      var wData=ws.data||getDefaultState();if(!wData.teamMembers)wData.teamMembers=[];if(!wData.memberIds)wData.memberIds={};
-      var needsWsUpdate=false;
-      if(myDisplayName&&!wData.teamMembers.includes(myDisplayName)){wData.teamMembers.push(myDisplayName);needsWsUpdate=true;}
-      if(myDisplayName&&wData.memberIds[myDisplayName]!==currentUser.id){wData.memberIds[myDisplayName]=currentUser.id;needsWsUpdate=true;}
-      if(needsWsUpdate){await _supabase.from('team_workspaces').update({data:wData}).eq('id',ws.id);ws.data=wData;}
-      teamWorkspaces.push(ws);
-      renderWorkspaceTabs();renderTeamPanel();
-    }
+    var res=await joinTeamByCode(code);
+    if(!res.ok){showToast(res.msg);if(btn){btn.disabled=false;btn.textContent='Join Workspace';}return;}
     if(codeEl)codeEl.value='';
     closeTeamPanel();
-    switchToTeamWorkspace(ws.id);
-    showToast('✅ Joined "'+ws.name+'"!');
+    switchToTeamWorkspace(res.ws.id);
+    showToast('✅ Joined "'+res.ws.name+'"!');
   }catch(e){showToast('Error joining workspace.');}
   if(btn){btn.disabled=false;btn.textContent='Join Workspace';}
+}
+
+// ── Email Invites ─────────────────────────────────────────────────────────────
+let pendingInvites=[];
+function toggleInviteRow(wsId){
+  var row=document.getElementById('invRow_'+wsId);
+  if(row){row.classList.toggle('hidden');var inp=row.querySelector('input');if(!row.classList.contains('hidden')&&inp)inp.focus();}
+}
+async function sendTeamInvite(wsId){
+  var inp=document.getElementById('invEmail_'+wsId);
+  var email=(inp?inp.value.trim().toLowerCase():'');
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showToast('Enter a valid email address.');return;}
+  if(currentUser&&email===currentUser.email.toLowerCase()){showToast("That's your own email!");return;}
+  var tw=teamWorkspaces.find(function(w){return w.id===wsId;});
+  if(!tw)return;
+  var myDisplayName=(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];
+  try{
+    var{error}=await _supabase.from('team_invites').insert({workspace_id:tw.id,workspace_name:tw.name,code:tw.code,invited_email:email,invited_by:myDisplayName,status:'pending'});
+    if(error){showToast('Invite failed: '+error.message+' — make sure the team_invites table exists.');return;}
+    if(inp)inp.value='';
+    toggleInviteRow(wsId);
+    showToast('📨 Invite sent to '+email+'. They\'ll see it on their dashboard when they sign in.');
+  }catch(e){showToast('Error sending invite.');}
+}
+async function loadPendingInvites(){
+  if(!currentUser)return;
+  try{
+    var{data,error}=await _supabase.from('team_invites').select('id,workspace_id,workspace_name,code,invited_by,created_at').eq('status','pending');
+    if(error){console.log('[TaskAura] invites load:',error.message);return;}
+    var haveIds=new Set(teamWorkspaces.map(function(t){return t.id;}));
+    pendingInvites=(data||[]).filter(function(i){return!haveIds.has(i.workspace_id);});
+    if(pendingInvites.length&&currentView==='dashboard')render();
+  }catch(e){console.log('[TaskAura] invites error:',e);}
+}
+async function acceptInvite(inviteId){
+  var inv=pendingInvites.find(function(i){return i.id===inviteId;});
+  if(!inv)return;
+  try{
+    var res=await joinTeamByCode(inv.code);
+    if(!res.ok){showToast(res.msg);return;}
+    await _supabase.from('team_invites').update({status:'accepted'}).eq('id',inviteId);
+    pendingInvites=pendingInvites.filter(function(i){return i.id!==inviteId;});
+    switchToTeamWorkspace(res.ws.id);
+    showToast('✅ Joined "'+res.ws.name+'"!');
+  }catch(e){showToast('Error accepting invite.');}
+}
+async function declineInvite(inviteId){
+  try{
+    await _supabase.from('team_invites').update({status:'declined'}).eq('id',inviteId);
+    pendingInvites=pendingInvites.filter(function(i){return i.id!==inviteId;});
+    render();
+    showToast('Invite declined.');
+  }catch(e){showToast('Error declining invite.');}
 }
 function copyText(txt){
   navigator.clipboard.writeText(txt).then(function(){showToast('📋 Copied: '+txt);}).catch(function(){showToast(txt);});
@@ -1775,7 +1850,20 @@ function renderPersonalDashboard(el){
     '</div>';
   }).join(''):'<div class="pd-empty" style="color:var(--low)">No high-priority tasks right now</div>';
 
+  // Pending team invites banner
+  const invitesHTML=pendingInvites.length?pendingInvites.map(function(inv){
+    return'<div class="pd-invite-banner">'+
+      '<span class="pd-invite-icon">📨</span>'+
+      '<span class="pd-invite-text"><strong>'+esc(inv.invited_by)+'</strong> invited you to join <strong>'+esc(inv.workspace_name)+'</strong></span>'+
+      '<div class="pd-invite-actions">'+
+        '<button class="pd-invite-accept" onclick="acceptInvite(\''+inv.id+'\')">Accept</button>'+
+        '<button class="pd-invite-decline" onclick="declineInvite(\''+inv.id+'\')">Decline</button>'+
+      '</div>'+
+    '</div>';
+  }).join(''):'';
+
   el.innerHTML=
+    invitesHTML+
     // Hero
     '<div class="pd-hero">'+
       '<div class="pd-hero-grid">'+

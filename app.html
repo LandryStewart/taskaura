@@ -1836,21 +1836,23 @@ async function loadPendingUsers(){
 }
 
 async function approveUser(userId){
-  await _supabase.from('profiles').update({approved:true}).eq('id',userId);
+  const{error}=await _supabase.from('profiles').update({approved:true}).eq('id',userId);
+  if(error){showToast('Error: '+error.message);console.error('Approve error:',error);return;}
   showToast('✓ User approved');
   loadPendingUsers();
 }
 
 async function denyUser(userId){
   if(!confirm('Deny and remove this user?'))return;
-  await _supabase.from('profiles').delete().eq('id',userId);
+  const{error}=await _supabase.from('profiles').delete().eq('id',userId);
+  if(error){showToast('Error: '+error.message);console.error('Deny error:',error);return;}
   showToast('User denied and removed');
   loadPendingUsers();
 }
 
 async function revokeUser(userId){
   if(!confirm('Revoke access for this user?'))return;
-  await _supabase.from('profiles').update({approved:false}).eq('id',userId);
+  const{error}=await _supabase.from('profiles').update({approved:false}).eq('id',userId);
   showToast('Access revoked');
   loadPendingUsers();
 }

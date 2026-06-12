@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=5.0,user-scalable=yes">
 <title>TaskAura</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@600,700&display=swap" rel="stylesheet">
 <style>
 :root{
  --pri:#f97316;--pri-d:#ea580c;--pri-l:#fff7ed;
@@ -39,8 +39,9 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .auth-remember input{accent-color:#2563eb;width:15px;height:15px;}
 .auth-error{color:#dc2626;font-size:12px;font-weight:600;margin-bottom:8px;min-height:18px;}
 .topbar{background:var(--card);color:var(--text);display:flex;align-items:center;padding:0 14px;height:var(--hdr);gap:8px;flex-shrink:0;z-index:100;border-bottom:1px solid var(--border);}
-.topbar .logo{font-weight:800;font-size:17px;letter-spacing:.5px;white-space:nowrap;color:var(--text);}
-.topbar .logo .logo-accent{background:linear-gradient(135deg,#ea580c,#f97316);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.topbar .logo{display:flex;align-items:center;gap:7px;font-family:'General Sans',sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.035em;white-space:nowrap;color:var(--text);}
+.topbar .logo .logo-accent{color:#f97316;font-weight:600;letter-spacing:-0.12em;margin:0 .05em;}
+.logo-tile{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,#ea580c,#fb923c);display:inline-flex;align-items:center;justify-content:center;font-family:'General Sans',sans-serif;font-weight:600;font-size:14px;color:#fff;box-shadow:0 2px 10px rgba(249,115,22,.4);flex-shrink:0;}
 .proj-name{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:6px;font-size:14px;width:150px;}
 .proj-name::placeholder{color:var(--muted);}
 .proj-name:focus{outline:none;border-color:var(--pri);}
@@ -909,7 +910,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 <body>
 <div class="auth-overlay" id="authOverlay">
  <div class="auth-card">
-  <h1>TaskAura</h1>
+  <h1 style="font-family:'General Sans',sans-serif;font-weight:700;letter-spacing:-0.035em;">Task<span style="color:#f97316;font-weight:600;letter-spacing:-0.12em;margin:0 .05em">//</span>Aura</h1>
   <p class="auth-sub" id="authSub">Sign in to your account</p>
   <div class="auth-error" id="loginError"></div>
   <div id="authFormSignIn">
@@ -941,7 +942,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 </div>
 <div class="topbar">
  <button class="mobile-hamburger" id="mobileHamburger" onclick="toggleMobileSidebar()">☰</button>
- <div class="logo" style="font-family:'Syne',sans-serif;font-weight:800;letter-spacing:-0.02em;">Task<span class="logo-accent">Aura</span></div>
+ <div class="logo"><span class="logo-tile">/</span><span>Task<span class="logo-accent">//</span>Aura</span></div>
  <input type="hidden" id="projName" value="My Project">
  <div class="topbar-search"><span>🔍</span><input type="search" id="searchBox" placeholder="Search tasks..." oninput="applyFilters()"></div>
  <div class="spacer"></div>

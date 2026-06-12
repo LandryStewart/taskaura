@@ -3,6 +3,6 @@
   "outputDirectory": ".",
   "rewrites": [
     { "source": "/app", "destination": "/app.html" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

@@ -3536,15 +3536,19 @@ function generatePDFReport(){
   const contentW=pageW-(margin*2);
   const generatedDate=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
 
-  // ── Color helpers ──
-  const priRGB=[37,99,235];
-  const navyRGB=[15,23,42];
-  const mutedRGB=[100,116,139];
-  const lightRGB=[239,246,255];
+  // ── Palette: minimal, executive ──
+  const inkRGB=[17,24,39];       // near-black text
+  const mutedRGB=[107,114,128];  // grey
+  const faintRGB=[229,231,235];  // hairlines
+  const accentRGB=[234,88,12];   // brand orange, used sparingly
 
   // ── Priority label ──
   function priLabel(p){return p==='critical'?'Critical':p==='high'?'High':p==='medium'?'Medium':'Low';}
-  function priColor(p){return p==='critical'?[220,38,38]:p==='high'?[234,88,12]:p==='medium'?[124,58,237]:[22,163,74];}
+  function fmtDue(d){
+    if(!d)return '—';
+    const dt=new Date(d+'T00:00:00');
+    return isNaN(dt)?d:dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  }
 
   // ── Group tasks by assignee ──
   const assigneeMap={};
@@ -3566,210 +3570,107 @@ function generatePDFReport(){
   });
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // PAGE 1: Cover
+  // PAGE 1: Title + Contents
   // ─────────────────────────────────────────────────────────────────────────────
-  // Header band
-  doc.setFillColor(...navyRGB);
-  doc.rect(0,0,pageW,52,'F');
-  // Brand dot
-  doc.setFillColor(...priRGB);
-  doc.circle(margin+5,26,5,'F');
-  // Title
-  doc.setTextColor(255,255,255);
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(22);
-  doc.text(reportTitle,margin+14,24);
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(11);
-  doc.setTextColor(148,163,184);
-  doc.text(reportSubtitle,margin+14,33);
-  // Meta row
+  // Wordmark: Task//Aura (orange slashes only)
+  let wx=margin;
+  doc.setFont('helvetica','bold');doc.setFontSize(12);
+  doc.setTextColor(...inkRGB);doc.text('Task',wx,16);wx+=doc.getTextWidth('Task');
+  doc.setTextColor(...accentRGB);doc.text('//',wx,16);wx+=doc.getTextWidth('//');
+  doc.setTextColor(...inkRGB);doc.text('Aura',wx,16);
+  doc.setDrawColor(...faintRGB);doc.setLineWidth(0.3);
+  doc.line(margin,21,pageW-margin,21);
+
+  // Title block
+  doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(...inkRGB);
+  doc.text(reportTitle,margin,38);
+  doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.setTextColor(...mutedRGB);
+  doc.text(reportSubtitle,margin,46);
+  const memberCount=assignees.filter(a=>a!=='Unassigned').length;
   doc.setFontSize(9);
-  doc.text('Generated: '+generatedDate,margin+14,42);
-  doc.text('Total tasks: '+tasks.length,pageW/2,42,'center');
-  doc.text('Employees: '+assignees.filter(a=>a!=='Unassigned').length,pageW-margin,42,'right');
+  doc.text('Generated '+generatedDate+'    ·    '+tasks.length+' task'+(tasks.length!==1?'s':'')+'    ·    '+memberCount+' member'+(memberCount!==1?'s':''),margin,53);
+  doc.setDrawColor(...accentRGB);doc.setLineWidth(0.9);
+  doc.line(margin,59,margin+16,59);
 
-  // Summary KPIs (small cards)
-  const overdue=tasks.filter(t=>t.due&&t.due<today&&(t.pct||0)<100).length;
-  const completed=tasks.filter(t=>(t.pct||0)>=100).length;
-  const dueToday=tasks.filter(t=>t.due===today&&(t.pct||0)<100).length;
-  const open=tasks.filter(t=>(t.pct||0)<100).length;
-  const kpis=[
-    {label:'Open',val:open,color:priRGB},
-    {label:'Completed',val:completed,color:[22,163,74]},
-    {label:'Overdue',val:overdue,color:[220,38,38]},
-    {label:'Due Today',val:dueToday,color:[234,88,12]}
-  ];
-  const kpiW=(contentW-9)/4;
-  let kx=margin;
-  kpis.forEach(k=>{
-    doc.setFillColor(...lightRGB);
-    doc.roundedRect(kx,60,kpiW,22,2,2,'F');
-    doc.setFillColor(...k.color);
-    doc.roundedRect(kx,60,3,22,1,1,'F');
-    doc.setTextColor(...navyRGB);
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(16);
-    doc.text(String(k.val),kx+kpiW/2+3,72.5,'center');
-    doc.setFont('helvetica','normal');
-    doc.setFontSize(8);
-    doc.setTextColor(...mutedRGB);
-    doc.text(k.label,kx+kpiW/2+3,79,'center');
-    kx+=kpiW+3;
-  });
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // PAGE 2: Table of Contents
-  // ─────────────────────────────────────────────────────────────────────────────
-  doc.addPage();
-  // TOC header band
-  doc.setFillColor(...navyRGB);
-  doc.rect(0,0,pageW,28,'F');
-  doc.setTextColor(255,255,255);
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(16);
-  doc.text('Table of Contents',margin,18);
-
-  let tocY=40;
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(10);
-  assignees.forEach((name,idx)=>{
-    const taskCount=assigneeMap[name].length;
-    const doneCount=assigneeMap[name].filter(t=>(t.pct||0)>=100).length;
-    const overdueCount=assigneeMap[name].filter(t=>t.due&&t.due<today&&(t.pct||0)<100).length;
-    // Row bg
-    if(idx%2===0){doc.setFillColor(248,250,252);doc.rect(margin,tocY-5,contentW,9,'F');}
-    // Index number
-    doc.setFillColor(...priRGB);
-    doc.circle(margin+4,tocY,3.5,'F');
-    doc.setTextColor(255,255,255);
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(7);
-    doc.text(String(idx+1),margin+4,tocY+0.8,'center');
-    // Name
-    doc.setTextColor(...navyRGB);
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(10);
-    doc.text(name,margin+11,tocY+0.5);
-    // Stats
-    doc.setFont('helvetica','normal');
-    doc.setFontSize(9);
-    doc.setTextColor(...mutedRGB);
-    doc.text(taskCount+' task'+(taskCount!==1?'s':''),pageW-margin-70,tocY+0.5);
-    doc.text(doneCount+' done',pageW-margin-40,tocY+0.5);
-    if(overdueCount>0){
-      doc.setTextColor(220,38,38);
-      doc.text(overdueCount+' overdue',pageW-margin-10,tocY+0.5,'right');
-    } else {
-      doc.setTextColor(22,163,74);
-      doc.text('✓',pageW-margin-10,tocY+0.5,'right');
-    }
-    // Dots
-    doc.setTextColor(203,213,225);
-    doc.setFontSize(8);
-    const dotsStart=margin+11+doc.getTextWidth(name)+3;
-    const dotsEnd=pageW-margin-75;
-    if(dotsEnd>dotsStart){doc.text('·'.repeat(Math.floor((dotsEnd-dotsStart)/1.8)),dotsStart,tocY+0.5);}
-    tocY+=10;
-    if(tocY>pageH-20){doc.addPage();tocY=20;}
-  });
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // PAGES 3+: Per-employee sections
-  // ─────────────────────────────────────────────────────────────────────────────
-  assignees.forEach((name,idx)=>{
-    doc.addPage();
-    const empTasks=assigneeMap[name];
-    const empDone=empTasks.filter(t=>(t.pct||0)>=100).length;
-    const empOverdue=empTasks.filter(t=>t.due&&t.due<today&&(t.pct||0)<100).length;
-    const empPct=empTasks.length?Math.round(empDone/empTasks.length*100):0;
-
-    // Section header
-    doc.setFillColor(...navyRGB);
-    doc.rect(0,0,pageW,34,'F');
-    doc.setFillColor(...priRGB);
-    doc.rect(0,0,5,34,'F');
-    doc.setTextColor(255,255,255);
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(15);
-    doc.text(name,margin+2,15);
-    doc.setFont('helvetica','normal');
-    doc.setFontSize(9);
-    doc.setTextColor(148,163,184);
-    doc.text(empTasks.length+' task'+(empTasks.length!==1?'s':'')+' · '+empDone+' completed ('+empPct+'%)'+
-      (empOverdue?' · '+empOverdue+' overdue':''),margin+2,24);
-    // Section number badge
-    doc.setFillColor(...priRGB);
-    doc.roundedRect(pageW-margin-20,5,18,16,3,3,'F');
-    doc.setTextColor(255,255,255);
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(9);
-    doc.text(String(idx+1)+' / '+assignees.length,pageW-margin-11,14.5,'center');
-
-    // Task table
-    const rows=empTasks.map(t=>{
-      const dueFmt=t.due?t.due:'—';
-      const status=(t.pct||0)>=100?'Done':isOverdue(t)?'Overdue':t.due===today?'Due Today':'Open';
-      const bucket=t.bucket||'—';
-      const wsName=t._workspace||t._wsName||'Work';
-      return[t.title||t.name||'(untitled)',wsName,bucket,priLabel(t.priority||'low'),dueFmt,(t.pct||0)+'%',status];
+  // Contents: each member, then their tasks
+  let tocY=72;
+  doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(...mutedRGB);
+  doc.text('CONTENTS',margin,tocY);
+  tocY+=8;
+  const tocEntries=[];
+  assignees.forEach(name=>{
+    if(tocY>pageH-28){doc.addPage();tocY=24;}
+    doc.setFont('helvetica','bold');doc.setFontSize(10.5);doc.setTextColor(...inkRGB);
+    doc.text(name,margin,tocY);
+    tocEntries.push({page:doc.internal.getCurrentPageInfo().pageNumber,y:tocY});
+    tocY+=6;
+    doc.setFont('helvetica','normal');doc.setFontSize(9);
+    assigneeMap[name].forEach(t=>{
+      if(tocY>pageH-22){doc.addPage();tocY=24;}
+      doc.setTextColor(...mutedRGB);
+      const title=(t.title||t.name||'(untitled)');
+      doc.text(doc.splitTextToSize(title,contentW-45)[0],margin+6,tocY);
+      if(t.due)doc.text(fmtDue(t.due),pageW-margin,tocY,'right');
+      tocY+=5.5;
     });
+    tocY+=4.5;
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Per-member sections
+  // ─────────────────────────────────────────────────────────────────────────────
+  const memberStartPages=[];
+  assignees.forEach(name=>{
+    doc.addPage();
+    memberStartPages.push(doc.internal.getNumberOfPages());
+    const empTasks=assigneeMap[name];
+
+    // Section header: name, short accent rule, task count
+    doc.setFont('helvetica','bold');doc.setFontSize(15);doc.setTextColor(...inkRGB);
+    doc.text(name,margin,24);
+    doc.setDrawColor(...accentRGB);doc.setLineWidth(0.9);
+    doc.line(margin,28,margin+14,28);
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...mutedRGB);
+    doc.text(empTasks.length+' task'+(empTasks.length!==1?'s':''),pageW-margin,24,'right');
+
+    const rows=empTasks.map(t=>[
+      t.title||t.name||'(untitled)',
+      t.bucket||'—',
+      priLabel(t.priority||'low'),
+      fmtDue(t.due)
+    ]);
 
     doc.autoTable({
-      startY:42,
-      head:[['Task','Workspace','Bucket','Priority','Due Date','Progress','Status']],
+      startY:36,
+      head:[['TASK','BUCKET','PRIORITY','DUE DATE']],
       body:rows,
       margin:{left:margin,right:margin},
-      styles:{fontSize:8,cellPadding:3,textColor:navyRGB,lineColor:[226,232,240],lineWidth:0.2},
-      headStyles:{fillColor:navyRGB,textColor:[255,255,255],fontStyle:'bold',fontSize:8},
-      alternateRowStyles:{fillColor:[248,250,252]},
+      theme:'plain',
+      styles:{fontSize:9,cellPadding:{top:3.2,bottom:3.2,left:0,right:4},textColor:inkRGB},
+      headStyles:{fontSize:7.5,fontStyle:'bold',textColor:mutedRGB,cellPadding:{top:2,bottom:2.5,left:0,right:4}},
       columnStyles:{
         0:{cellWidth:'auto'},
-        1:{cellWidth:28},
+        1:{cellWidth:34},
         2:{cellWidth:24},
-        3:{cellWidth:18,halign:'center'},
-        4:{cellWidth:22,halign:'center'},
-        5:{cellWidth:16,halign:'center'},
-        6:{cellWidth:20,halign:'center'}
+        3:{cellWidth:30}
+      },
+      didParseCell:function(data){
+        if(data.section==='body'&&data.column.index===2&&data.cell.raw==='Critical'){data.cell.styles.fontStyle='bold';}
       },
       didDrawCell:function(data){
-        if(data.section==='body'&&data.column.index===3){
-          const p=empTasks[data.row.index]?empTasks[data.row.index].priority||'low':'low';
-          const [r,g,b]=priColor(p);
-          doc.setTextColor(r,g,b);
-          doc.setFont('helvetica','bold');
-          doc.setFontSize(8);
-          doc.text(priLabel(p),data.cell.x+data.cell.width/2,data.cell.y+data.cell.height/2+0.5,{align:'center'});
-          doc.setTextColor(...navyRGB);
-          doc.setFont('helvetica','normal');
-        }
-        if(data.section==='body'&&data.column.index===6){
-          const s=data.cell.text[0];
-          const colors={'Done':[22,163,74],'Overdue':[220,38,38],'Due Today':[234,88,12],'Open':priRGB};
-          const [r,g,b]=colors[s]||priRGB;
-          doc.setTextColor(r,g,b);
-          doc.setFont('helvetica','bold');
-          doc.setFontSize(8);
-          doc.text(s,data.cell.x+data.cell.width/2,data.cell.y+data.cell.height/2+0.5,{align:'center'});
-          doc.setTextColor(...navyRGB);
-          doc.setFont('helvetica','normal');
-        }
+        const yB=data.cell.y+data.cell.height;
+        if(data.section==='head'){doc.setDrawColor(...inkRGB);doc.setLineWidth(0.4);}
+        else{doc.setDrawColor(...faintRGB);doc.setLineWidth(0.15);}
+        doc.line(data.cell.x,yB,data.cell.x+data.cell.width,yB);
       }
     });
+  });
 
-    // Progress bar below table
-    const tableBottom=doc.lastAutoTable.finalY+6;
-    if(tableBottom<pageH-25){
-      doc.setFillColor(226,232,240);
-      doc.roundedRect(margin,tableBottom,contentW,5,2,2,'F');
-      if(empPct>0){
-        doc.setFillColor(...priRGB);
-        doc.roundedRect(margin,tableBottom,contentW*(empPct/100),5,2,2,'F');
-      }
-      doc.setTextColor(...mutedRGB);
-      doc.setFontSize(8);
-      doc.text(empPct+'% complete',margin,tableBottom+10);
-    }
+  // Fill in TOC page numbers now that section pages are known
+  tocEntries.forEach((e,idx)=>{
+    doc.setPage(e.page);
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...mutedRGB);
+    doc.text(String(memberStartPages[idx]),pageW-margin,e.y,'right');
   });
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -3778,15 +3679,14 @@ function generatePDFReport(){
   const totalPages=doc.internal.getNumberOfPages();
   for(let i=1;i<=totalPages;i++){
     doc.setPage(i);
-    doc.setFillColor(248,250,252);
-    doc.rect(0,pageH-10,pageW,10,'F');
-    doc.setDrawColor(226,232,240);
-    doc.line(0,pageH-10,pageW,pageH-10);
+    doc.setDrawColor(...faintRGB);doc.setLineWidth(0.3);
+    doc.line(margin,pageH-12,pageW-margin,pageH-12);
     doc.setFont('helvetica','normal');
-    doc.setFontSize(7);
+    doc.setFontSize(7.5);
     doc.setTextColor(...mutedRGB);
-    doc.text('TaskAura · '+reportTitle+' · '+generatedDate,margin,pageH-3.5);
-    doc.text('Page '+i+' of '+totalPages,pageW-margin,pageH-3.5,'right');
+    doc.text('TaskAura  ·  '+reportTitle,margin,pageH-7);
+    doc.text(generatedDate,pageW/2,pageH-7,{align:'center'});
+    doc.text('Page '+i+' of '+totalPages,pageW-margin,pageH-7,'right');
   }
 
   // Save

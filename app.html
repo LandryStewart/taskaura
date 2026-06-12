@@ -1180,7 +1180,7 @@ function showPendingApproval(){
 }
 
 let currentUserPlan='free';
-function hasTeamPlan(){return currentUserPlan==='team'||(currentUser&&currentUser.email==='landrystewart@live.com');}
+function hasTeamPlan(){return true;} // All features free for everyone (was: plan-gated)
 function applyPlanGates(){
   const teamOk=hasTeamPlan();
   const ns=document.getElementById('navSchedules');if(ns)ns.style.display=teamOk?'':'none';

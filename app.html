@@ -1398,6 +1398,7 @@ async function loadFromCloud(){
     }
     await loadTeamWorkspaces();
     await loadPendingInvites();
+    await loadJoinRequests();
   }catch(e){console.log('Cloud load error:',e);}
 }
 
@@ -1553,21 +1554,91 @@ async function joinTeamByCode(code){
   }
   return{ok:true,ws:ws};
 }
+// Joining by code now requires owner approval — this sends a request instead of joining directly.
+// (Email invites still join instantly, since the owner already approved by sending them.)
 async function joinTeamWorkspace(){
   var codeEl=document.getElementById('joinTeamCode');
   var code=(codeEl?codeEl.value.trim().toUpperCase():'');
   if(code.length<4){showToast('Enter the 6-letter code.');return;}
   var btn=document.getElementById('joinTeamBtn');
-  if(btn){btn.disabled=true;btn.textContent='Joining...';}
+  if(btn){btn.disabled=true;btn.textContent='Sending...';}
   try{
-    var res=await joinTeamByCode(code);
-    if(!res.ok){showToast(res.msg);if(btn){btn.disabled=false;btn.textContent='Join Workspace';}return;}
-    if(codeEl)codeEl.value='';
-    closeTeamPanel();
-    switchToTeamWorkspace(res.ws.id);
-    showToast('✅ Joined "'+res.ws.name+'"!');
-  }catch(e){showToast('Error joining workspace.');}
+    var{data:ws,error}=await _supabase.from('team_workspaces').select('id,name,code,owner_id').eq('code',code).single();
+    if(error||!ws){showToast('Team not found. Check the code.');}
+    else if(teamWorkspaces.find(function(t){return t.id===ws.id;})){showToast('You are already in this team.');}
+    else{
+      var{data:existing}=await _supabase.from('team_join_requests').select('id').eq('workspace_id',ws.id).eq('user_id',currentUser.id).eq('status','pending');
+      if(existing&&existing.length){showToast('Request already sent — waiting for the owner to approve.');}
+      else{
+        var myName=state.myName||(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];
+        var{error:reqErr}=await _supabase.from('team_join_requests').insert({workspace_id:ws.id,workspace_name:ws.name,code:ws.code,user_id:currentUser.id,user_email:currentUser.email,user_name:myName,status:'pending'});
+        if(reqErr){showToast('Request failed: '+reqErr.message+' — make sure the team_join_requests table exists.');}
+        else{
+          if(codeEl)codeEl.value='';
+          closeTeamPanel();
+          myJoinRequests.push({workspace_id:ws.id,workspace_name:ws.name,status:'pending'});
+          if(currentView==='dashboard')render();
+          showToast('✉️ Request sent! The team owner needs to approve you.');
+        }
+      }
+    }
+  }catch(e){showToast('Error sending request.');}
   if(btn){btn.disabled=false;btn.textContent='Join Workspace';}
+}
+
+// ── Join Requests (owner approval) ───────────────────────────────────────────
+let incomingJoinRequests=[];
+let myJoinRequests=[];
+async function loadJoinRequests(){
+  if(!currentUser)return;
+  try{
+    var{data,error}=await _supabase.from('team_join_requests').select('*');
+    if(error){console.log('[TaskAura] join requests load:',error.message);return;}
+    var rows=data||[];
+    var myOwnedIds=new Set(teamWorkspaces.filter(function(t){return t.owner_id===currentUser.id;}).map(function(t){return t.id;}));
+    incomingJoinRequests=rows.filter(function(r){return r.status==='pending'&&r.user_id!==currentUser.id&&myOwnedIds.has(r.workspace_id);});
+    myJoinRequests=rows.filter(function(r){return r.user_id===currentUser.id&&r.status==='pending';});
+    // Tell me when my own requests get resolved
+    var resolved=rows.filter(function(r){return r.user_id===currentUser.id&&(r.status==='approved'||r.status==='declined');});
+    for(var i=0;i<resolved.length;i++){
+      var r=resolved[i];
+      showToast(r.status==='approved'?'🎉 You were approved to join "'+r.workspace_name+'"!':'Your request to join "'+r.workspace_name+'" was declined.');
+      await _supabase.from('team_join_requests').update({status:r.status+'_seen'}).eq('id',r.id);
+    }
+    if(resolved.some(function(r){return r.status==='approved';}))await loadTeamWorkspaces();
+    if((incomingJoinRequests.length||myJoinRequests.length)&&currentView==='dashboard')render();
+  }catch(e){console.log('[TaskAura] join requests error:',e);}
+}
+async function approveJoinRequest(reqId){
+  var r=incomingJoinRequests.find(function(x){return x.id===reqId;});if(!r)return;
+  var tw=teamWorkspaces.find(function(t){return t.id===r.workspace_id;});
+  if(!tw){showToast('Team not found.');return;}
+  var memCount=((tw.data||{}).teamMembers||[]).length;
+  var memCap=hasTeamPlan()?25:3;
+  if(memCount>=memCap){showToast(hasTeamPlan()?'This team is full (25 member limit).':'🔒 Free plan teams support up to 3 members. Upgrade to Team for up to 25.');return;}
+  try{
+    var{error:memErr}=await _supabase.from('team_workspace_members').insert({workspace_id:r.workspace_id,user_id:r.user_id});
+    if(memErr&&memErr.code!=='23505'){showToast('Approve failed: '+memErr.message+' — run the join-approval SQL in Supabase.');return;}
+    // Register their name in the shared workspace data
+    var d=tw.data||getDefaultState();if(!d.teamMembers)d.teamMembers=[];if(!d.memberIds)d.memberIds={};
+    var nm=r.user_name||((r.user_email||'').split('@')[0]);
+    var changed=false;
+    if(nm&&!d.teamMembers.includes(nm)){d.teamMembers.push(nm);changed=true;}
+    if(nm&&d.memberIds[nm]!==r.user_id){d.memberIds[nm]=r.user_id;changed=true;}
+    if(changed){await _supabase.from('team_workspaces').update({data:d}).eq('id',tw.id);tw.data=d;if(currentTeamWorkspaceId===tw.id)state=d;}
+    await _supabase.from('team_join_requests').update({status:'approved'}).eq('id',reqId);
+    incomingJoinRequests=incomingJoinRequests.filter(function(x){return x.id!==reqId;});
+    render();
+    showToast('✅ '+(nm||'Member')+' added to "'+tw.name+'".');
+  }catch(e){showToast('Error approving request.');}
+}
+async function declineJoinRequest(reqId){
+  try{
+    await _supabase.from('team_join_requests').update({status:'declined'}).eq('id',reqId);
+    incomingJoinRequests=incomingJoinRequests.filter(function(x){return x.id!==reqId;});
+    render();
+    showToast('Request declined.');
+  }catch(e){showToast('Error declining request.');}
 }
 
 // ── Email Invites ─────────────────────────────────────────────────────────────
@@ -1866,8 +1937,27 @@ function renderPersonalDashboard(el){
     '</div>';
   }).join(''):'';
 
+  // Join requests waiting for MY approval (I own the team)
+  const joinReqHTML=incomingJoinRequests.map(function(r){
+    return'<div class="pd-invite-banner">'+
+      '<span class="pd-invite-icon">🙋</span>'+
+      '<span class="pd-invite-text"><strong>'+esc(r.user_name||r.user_email||'Someone')+'</strong> wants to join <strong>'+esc(r.workspace_name)+'</strong></span>'+
+      '<div class="pd-invite-actions">'+
+        '<button class="pd-invite-accept" onclick="approveJoinRequest(\''+r.id+'\')">Approve</button>'+
+        '<button class="pd-invite-decline" onclick="declineJoinRequest(\''+r.id+'\')">Decline</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  // My own requests still waiting on an owner
+  const myReqHTML=myJoinRequests.map(function(r){
+    return'<div class="pd-invite-banner" style="border-color:var(--border);box-shadow:none">'+
+      '<span class="pd-invite-icon">⏳</span>'+
+      '<span class="pd-invite-text">Waiting for the owner of <strong>'+esc(r.workspace_name)+'</strong> to approve your request</span>'+
+    '</div>';
+  }).join('');
+
   el.innerHTML=
-    invitesHTML+
+    invitesHTML+joinReqHTML+myReqHTML+
     // Hero
     '<div class="pd-hero">'+
       '<div class="pd-hero-grid">'+
@@ -3158,9 +3248,12 @@ async function sendAIMessage(srcId){
   aiStreaming=true;
 
   try{
+    // Attach the user's sign-in token — the server verifies it before spending AI credits
+    let aiToken='';
+    try{const s=await _supabase.auth.getSession();aiToken=(s.data&&s.data.session&&s.data.session.access_token)||'';}catch(_){}
     const resp=await fetch('/api/ai',{
       method:'POST',
-      headers:{'content-type':'application/json'},
+      headers:{'content-type':'application/json','authorization':'Bearer '+aiToken},
       body:JSON.stringify({
         model:getAIModel(),
         system:buildSystemPrompt(),

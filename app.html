@@ -3569,51 +3569,76 @@ function generatePDFReport(){
     });
   });
 
+  // ── Brand: landing-page logo (orange tile with "/" + Task//Aura wordmark) ──
+  function drawLogo(x,baseY,tile,fontSz){
+    doc.setFillColor(...accentRGB);
+    doc.roundedRect(x,baseY-tile*0.78,tile,tile,tile*0.28,tile*0.28,'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(tile*2.2);
+    doc.setTextColor(255,255,255);
+    doc.text('/',x+tile/2,baseY-tile*0.78+tile*0.74,'center');
+    let lx=x+tile+tile*0.4;
+    doc.setFontSize(fontSz);
+    doc.setTextColor(...inkRGB);doc.text('Task',lx,baseY);lx+=doc.getTextWidth('Task');
+    doc.setTextColor(...accentRGB);doc.text('//',lx,baseY);lx+=doc.getTextWidth('//');
+    doc.setTextColor(...inkRGB);doc.text('Aura',lx,baseY);
+  }
+
+  // ── Centered watermark on every page ──
+  function drawWatermark(){
+    if(!doc.GState||!doc.setGState)return;
+    doc.setGState(new doc.GState({opacity:0.045}));
+    const cx=pageW/2,cy=pageH/2;
+    const tile=32;
+    doc.setFillColor(...accentRGB);
+    doc.roundedRect(cx-tile/2,cy-40,tile,tile,tile*0.28,tile*0.28,'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(tile*2.2);
+    doc.setTextColor(255,255,255);
+    doc.text('/',cx,cy-40+tile*0.74,'center');
+    doc.setFontSize(44);
+    const total=doc.getTextWidth('Task')+doc.getTextWidth('//')+doc.getTextWidth('Aura');
+    let x=cx-total/2;const y=cy+18;
+    doc.setTextColor(...inkRGB);doc.text('Task',x,y);x+=doc.getTextWidth('Task');
+    doc.setTextColor(...accentRGB);doc.text('//',x,y);x+=doc.getTextWidth('//');
+    doc.setTextColor(...inkRGB);doc.text('Aura',x,y);
+    doc.setGState(new doc.GState({opacity:1}));
+  }
+
   // ─────────────────────────────────────────────────────────────────────────────
   // PAGE 1: Title + Contents
   // ─────────────────────────────────────────────────────────────────────────────
-  // Wordmark: Task//Aura (orange slashes only)
-  let wx=margin;
-  doc.setFont('helvetica','bold');doc.setFontSize(12);
-  doc.setTextColor(...inkRGB);doc.text('Task',wx,16);wx+=doc.getTextWidth('Task');
-  doc.setTextColor(...accentRGB);doc.text('//',wx,16);wx+=doc.getTextWidth('//');
-  doc.setTextColor(...inkRGB);doc.text('Aura',wx,16);
+  drawLogo(margin,16,6,12);
   doc.setDrawColor(...faintRGB);doc.setLineWidth(0.3);
-  doc.line(margin,21,pageW-margin,21);
+  doc.line(margin,23,pageW-margin,23);
 
   // Title block
-  doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(...inkRGB);
-  doc.text(reportTitle,margin,38);
+  doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...inkRGB);
+  doc.text(reportTitle,margin,46);
   doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.setTextColor(...mutedRGB);
-  doc.text(reportSubtitle,margin,46);
+  doc.text(reportSubtitle,margin,54);
   const memberCount=assignees.filter(a=>a!=='Unassigned').length;
   doc.setFontSize(9);
-  doc.text('Generated '+generatedDate+'    ·    '+tasks.length+' task'+(tasks.length!==1?'s':'')+'    ·    '+memberCount+' member'+(memberCount!==1?'s':''),margin,53);
+  doc.text('Generated '+generatedDate+'    ·    '+tasks.length+' task'+(tasks.length!==1?'s':'')+'    ·    '+memberCount+' member'+(memberCount!==1?'s':''),margin,61);
   doc.setDrawColor(...accentRGB);doc.setLineWidth(0.9);
-  doc.line(margin,59,margin+16,59);
+  doc.line(margin,68,margin+16,68);
 
-  // Contents: each member, then their tasks
-  let tocY=72;
+  // Contents: member names only, dot leaders to page numbers (filled in later)
+  let tocY=84;
   doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(...mutedRGB);
   doc.text('CONTENTS',margin,tocY);
-  tocY+=8;
+  tocY+=10;
   const tocEntries=[];
   assignees.forEach(name=>{
-    if(tocY>pageH-28){doc.addPage();tocY=24;}
+    if(tocY>pageH-26){doc.addPage();tocY=24;}
     doc.setFont('helvetica','bold');doc.setFontSize(10.5);doc.setTextColor(...inkRGB);
     doc.text(name,margin,tocY);
-    tocEntries.push({page:doc.internal.getCurrentPageInfo().pageNumber,y:tocY});
-    tocY+=6;
-    doc.setFont('helvetica','normal');doc.setFontSize(9);
-    assigneeMap[name].forEach(t=>{
-      if(tocY>pageH-22){doc.addPage();tocY=24;}
-      doc.setTextColor(...mutedRGB);
-      const title=(t.title||t.name||'(untitled)');
-      doc.text(doc.splitTextToSize(title,contentW-45)[0],margin+6,tocY);
-      if(t.due)doc.text(fmtDue(t.due),pageW-margin,tocY,'right');
-      tocY+=5.5;
+    tocEntries.push({
+      page:doc.internal.getCurrentPageInfo().pageNumber,
+      y:tocY,
+      xDots:margin+doc.getTextWidth(name)+3
     });
-    tocY+=4.5;
+    tocY+=9;
   });
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -3666,19 +3691,26 @@ function generatePDFReport(){
     });
   });
 
-  // Fill in TOC page numbers now that section pages are known
+  // Fill in TOC page numbers + dot leaders now that section pages are known
   tocEntries.forEach((e,idx)=>{
     doc.setPage(e.page);
-    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...mutedRGB);
-    doc.text(String(memberStartPages[idx]),pageW-margin,e.y,'right');
+    const pn=String(memberStartPages[idx]);
+    doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...inkRGB);
+    doc.text(pn,pageW-margin,e.y,'right');
+    const dotsEnd=pageW-margin-doc.getTextWidth(pn)-3;
+    doc.setFontSize(9);doc.setTextColor(...faintRGB);
+    const dotW=doc.getTextWidth('. ');
+    const n=Math.max(0,Math.floor((dotsEnd-e.xDots)/dotW));
+    if(n>0)doc.text('. '.repeat(n),e.xDots,e.y);
   });
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // Footer on every page
+  // Watermark + footer on every page
   // ─────────────────────────────────────────────────────────────────────────────
   const totalPages=doc.internal.getNumberOfPages();
   for(let i=1;i<=totalPages;i++){
     doc.setPage(i);
+    drawWatermark();
     doc.setDrawColor(...faintRGB);doc.setLineWidth(0.3);
     doc.line(margin,pageH-12,pageW-margin,pageH-12);
     doc.setFont('helvetica','normal');

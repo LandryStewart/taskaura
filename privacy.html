@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — TaskAura</title>
+  <meta name="description" content="TaskAura's privacy policy — how we collect, use, and protect your data." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://api.fontshare.com/v2/css?f[]=general-sans@600,700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #09090b; --bg2: #0e0e11; --surface: #131316; --surface2: #1a1a1f;
+      --orange: #f97316; --orange-lt: #fb923c; --orange-dk: #c2410c;
+      --text: #fafafa; --text2: #d4d4d8; --muted: #a1a1aa; --faint: #71717a;
+      --border: rgba(255,255,255,.08); --border-lt: rgba(255,255,255,.14);
+      --success: #4ade80;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    ::selection { background: rgba(249,115,22,.35); }
+    h1,h2,h3 { font-weight: 800; letter-spacing: -0.035em; line-height: 1.08; color: var(--text); }
+    a { color: var(--orange-lt); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Nav */
+    .nav-wrap { position: sticky; top: 0; z-index: 100; background: rgba(9,9,11,.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+    nav { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 64px; }
+    .nav-logo { display: flex; align-items: center; gap: .55rem; text-decoration: none; }
+    .logo-mark { width: 26px; height: 26px; border-radius: 7px; background: linear-gradient(135deg, var(--orange-dk), var(--orange-lt)); display: flex; align-items: center; justify-content: center; font-family: 'General Sans', 'Inter', sans-serif; font-weight: 600; font-size: .95rem; color: #fff; box-shadow: 0 2px 10px rgba(249,115,22,.4); }
+    .nav-logo-text { font-family: 'General Sans', 'Inter', sans-serif; font-weight: 700; font-size: 1.1rem; letter-spacing: -0.035em; color: var(--text); }
+    .nav-logo-text span { color: var(--orange); font-weight: 600; letter-spacing: -0.12em; margin: 0 .05em; }
+    .nav-links { display: flex; gap: 1.75rem; align-items: center; }
+    .nav-links a { font-size: .875rem; font-weight: 500; color: var(--muted); text-decoration: none; transition: color .15s; }
+    .nav-links a:hover { color: var(--text); }
+    .btn-nav { background: var(--text) !important; color: var(--bg) !important; padding: .48rem 1.1rem; border-radius: 8px; font-weight: 700 !important; transition: opacity .15s !important; }
+    .btn-nav:hover { opacity: .85; text-decoration: none; }
+    .mobile-nav-toggle { display: none; background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; padding: 4px 8px; }
+
+    /* Content */
+    .page-content { max-width: 760px; margin: 0 auto; padding: 4.5rem 24px 6rem; }
+    .page-content h1 { font-size: clamp(2rem, 4vw, 2.8rem); margin-bottom: .6rem; }
+    .page-meta { font-size: .875rem; color: var(--faint); margin-bottom: 3rem; }
+    .page-content h2 { font-size: 1.25rem; margin: 2.5rem 0 .8rem; }
+    .page-content h3 { font-size: 1.05rem; font-weight: 700; margin: 1.8rem 0 .6rem; }
+    .page-content p { color: var(--text2); margin-bottom: 1rem; line-height: 1.75; font-size: .95rem; }
+    .page-content ul { margin: 0 0 1rem 1.5rem; color: var(--text2); font-size: .95rem; }
+    .page-content ul li { margin-bottom: .4rem; line-height: 1.65; }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--border); background: var(--bg2); }
+    .footer-bottom { border-top: 1px solid var(--border); }
+    .footer-bottom-inner { max-width: 1120px; margin: 0 auto; padding: 1.4rem 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .8rem; font-size: .78rem; color: var(--faint); }
+    .footer-grid { max-width: 1120px; margin: 0 auto; padding: 4rem 24px 2.5rem; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 2.5rem; }
+    .footer-brand p { font-size: .84rem; color: var(--muted); max-width: 260px; margin-top: .9rem; line-height: 1.65; }
+    .footer-col h4 { font-size: .76rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); margin-bottom: 1rem; }
+    .footer-col a { display: block; font-size: .86rem; color: var(--muted); text-decoration: none; padding: .28rem 0; transition: color .15s; }
+    .footer-col a:hover { color: var(--text); }
+    .footer-status { display: inline-flex; align-items: center; gap: .45rem; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 7px var(--success); }
+
+    @media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) {
+      nav { flex-wrap: wrap; height: auto; padding: .8rem 20px; }
+      .nav-links { display: none; flex-direction: column; width: 100%; gap: .4rem; padding: .8rem 0 .4rem; border-top: 1px solid var(--border); margin-top: .8rem; align-items: stretch; text-align: center; }
+      .nav-links.mobile-open { display: flex; }
+      .nav-links a { padding: .55rem; }
+      .mobile-nav-toggle { display: block; }
+      .footer-grid { grid-template-columns: 1fr; gap: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="nav-wrap">
+<nav>
+  <a class="nav-logo" href="/">
+    <div class="logo-mark">/</div>
+    <span class="nav-logo-text">Task<span>//</span>Aura</span>
+  </a>
+  <button class="mobile-nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('mobile-open')" aria-label="Menu">&#9776;</button>
+  <div class="nav-links">
+    <a href="/#features">Features</a>
+    <a href="/#pricing">Pricing</a>
+    <a href="/about">About</a>
+    <a href="/app" class="btn-nav">Get started</a>
+  </div>
+</nav>
+</div>
+
+<div class="page-content">
+  <h1>Privacy Policy</h1>
+  <p class="page-meta">Effective date: June 14, 2026 · Last updated: June 14, 2026</p>
+
+  <p>TaskAura ("we," "us," or "our") operates the taskaura.org website and the TaskAura application (together, the "Service"). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Service.</p>
+
+  <h2>1. Information We Collect</h2>
+
+  <h3>Account Information</h3>
+  <p>When you create an account, we collect your name, email address, and password (stored as a secure hash). If you sign in with Google, we receive your name, email, and profile picture from Google.</p>
+
+  <h3>Usage Data</h3>
+  <p>We collect information about how you interact with the Service, including pages visited, features used, timestamps, browser type, device type, and IP address. This data is collected through server logs and analytics.</p>
+
+  <h3>User Content</h3>
+  <p>We store the tasks, notes, workspace data, and chat messages you create within the Service. This content is necessary to provide the Service and is stored securely in our database infrastructure.</p>
+
+  <h2>2. How We Use Your Information</h2>
+  <p>We use the information we collect to:</p>
+  <ul>
+    <li>Provide, maintain, and improve the Service</li>
+    <li>Authenticate your identity and manage your account</li>
+    <li>Sync your data across devices in real time</li>
+    <li>Send transactional emails (account confirmation, password resets)</li>
+    <li>Monitor for security threats and abuse</li>
+    <li>Respond to support requests</li>
+  </ul>
+
+  <h2>3. Data Storage and Security</h2>
+  <p>Your data is stored on infrastructure provided by Supabase (hosted on AWS) and served through Vercel. All data is transmitted over HTTPS with TLS encryption. Passwords are hashed using industry-standard algorithms. We implement access controls, audit logging, and regular security reviews to protect your data.</p>
+
+  <h2>4. Data Sharing</h2>
+  <p>We do not sell, rent, or trade your personal information. We may share data only in these circumstances:</p>
+  <ul>
+    <li><strong>Service providers:</strong> We use Supabase (database/auth), Vercel (hosting), and Google (OAuth) to operate the Service. These providers process data on our behalf under their own privacy policies.</li>
+    <li><strong>Team workspaces:</strong> When you join a team workspace, your name and tasks are visible to other members of that workspace.</li>
+    <li><strong>Legal requirements:</strong> We may disclose information if required by law, legal process, or to protect the rights, safety, or property of TaskAura or others.</li>
+  </ul>
+
+  <h2>5. Your Rights</h2>
+  <p>You may:</p>
+  <ul>
+    <li><strong>Access</strong> your data by signing in and viewing your workspaces</li>
+    <li><strong>Export</strong> your data at any time through the application</li>
+    <li><strong>Delete</strong> your account and all associated data by contacting us at <a href="mailto:privacy@taskaura.org">privacy@taskaura.org</a></li>
+    <li><strong>Correct</strong> inaccurate data through your account settings</li>
+  </ul>
+
+  <h2>6. Cookies and Local Storage</h2>
+  <p>We use browser local storage to cache your workspace data for offline access and faster load times. We use session cookies for authentication. We do not use third-party advertising or tracking cookies.</p>
+
+  <h2>7. Children's Privacy</h2>
+  <p>The Service is not directed to children under 13. We do not knowingly collect personal information from children under 13. If you believe a child has provided us with personal data, please contact us and we will delete it.</p>
+
+  <h2>8. International Data Transfers</h2>
+  <p>Your information may be transferred to and processed in the United States, where our infrastructure providers are located. By using the Service, you consent to this transfer.</p>
+
+  <h2>9. Changes to This Policy</h2>
+  <p>We may update this Privacy Policy from time to time. We will notify you of material changes by posting the updated policy on this page with a new "Last updated" date.</p>
+
+  <h2>10. Contact Us</h2>
+  <p>If you have questions about this Privacy Policy, contact us at <a href="mailto:privacy@taskaura.org">privacy@taskaura.org</a>.</p>
+</div>
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a class="nav-logo" href="/">
+        <div class="logo-mark">T</div>
+        <span class="nav-logo-text">Task<span>Aura</span></span>
+      </a>
+      <p>The task platform modern teams run on. Plan, assign, and ship — together, in real time.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <a href="/#features">Features</a>
+      <a href="/#pricing">Pricing</a>
+      <a href="/app">Sign in</a>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <a href="/about">About</a>
+      <a href="mailto:hello@taskaura.org">Contact</a>
+      <a href="mailto:hello@taskaura.org">Support</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <span>&copy; 2026 TaskAura. All rights reserved.</span>
+      <span class="footer-status"><span class="status-dot"></span> All systems operational</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

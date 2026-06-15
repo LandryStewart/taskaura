@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About — TaskAura</title>
+  <meta name="description" content="Learn about TaskAura — the task platform built for modern teams who want to plan, assign, and ship work together." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://api.fontshare.com/v2/css?f[]=general-sans@600,700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #09090b; --bg2: #0e0e11; --surface: #131316; --surface2: #1a1a1f;
+      --orange: #f97316; --orange-lt: #fb923c; --orange-dk: #c2410c;
+      --text: #fafafa; --text2: #d4d4d8; --muted: #a1a1aa; --faint: #71717a;
+      --border: rgba(255,255,255,.08); --border-lt: rgba(255,255,255,.14);
+      --success: #4ade80;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    ::selection { background: rgba(249,115,22,.35); }
+    h1,h2,h3 { font-weight: 800; letter-spacing: -0.035em; line-height: 1.08; color: var(--text); }
+    a { color: var(--orange-lt); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .nav-wrap { position: sticky; top: 0; z-index: 100; background: rgba(9,9,11,.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+    nav { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 64px; }
+    .nav-logo { display: flex; align-items: center; gap: .55rem; text-decoration: none; }
+    .logo-mark { width: 26px; height: 26px; border-radius: 7px; background: linear-gradient(135deg, var(--orange-dk), var(--orange-lt)); display: flex; align-items: center; justify-content: center; font-family: 'General Sans', 'Inter', sans-serif; font-weight: 600; font-size: .95rem; color: #fff; box-shadow: 0 2px 10px rgba(249,115,22,.4); }
+    .nav-logo-text { font-family: 'General Sans', 'Inter', sans-serif; font-weight: 700; font-size: 1.1rem; letter-spacing: -0.035em; color: var(--text); }
+    .nav-logo-text span { color: var(--orange); font-weight: 600; letter-spacing: -0.12em; margin: 0 .05em; }
+    .nav-links { display: flex; gap: 1.75rem; align-items: center; }
+    .nav-links a { font-size: .875rem; font-weight: 500; color: var(--muted); text-decoration: none; transition: color .15s; }
+    .nav-links a:hover { color: var(--text); }
+    .btn-nav { background: var(--text) !important; color: var(--bg) !important; padding: .48rem 1.1rem; border-radius: 8px; font-weight: 700 !important; transition: opacity .15s !important; }
+    .btn-nav:hover { opacity: .85; text-decoration: none; }
+    .mobile-nav-toggle { display: none; background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; padding: 4px 8px; }
+
+    /* Hero-style header for about page */
+    .about-hero { text-align: center; padding: 5.5rem 24px 4rem; position: relative; overflow: hidden; }
+    .about-hero::before { content: ''; position: absolute; top: -280px; left: 50%; transform: translateX(-50%); width: 800px; height: 500px; background: radial-gradient(ellipse at center, rgba(249,115,22,.12) 0%, transparent 65%); pointer-events: none; }
+    .about-hero h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); margin-bottom: 1.2rem; position: relative; }
+    .about-hero h1 em { font-style: normal; background: linear-gradient(120deg, var(--orange-lt), var(--orange), var(--orange-dk)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .about-hero p { font-size: 1.1rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.75; position: relative; }
+
+    /* Content sections */
+    .about-section { max-width: 760px; margin: 0 auto; padding: 0 24px 4rem; }
+    .about-section h2 { font-size: 1.5rem; margin-bottom: 1.2rem; }
+    .about-section p { color: var(--text2); margin-bottom: 1rem; line-height: 1.75; font-size: .95rem; }
+
+    /* Values grid */
+    .values-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 1.5rem; }
+    .value-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 1.6rem; }
+    .value-card:hover { border-color: rgba(249,115,22,.25); }
+    .value-icon { font-size: 1.4rem; margin-bottom: .8rem; }
+    .value-title { font-weight: 700; font-size: 1rem; margin-bottom: .4rem; letter-spacing: -.02em; }
+    .value-desc { font-size: .875rem; color: var(--muted); line-height: 1.65; }
+
+    /* CTA */
+    .about-cta { text-align: center; padding: 2rem 24px 6rem; }
+    .about-cta-inner { max-width: 600px; margin: 0 auto; background: var(--bg2); border: 1px solid var(--border-lt); border-radius: 20px; padding: 3rem 2.5rem; }
+    .about-cta-inner h2 { font-size: 1.5rem; margin-bottom: .6rem; }
+    .about-cta-inner p { color: var(--muted); font-size: .95rem; margin-bottom: 1.5rem; }
+    .btn-primary { display: inline-block; background: linear-gradient(135deg, var(--orange-dk), var(--orange)); color: #fff; padding: .8rem 1.8rem; border-radius: 10px; font-size: .95rem; font-weight: 700; text-decoration: none; transition: transform .15s, box-shadow .15s; box-shadow: 0 4px 22px rgba(249,115,22,.35); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(249,115,22,.45); text-decoration: none; }
+
+    footer { border-top: 1px solid var(--border); background: var(--bg2); }
+    .footer-bottom { border-top: 1px solid var(--border); }
+    .footer-bottom-inner { max-width: 1120px; margin: 0 auto; padding: 1.4rem 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .8rem; font-size: .78rem; color: var(--faint); }
+    .footer-grid { max-width: 1120px; margin: 0 auto; padding: 4rem 24px 2.5rem; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 2.5rem; }
+    .footer-brand p { font-size: .84rem; color: var(--muted); max-width: 260px; margin-top: .9rem; line-height: 1.65; }
+    .footer-col h4 { font-size: .76rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); margin-bottom: 1rem; }
+    .footer-col a { display: block; font-size: .86rem; color: var(--muted); text-decoration: none; padding: .28rem 0; transition: color .15s; }
+    .footer-col a:hover { color: var(--text); }
+    .footer-status { display: inline-flex; align-items: center; gap: .45rem; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 7px var(--success); }
+
+    @media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) {
+      nav { flex-wrap: wrap; height: auto; padding: .8rem 20px; }
+      .nav-links { display: none; flex-direction: column; width: 100%; gap: .4rem; padding: .8rem 0 .4rem; border-top: 1px solid var(--border); margin-top: .8rem; align-items: stretch; text-align: center; }
+      .nav-links.mobile-open { display: flex; }
+      .nav-links a { padding: .55rem; }
+      .mobile-nav-toggle { display: block; }
+      .values-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; gap: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="nav-wrap">
+<nav>
+  <a class="nav-logo" href="/">
+    <div class="logo-mark">/</div>
+    <span class="nav-logo-text">Task<span>//</span>Aura</span>
+  </a>
+  <button class="mobile-nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('mobile-open')" aria-label="Menu">&#9776;</button>
+  <div class="nav-links">
+    <a href="/#features">Features</a>
+    <a href="/#pricing">Pricing</a>
+    <a href="/about">About</a>
+    <a href="/app" class="btn-nav">Get started</a>
+  </div>
+</nav>
+</div>
+
+<section class="about-hero">
+  <h1>Built for teams that<br><em>move fast.</em></h1>
+  <p>TaskAura started with a simple idea: teams shouldn't need five tools to manage their work. We built one fast workspace that keeps everyone in sync.</p>
+</section>
+
+<section class="about-section">
+  <h2>Our Story</h2>
+  <p>TaskAura was born out of frustration with bloated project management tools that slow teams down instead of speeding them up. We wanted something lightweight, real-time, and free — a tool that gets out of the way and lets teams focus on the work that matters.</p>
+  <p>We built TaskAura as a single, fast workspace where tasks, notes, calendars, and team chat live together. No tab-switching, no sync delays, no per-seat pricing that punishes you for growing your team.</p>
+</section>
+
+<section class="about-section">
+  <h2>What We Believe</h2>
+  <div class="values-grid">
+    <div class="value-card">
+      <div class="value-icon">⚡</div>
+      <div class="value-title">Speed over ceremony</div>
+      <div class="value-desc">Tools should be fast to open, fast to use, and fast to close. Every millisecond of friction adds up.</div>
+    </div>
+    <div class="value-card">
+      <div class="value-icon">🔓</div>
+      <div class="value-title">Free means free</div>
+      <div class="value-desc">Every feature, every team member, $0. We believe productivity tools shouldn't have a paywall.</div>
+    </div>
+    <div class="value-card">
+      <div class="value-icon">🔄</div>
+      <div class="value-title">Real-time by default</div>
+      <div class="value-desc">Your team should never wonder if they're looking at stale data. Changes sync instantly, always.</div>
+    </div>
+    <div class="value-card">
+      <div class="value-icon">🛡️</div>
+      <div class="value-title">Your data, your control</div>
+      <div class="value-desc">We don't sell your data. We don't use tracking ads. Your workspace data stays yours, exportable at any time.</div>
+    </div>
+  </div>
+</section>
+
+<section class="about-section">
+  <h2>Contact Us</h2>
+  <p>We'd love to hear from you — whether it's feedback, a feature request, or a question about how TaskAura can work for your team.</p>
+  <p>General inquiries: <a href="mailto:hello@taskaura.org">hello@taskaura.org</a><br>
+  Support: <a href="mailto:support@taskaura.org">support@taskaura.org</a><br>
+  Privacy questions: <a href="mailto:privacy@taskaura.org">privacy@taskaura.org</a></p>
+</section>
+
+<div class="about-cta">
+  <div class="about-cta-inner">
+    <h2>Ready to try it?</h2>
+    <p>Set up your first workspace in under two minutes — free for your whole team.</p>
+    <a href="/app" class="btn-primary">Get started free</a>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a class="nav-logo" href="/">
+        <div class="logo-mark">T</div>
+        <span class="nav-logo-text">Task<span>Aura</span></span>
+      </a>
+      <p>The task platform modern teams run on. Plan, assign, and ship — together, in real time.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <a href="/#features">Features</a>
+      <a href="/#pricing">Pricing</a>
+      <a href="/app">Sign in</a>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <a href="/about">About</a>
+      <a href="mailto:hello@taskaura.org">Contact</a>
+      <a href="mailto:hello@taskaura.org">Support</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <span>&copy; 2026 TaskAura. All rights reserved.</span>
+      <span class="footer-status"><span class="status-dot"></span> All systems operational</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

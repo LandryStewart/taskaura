@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms of Service — TaskAura</title>
+  <meta name="description" content="TaskAura's terms of service — the rules and guidelines for using our platform." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://api.fontshare.com/v2/css?f[]=general-sans@600,700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #09090b; --bg2: #0e0e11; --surface: #131316; --surface2: #1a1a1f;
+      --orange: #f97316; --orange-lt: #fb923c; --orange-dk: #c2410c;
+      --text: #fafafa; --text2: #d4d4d8; --muted: #a1a1aa; --faint: #71717a;
+      --border: rgba(255,255,255,.08); --border-lt: rgba(255,255,255,.14);
+      --success: #4ade80;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    ::selection { background: rgba(249,115,22,.35); }
+    h1,h2,h3 { font-weight: 800; letter-spacing: -0.035em; line-height: 1.08; color: var(--text); }
+    a { color: var(--orange-lt); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .nav-wrap { position: sticky; top: 0; z-index: 100; background: rgba(9,9,11,.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+    nav { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 64px; }
+    .nav-logo { display: flex; align-items: center; gap: .55rem; text-decoration: none; }
+    .logo-mark { width: 26px; height: 26px; border-radius: 7px; background: linear-gradient(135deg, var(--orange-dk), var(--orange-lt)); display: flex; align-items: center; justify-content: center; font-family: 'General Sans', 'Inter', sans-serif; font-weight: 600; font-size: .95rem; color: #fff; box-shadow: 0 2px 10px rgba(249,115,22,.4); }
+    .nav-logo-text { font-family: 'General Sans', 'Inter', sans-serif; font-weight: 700; font-size: 1.1rem; letter-spacing: -0.035em; color: var(--text); }
+    .nav-logo-text span { color: var(--orange); font-weight: 600; letter-spacing: -0.12em; margin: 0 .05em; }
+    .nav-links { display: flex; gap: 1.75rem; align-items: center; }
+    .nav-links a { font-size: .875rem; font-weight: 500; color: var(--muted); text-decoration: none; transition: color .15s; }
+    .nav-links a:hover { color: var(--text); }
+    .btn-nav { background: var(--text) !important; color: var(--bg) !important; padding: .48rem 1.1rem; border-radius: 8px; font-weight: 700 !important; transition: opacity .15s !important; }
+    .btn-nav:hover { opacity: .85; text-decoration: none; }
+    .mobile-nav-toggle { display: none; background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; padding: 4px 8px; }
+
+    .page-content { max-width: 760px; margin: 0 auto; padding: 4.5rem 24px 6rem; }
+    .page-content h1 { font-size: clamp(2rem, 4vw, 2.8rem); margin-bottom: .6rem; }
+    .page-meta { font-size: .875rem; color: var(--faint); margin-bottom: 3rem; }
+    .page-content h2 { font-size: 1.25rem; margin: 2.5rem 0 .8rem; }
+    .page-content h3 { font-size: 1.05rem; font-weight: 700; margin: 1.8rem 0 .6rem; }
+    .page-content p { color: var(--text2); margin-bottom: 1rem; line-height: 1.75; font-size: .95rem; }
+    .page-content ul { margin: 0 0 1rem 1.5rem; color: var(--text2); font-size: .95rem; }
+    .page-content ul li { margin-bottom: .4rem; line-height: 1.65; }
+
+    footer { border-top: 1px solid var(--border); background: var(--bg2); }
+    .footer-bottom { border-top: 1px solid var(--border); }
+    .footer-bottom-inner { max-width: 1120px; margin: 0 auto; padding: 1.4rem 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .8rem; font-size: .78rem; color: var(--faint); }
+    .footer-grid { max-width: 1120px; margin: 0 auto; padding: 4rem 24px 2.5rem; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 2.5rem; }
+    .footer-brand p { font-size: .84rem; color: var(--muted); max-width: 260px; margin-top: .9rem; line-height: 1.65; }
+    .footer-col h4 { font-size: .76rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); margin-bottom: 1rem; }
+    .footer-col a { display: block; font-size: .86rem; color: var(--muted); text-decoration: none; padding: .28rem 0; transition: color .15s; }
+    .footer-col a:hover { color: var(--text); }
+    .footer-status { display: inline-flex; align-items: center; gap: .45rem; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 7px var(--success); }
+
+    @media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) {
+      nav { flex-wrap: wrap; height: auto; padding: .8rem 20px; }
+      .nav-links { display: none; flex-direction: column; width: 100%; gap: .4rem; padding: .8rem 0 .4rem; border-top: 1px solid var(--border); margin-top: .8rem; align-items: stretch; text-align: center; }
+      .nav-links.mobile-open { display: flex; }
+      .nav-links a { padding: .55rem; }
+      .mobile-nav-toggle { display: block; }
+      .footer-grid { grid-template-columns: 1fr; gap: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="nav-wrap">
+<nav>
+  <a class="nav-logo" href="/">
+    <div class="logo-mark">/</div>
+    <span class="nav-logo-text">Task<span>//</span>Aura</span>
+  </a>
+  <button class="mobile-nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('mobile-open')" aria-label="Menu">&#9776;</button>
+  <div class="nav-links">
+    <a href="/#features">Features</a>
+    <a href="/#pricing">Pricing</a>
+    <a href="/about">About</a>
+    <a href="/app" class="btn-nav">Get started</a>
+  </div>
+</nav>
+</div>
+
+<div class="page-content">
+  <h1>Terms of Service</h1>
+  <p class="page-meta">Effective date: June 14, 2026 · Last updated: June 14, 2026</p>
+
+  <p>These Terms of Service ("Terms") govern your use of the TaskAura website and application (the "Service") operated by TaskAura ("we," "us," or "our"). By accessing or using the Service, you agree to be bound by these Terms.</p>
+
+  <h2>1. Accounts</h2>
+  <p>You must create an account to use the Service. You are responsible for maintaining the confidentiality of your login credentials and for all activities that occur under your account. You must provide accurate, current information during registration. You must be at least 13 years old to use the Service.</p>
+
+  <h2>2. Acceptable Use</h2>
+  <p>You agree not to:</p>
+  <ul>
+    <li>Use the Service for any unlawful purpose or in violation of any applicable laws</li>
+    <li>Attempt to gain unauthorized access to any part of the Service or its infrastructure</li>
+    <li>Interfere with or disrupt the Service or servers connected to the Service</li>
+    <li>Upload or transmit viruses, malware, or other harmful code</li>
+    <li>Use the Service to send spam, phishing messages, or unsolicited communications</li>
+    <li>Impersonate any person or entity, or misrepresent your affiliation</li>
+    <li>Scrape, crawl, or otherwise automatically collect data from the Service without permission</li>
+    <li>Use the Service to store or transmit content that infringes any intellectual property rights</li>
+  </ul>
+
+  <h2>3. Your Content</h2>
+  <p>You retain ownership of all content you create within the Service (tasks, notes, messages, workspace data). By using the Service, you grant us a limited license to store, process, and display your content solely to provide the Service to you and your team members. We do not claim ownership of your content and will not use it for purposes unrelated to operating the Service.</p>
+
+  <h2>4. Team Workspaces</h2>
+  <p>When you create or join a team workspace, your name and the content you create within that workspace are visible to other team members. Workspace creators ("organizers") may have additional administrative capabilities. You are responsible for any content you share in team workspaces.</p>
+
+  <h2>5. Service Availability</h2>
+  <p>We strive to keep the Service available and reliable, but we do not guarantee uninterrupted or error-free operation. We may modify, suspend, or discontinue any part of the Service at any time with reasonable notice. We will make commercially reasonable efforts to notify users of material changes.</p>
+
+  <h2>6. Free Tier</h2>
+  <p>The Service is currently offered free of charge. We reserve the right to introduce paid features or plans in the future. If we do, existing free features will remain available or users will be given reasonable notice of changes.</p>
+
+  <h2>7. Data and Privacy</h2>
+  <p>Your use of the Service is also governed by our <a href="/privacy">Privacy Policy</a>, which describes how we collect, use, and protect your information.</p>
+
+  <h2>8. Intellectual Property</h2>
+  <p>The Service, including its design, code, logos, and documentation, is owned by TaskAura and protected by intellectual property laws. You may not copy, modify, distribute, or reverse engineer any part of the Service, except as expressly permitted by these Terms or applicable law.</p>
+
+  <h2>9. Termination</h2>
+  <p>You may stop using the Service and delete your account at any time by contacting us. We may suspend or terminate your access if you violate these Terms, with notice where practicable. Upon termination, your right to use the Service ceases, though we will make your data available for export for a reasonable period.</p>
+
+  <h2>10. Disclaimers</h2>
+  <p>The Service is provided "as is" and "as available" without warranties of any kind, whether express or implied, including warranties of merchantability, fitness for a particular purpose, or non-infringement. We do not warrant that the Service will meet your requirements or be error-free.</p>
+
+  <h2>11. Limitation of Liability</h2>
+  <p>To the maximum extent permitted by law, TaskAura shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of data, profits, or revenue, arising from your use of the Service.</p>
+
+  <h2>12. Changes to These Terms</h2>
+  <p>We may update these Terms from time to time. We will notify you of material changes by posting the updated Terms on this page. Your continued use of the Service after changes take effect constitutes acceptance of the revised Terms.</p>
+
+  <h2>13. Contact</h2>
+  <p>Questions about these Terms? Contact us at <a href="mailto:legal@taskaura.org">legal@taskaura.org</a>.</p>
+</div>
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a class="nav-logo" href="/">
+        <div class="logo-mark">T</div>
+        <span class="nav-logo-text">Task<span>Aura</span></span>
+      </a>
+      <p>The task platform modern teams run on. Plan, assign, and ship — together, in real time.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <a href="/#features">Features</a>
+      <a href="/#pricing">Pricing</a>
+      <a href="/app">Sign in</a>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <a href="/about">About</a>
+      <a href="mailto:hello@taskaura.org">Contact</a>
+      <a href="mailto:hello@taskaura.org">Support</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <span>&copy; 2026 TaskAura. All rights reserved.</span>
+      <span class="footer-status"><span class="status-dot"></span> All systems operational</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -2090,8 +2090,8 @@ function renderPersonalDashboard(el){
     // Admin approval widget (only for admin)
     (currentUser&&currentUser.email==='landrystewart@live.com'?
       '<div class="pd-panel" id="adminApprovalPanel" style="margin-top:16px">'+
-        '<div class="pd-panel-title">🔐 User Approvals</div>'+
-        '<div id="adminPendingList"><div class="pd-empty" style="color:var(--muted)">Loading...</div></div>'+
+        '<div class="pd-panel-title" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between" onclick="var b=document.getElementById(\'adminPendingList\');var ch=this.querySelector(\'.filter-section-chevron\');if(b.style.display===\'none\'){b.style.display=\'\';ch.classList.add(\'open\');}else{b.style.display=\'none\';ch.classList.remove(\'open\');}">🔐 User Approvals<span class="filter-section-chevron" style="font-size:9px;color:var(--muted)">▶</span></div>'+
+        '<div id="adminPendingList" style="display:none"><div class="pd-empty" style="color:var(--muted)">Loading...</div></div>'+
       '</div>':'');
   animateKpiNums(el);
   startPdClock();

@@ -2001,7 +2001,9 @@ function renderPersonalDashboard(el){
     // Team workspace cards (right after KPIs, before bento panels)
     // Workspace cards — personal + teams
     (function(){
-      var pTasks=(function(){try{var r=localStorage.getItem('wm_workspaces');if(r){var d=JSON.parse(r);return(d.work||{}).tasks||[];}return[];}catch(e){return[];}})();
+      // Personal workspace tasks from the wm_workspaces store
+      var allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');
+      var pTasks=(allWs.work||{}).tasks||[];
       var pTotal=pTasks.length;
       var pDone=pTasks.filter(function(t){return(t.pct||0)>=100;}).length;
       var pOverdue=pTasks.filter(function(t){if((t.pct||0)>=100||!t.due)return false;return t.due<todayStr();}).length;
@@ -2020,15 +2022,15 @@ function renderPersonalDashboard(el){
           '<div class="pd-team-card-bar" style="height:6px;margin-bottom:12px"><div class="pd-team-card-bar-fill" style="width:'+pPct+'%"></div></div>'+
           '<div style="font-size:11px;color:var(--muted);margin-top:4px">Private — only you can see this</div>'+
         '</div>';
-      // Team cards
+      // Team cards — read from teamWorkspaces array (already loaded from Supabase)
       teamWorkspaces.forEach(function(tw){
-        var twTasks=[];
-        try{var k='wm_team_'+tw.id;var raw=localStorage.getItem(k);if(raw){var d=JSON.parse(raw);twTasks=d.tasks||[];}}catch(e){}
+        var twData=tw.data||{};
+        var twTasks=twData.tasks||[];
         var twTotal=twTasks.length;
         var twDone=twTasks.filter(function(t){return(t.pct||0)>=100;}).length;
         var twOverdue=twTasks.filter(function(t){if((t.pct||0)>=100||!t.due)return false;return t.due<todayStr();}).length;
         var twPct=twTotal?Math.round(twDone/twTotal*100):0;
-        var members=(function(){try{var k2='wm_team_'+tw.id;var r2=localStorage.getItem(k2);if(r2){var d2=JSON.parse(r2);return d2.teamMembers||[];}return[];}catch(e){return[];}})();
+        var members=twData.teamMembers||[];
         var memAvatars=members.slice(0,5).map(function(m){return'<div class="pd-team-card-avatar" style="background:'+avatarColor(m)+'">'+initials(m)+'</div>';}).join('');
         if(members.length>5)memAvatars+='<div class="pd-team-card-avatar" style="background:var(--border);color:var(--text2)">+'+(members.length-5)+'</div>';
         html+='<div class="pd-team-card" style="padding:24px 22px" onclick="switchToTeamWorkspace(\''+tw.id+'\')">'+
@@ -2061,10 +2063,6 @@ function renderPersonalDashboard(el){
           '<button class="pd-action-btn secondary" onclick="openTeamPanel()">Create / Join Team</button>'+
           '<button class="pd-action-btn secondary" onclick="generatePDFReport()">Export PDF Report</button>'+
         '</div>'+
-      '</div>'+
-      '<div class="pd-panel pd-span4">'+
-        '<div class="pd-panel-title">My Priorities</div>'+
-        prioritiesHTML+
       '</div>'+
     '</div>'+
     // Activity log (today's session)

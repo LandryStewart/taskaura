@@ -920,6 +920,83 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .bucket-expanded .bucket-exp-add{padding:12px 20px;border-top:1px solid var(--border);flex-shrink:0;}
 .bucket-expanded .bucket-exp-add input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;background:var(--bg);color:var(--text);outline:none;}
 .bucket-expanded .bucket-exp-add input:focus{border-color:var(--pri);}
+
+/* ── Legal Tracker View ──────────────────────────────────────────────────── */
+.legal-view{flex:1;overflow:auto;padding:0;display:none;flex-direction:column;}
+.legal-view.active-view{display:flex;}
+.lt-header{background:linear-gradient(90deg,#1a3c2a,#2d5a3f);color:#fff;padding:14px 22px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+[data-theme="dark"] .lt-header{background:linear-gradient(90deg,#0d1f15,#1a3c2a);}
+.lt-header h2{font-size:16px;font-weight:900;letter-spacing:.3px;margin:0;flex:1;}
+.lt-header-actions{display:flex;gap:8px;align-items:center;}
+.lt-header-btn{background:rgba(255,255,255,.15);border:none;color:#fff;font-size:12px;cursor:pointer;padding:6px 12px;border-radius:8px;font-weight:700;display:flex;align-items:center;gap:4px;transition:.15s;}
+.lt-header-btn:hover{background:rgba(255,255,255,.25);}
+.lt-sync-info{font-size:11px;color:rgba(255,255,255,.7);font-weight:600;white-space:nowrap;}
+.lt-body{flex:1;overflow:auto;padding:16px;max-width:1320px;width:100%;margin:0 auto;}
+.lt-tab-bar{display:flex;gap:0;margin-bottom:14px;border-bottom:2px solid var(--border);}
+.lt-tab-btn{padding:10px 20px;font-size:13px;font-weight:800;color:var(--muted);background:none;border:none;cursor:pointer;border-bottom:3px solid transparent;transition:.2s;border-radius:6px 6px 0 0;}
+.lt-tab-btn:hover{color:var(--text);background:var(--pri-l);}
+.lt-tab-btn.active{color:#16a34a;border-bottom-color:#16a34a;}
+.lt-tab-panel{display:none;}
+.lt-tab-panel.active{display:block;}
+.lt-card{background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px;}
+.lt-card h3{font-size:14px;color:var(--text);display:inline-block;border-bottom:2px solid #16a34a;padding-bottom:4px;margin-bottom:12px;font-weight:900;}
+.lt-formgrid{display:grid;grid-template-columns:repeat(12,1fr);gap:10px;}
+.lt-field{display:flex;flex-direction:column;gap:4px;}
+.lt-field label{font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;}
+.lt-field input,.lt-field select,.lt-field textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--bg);color:var(--text);transition:.15s;}
+.lt-field input:focus,.lt-field select:focus,.lt-field textarea:focus{outline:none;border-color:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.12);}
+.lt-field textarea{min-height:60px;resize:vertical;}
+.lt-col-12{grid-column:span 12}.lt-col-8{grid-column:span 8}.lt-col-6{grid-column:span 6}.lt-col-4{grid-column:span 4}.lt-col-3{grid-column:span 3}
+@media(max-width:980px){.lt-col-8,.lt-col-6,.lt-col-4,.lt-col-3{grid-column:span 12}}
+.lt-btn{border:none;border-radius:10px;padding:8px 14px;font-weight:800;font-size:12px;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:4px;}
+.lt-btn.primary{background:#16a34a;color:#fff;}.lt-btn.primary:hover{background:#15803d;}
+.lt-btn.outline{background:transparent;border:2px solid #16a34a;color:#16a34a;}.lt-btn.outline:hover{background:#16a34a;color:#fff;}
+.lt-btn.danger{background:var(--crit);color:#fff;}.lt-btn.danger:hover{filter:brightness(.9);}
+.lt-btn.sm{padding:5px 10px;font-size:11px;border-radius:8px;}
+.lt-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;}
+.lt-plusline{display:flex;gap:8px;align-items:center;}
+.lt-plusline button{width:38px;min-width:38px;padding:8px 0;}
+.lt-stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.lt-stat{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:800;color:var(--text);}
+.lt-stat span{color:#16a34a;}
+.lt-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0 12px;}
+.lt-filters input,.lt-filters select{padding:6px 10px;border-radius:10px;font-size:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);}
+.lt-badge{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:3px 9px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;}
+.lt-task-card{border:1px solid var(--border);border-radius:10px;margin-bottom:6px;background:var(--card);transition:box-shadow .2s,border-color .2s;cursor:pointer;overflow:hidden;}
+.lt-task-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.07);border-color:#16a34a;}
+.lt-task-card-header{display:flex;align-items:center;gap:8px;padding:10px 12px;flex-wrap:wrap;}
+.lt-task-card-body{max-height:0;overflow:hidden;transition:max-height .35s ease,padding .35s ease;padding:0 12px;}
+.lt-task-card.expanded .lt-task-card-body{max-height:400px;padding:10px 12px 12px;border-top:1px solid var(--border);}
+.lt-task-card .lt-chevron{font-size:12px;color:var(--muted);transition:transform .25s;margin-left:auto;flex-shrink:0;}
+.lt-task-card.expanded .lt-chevron{transform:rotate(90deg);}
+.lt-sort-bar{display:flex;gap:6px;align-items:center;margin-bottom:8px;font-size:12px;flex-wrap:wrap;}
+.lt-sort-bar .lt-sort-label{font-weight:900;color:var(--text);margin-right:4px;}
+.lt-sort-bar .lt-sort-link{color:#16a34a;cursor:pointer;font-weight:700;padding:3px 8px;border-radius:6px;transition:.15s;}
+.lt-sort-bar .lt-sort-link:hover{background:rgba(22,163,74,.08);}
+.lt-sort-bar .lt-sort-link.active{background:#16a34a;color:#fff;}
+.lt-group-header{margin:12px 0 4px;padding:8px 12px;background:#1a3c2a;color:#fff;border-radius:8px;font-weight:900;font-size:13px;}
+[data-theme="dark"] .lt-group-header{background:#16a34a;}
+.lt-counsel-header{margin:4px 0 4px 10px;padding:4px 10px;border-radius:6px;font-weight:800;font-size:11px;color:var(--text);}
+.lt-empty{text-align:center;color:var(--muted);padding:24px 10px;font-size:13px;}
+.lt-summary-box{border:1px solid var(--border);border-radius:12px;background:var(--card);padding:14px;max-height:540px;overflow:auto;margin-top:10px;}
+.lt-summary-box:empty{display:none;}
+.lt-email-setup{background:var(--pri-l);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;}
+[data-theme="dark"] .lt-email-setup{background:rgba(22,163,74,.08);}
+.lt-email-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.lt-email-row:last-child{margin-bottom:0;}
+.lt-email-row label{min-width:50px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);}
+.lt-email-row input{flex:1;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--bg);color:var(--text);}
+.lt-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:998;align-items:center;justify-content:center;}
+.lt-overlay.active{display:flex;}
+.lt-modal{background:var(--card);border-radius:14px;border:1px solid var(--border);box-shadow:0 14px 34px rgba(0,0,0,.18);width:92%;max-width:720px;max-height:88vh;overflow:auto;padding:16px;}
+.lt-modal h3{font-size:14px;color:var(--text);font-weight:900;margin-bottom:10px;}
+.lt-list{display:flex;flex-direction:column;gap:6px;margin-top:8px;}
+.lt-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:var(--bg);}
+.lt-item strong{font-size:13px;color:var(--text);}
+.lt-cb{width:16px;height:16px;cursor:pointer;accent-color:#16a34a;}
+.lt-gh-settings{background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.18);padding:16px;width:380px;max-width:92vw;position:absolute;top:56px;right:16px;z-index:200;display:none;}
+.lt-ws-tab{background:linear-gradient(135deg,#1a3c2a,#16a34a);color:#fff;border:none;font-weight:800;font-size:11px;letter-spacing:.3px;padding:6px 14px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s;white-space:nowrap;}
+.lt-ws-tab:hover{box-shadow:0 2px 8px rgba(22,163,74,.4);transform:translateY(-1px);}
 </style>
 <script src="/vendor/supabase.js"></script>
 <script src="/vendor/jspdf.umd.min.js"></script>
@@ -1050,6 +1127,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 </div>
   <div class="schedules-view" id="schedulesView"></div>
   <div class="chat-view" id="chatView"></div>
+  <div class="legal-view" id="legalView"></div>
  </div>
 </div>
 </div>
@@ -1138,6 +1216,37 @@ input,select,textarea{font-family:inherit;color:var(--text);}
    <button class="team-panel-btn secondary" id="joinTeamBtn" onclick="joinTeamWorkspace()">Join Workspace</button>
   </div>
  </div>
+</div>
+<!-- Legal Tracker Modals -->
+<div class="lt-overlay" id="ltManageOverlay">
+<div class="lt-modal">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+<h3>Manage Lists</h3>
+<button class="lt-btn outline sm" onclick="lt_closeManage()">Close</button>
+</div>
+<p style="color:var(--muted);font-size:12px;margin:6px 0 12px">Add/remove projects and stages. Deleting a value reassigns tasks to a default.</p>
+<div class="lt-card" style="box-shadow:none"><h3 style="margin-bottom:8px">Projects</h3><div class="lt-plusline"><input id="ltMgrNewProject" type="text" placeholder="Add project..." style="flex:1;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--bg);color:var(--text)"><button class="lt-btn primary" onclick="lt_mgrAdd('project')">Add</button></div><div id="ltMgrProjects" class="lt-list"></div></div>
+<div class="lt-card" style="box-shadow:none;margin-top:10px"><h3 style="margin-bottom:8px">Stages / Statuses</h3><div class="lt-plusline"><input id="ltMgrNewStatus" type="text" placeholder="Add stage/status..." style="flex:1;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--bg);color:var(--text)"><button class="lt-btn primary" onclick="lt_mgrAdd('status')">Add</button></div><div id="ltMgrStatuses" class="lt-list"></div></div>
+<div class="lt-card" style="box-shadow:none;margin-top:10px"><h3 style="margin-bottom:8px">Priorities</h3><p style="color:var(--muted);font-size:12px">Priorities auto-calculate from due dates: Critical = this week/overdue, High = next week, Medium = this month, Low = beyond/no date.</p></div>
+</div>
+</div>
+<div class="lt-overlay" id="ltEditOverlay">
+<div class="lt-modal">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+<h3>Edit Task</h3>
+<button class="lt-btn outline sm" onclick="lt_closeEdit()">Close</button>
+</div>
+<div class="lt-formgrid" style="margin-top:10px">
+<div class="lt-field lt-col-12"><label>Task Name</label><input id="ltEName" type="text"></div>
+<div class="lt-field lt-col-6"><label>Project</label><select id="ltEProject"></select></div>
+<div class="lt-field lt-col-4"><label>Counsel Type</label><select id="ltECounsel"></select></div>
+<div class="lt-field lt-col-4"><label>Action</label><select id="ltEAction"></select></div>
+<div class="lt-field lt-col-4"><label>Stage / Status</label><select id="ltEStatus"></select></div>
+<div class="lt-field lt-col-6"><label>Due Date</label><input id="ltEDue" type="date"></div>
+<div class="lt-field lt-col-12"><label>Notes</label><textarea id="ltENotes"></textarea></div>
+</div>
+<div class="lt-row"><button class="lt-btn primary" onclick="lt_saveEdit()">Save</button><button class="lt-btn outline" onclick="lt_closeEdit()">Cancel</button></div>
+</div>
 </div>
 <div class="toast-container" id="toastContainer"></div>
 <div class="tour-overlay" id="tourOverlay"></div>
@@ -1474,9 +1583,11 @@ async function switchToTeamWorkspace(id){
 function renderWorkspaceTabs(){
   const tabs=document.getElementById('workspaceTabs');if(!tabs)return;
   const isWork=!currentTeamWorkspaceId&&currentWorkspace==='work';
-  let html='<div class="workspace-tab '+(isWork?'active':'')+'" onclick="switchWorkspace(\'work\')">Personal Dashboard <span class="tab-dot"></span></div>';
+  let html='<div class="workspace-tab '+(isWork&&currentView!=='legal'?'active':'')+'" onclick="switchWorkspace(\'work\')">Personal Dashboard <span class="tab-dot"></span></div>';
   // Team workspaces shown as cards on dashboard — no tabs
   html+='<div class="workspace-tab add-team-tab" onclick="openTeamPanel()">＋ Team</div>';
+  html+='<div style="flex:1"></div>';
+  html+='<button class="lt-ws-tab'+(currentView==='legal'?' active':'')+'" onclick="setView(\'legal\')">⚖ Legal Tracker</button>';
   tabs.innerHTML=html;
 }
 
@@ -2044,6 +2155,21 @@ function renderPersonalDashboard(el){
           (memAvatars?'<div class="pd-team-card-members" style="margin-top:4px">'+memAvatars+'</div>':'')+
         '</div>';
       });
+      // Legal Tracker card
+      var ltTasks=lt_safeJSON(localStorage.getItem('tbws_tasks_v1'),[]);
+      var ltTotal=ltTasks.length;
+      var ltActive=ltTasks.filter(function(t){return!lt_isCompleteStatus(t.status);}).length;
+      var ltCrit=ltTasks.filter(function(t){return t.priority==='Critical';}).length;
+      html+='<div class="pd-team-card" style="padding:24px 22px;border-left:4px solid #16a34a" onclick="setView(\'legal\')">'+
+        '<div class="pd-team-card-name" style="font-size:17px;margin-bottom:10px"><span class="tc-icon" style="font-size:22px">⚖</span>Legal Tracker</div>'+
+        '<div class="pd-team-card-stats" style="font-size:13px;gap:16px;margin-bottom:12px">'+
+          '<span class="pd-team-card-stat">📋 '+ltTotal+' tasks</span>'+
+          '<span class="pd-team-card-stat" style="color:#16a34a">⚡ '+ltActive+' active</span>'+
+          (ltCrit?'<span class="pd-team-card-stat" style="color:var(--crit)">🔴 '+ltCrit+' critical</span>':'')+
+        '</div>'+
+        '<div class="pd-team-card-bar" style="height:6px;margin-bottom:12px"><div class="pd-team-card-bar-fill" style="width:'+(ltTotal?Math.round((ltTotal-ltActive)/ltTotal*100):0)+'%;background:#16a34a"></div></div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-top:4px">DFW-West Legal · Click to open</div>'+
+      '</div>';
       // Add team button
       html+='<div class="pd-team-card pd-team-add" onclick="openTeamPanel()" style="display:flex;align-items:center;justify-content:center;min-height:120px;border-style:dashed;opacity:.7;padding:24px 22px">'+
         '<div style="text-align:center;color:var(--text2)"><div style="font-size:28px;margin-bottom:6px">＋</div><div style="font-size:13px;font-weight:600">New Team</div></div>'+
@@ -2264,9 +2390,11 @@ function escAttr(s){return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot
 function avatarColor(name){if(!name)return'var(--pri)';let h=0;for(let i=0;i<name.length;i++)h=name.charCodeAt(i)+((h<<5)-h);const c=['#8b5cf6','#0891b2','#ec4899','#f97316','#16a34a','#dc2626','#2563eb','#d97706','#7c3aed','#059669'];return c[Math.abs(h)%c.length];}
 function todayStr(){const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');}
 let currentView='dashboard';
-function setView(v){if(v==='schedules'&&!hasTeamPlan()){showToast('🔒 Schedules is a Team plan feature.');return;}currentView=v;if(isMobile())closeMobileSidebar();['dashboard','board','list','calendar','notes','schedules','chat'].forEach(t=>{const el=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',v===t);});document.getElementById('dashboardView').style.display=v==='dashboard'?'flex':'none';document.getElementById('boardView').style.display=v==='board'?'flex':'none';document.getElementById('listView').style.display=v==='list'?'block':'none';document.getElementById('calendarView').style.display=v==='calendar'?'flex':'none';document.getElementById('notesView').style.display=v==='notes'?'flex':'none';document.getElementById('schedulesView').style.display=v==='schedules'?'flex':'none';document.getElementById('chatView').style.display=v==='chat'?'flex':'none';document.querySelectorAll('.mobile-bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
-// Hide sidebar on master dashboard, show when inside a workspace
-var sb=document.getElementById('sidebar');if(sb&&!isMobile()){if(v==='dashboard'&&!currentTeamWorkspaceId){sb.style.display='none';}else{sb.style.display='';sb.classList.remove('collapsed');}}
+function setView(v){if(v==='schedules'&&!hasTeamPlan()){showToast('🔒 Schedules is a Team plan feature.');return;}currentView=v;if(isMobile())closeMobileSidebar();['dashboard','board','list','calendar','notes','schedules','chat'].forEach(t=>{const el=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',v===t);});document.getElementById('dashboardView').style.display=v==='dashboard'?'flex':'none';document.getElementById('boardView').style.display=v==='board'?'flex':'none';document.getElementById('listView').style.display=v==='list'?'block':'none';document.getElementById('calendarView').style.display=v==='calendar'?'flex':'none';document.getElementById('notesView').style.display=v==='notes'?'flex':'none';document.getElementById('schedulesView').style.display=v==='schedules'?'flex':'none';document.getElementById('chatView').style.display=v==='chat'?'flex':'none';var lv=document.getElementById('legalView');if(lv)lv.style.display=v==='legal'?'flex':'none';document.querySelectorAll('.mobile-bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+// Hide sidebar on legal view and master dashboard, show when inside a workspace
+var sb=document.getElementById('sidebar');if(sb&&!isMobile()){if((v==='dashboard'&&!currentTeamWorkspaceId)||v==='legal'){sb.style.display='none';}else{sb.style.display='';sb.classList.remove('collapsed');}}
+// Hide filter chips and stats bar on legal view
+var fcb=document.getElementById('filterChipsBar');if(fcb)fcb.style.display=v==='legal'?'none':'';var stb=document.getElementById('statsBar');if(stb)stb.style.display=v==='legal'?'none':'';
 render();}
 function enterPersonalWorkspace(){
   if(currentTeamWorkspaceId){save();if(realtimeChannel)realtimeChannel.unsubscribe();currentTeamWorkspaceId=null;currentWorkspace='work';load();renderWorkspaceTabs();}
@@ -2275,7 +2403,7 @@ function enterPersonalWorkspace(){
 function render(){document.querySelectorAll('.workspace-tab').forEach(t=>{t.classList.toggle('active',t.dataset.ws===currentWorkspace);});updateFilters();renderSidebarFilters();updateStats();updateFilterChips();updateTodayBadge();renderPresets();updateDashboardNav();// Show/hide chat nav item
 const chatNav=document.getElementById('navChat');if(chatNav){if(currentTeamWorkspaceId)chatNav.classList.remove('hidden');else{chatNav.classList.add('hidden');if(currentView==='chat'){currentView='dashboard';}}}
 updateChatUnread();
-if(currentView==='dashboard')renderDashboard();else if(currentView==='board')renderBoard();else if(currentView==='list')renderList();else if(currentView==='calendar')renderCalendar();else if(currentView==='notes')renderNotesView();else if(currentView==='schedules')renderSchedules();else if(currentView==='chat')renderChat();save();}
+if(currentView==='dashboard')renderDashboard();else if(currentView==='board')renderBoard();else if(currentView==='list')renderList();else if(currentView==='calendar')renderCalendar();else if(currentView==='notes')renderNotesView();else if(currentView==='schedules')renderSchedules();else if(currentView==='chat')renderChat();else if(currentView==='legal')lt_render();save();}
 function updateDashboardNav(){const navEl=document.getElementById('navDashboard');if(navEl)navEl.classList.remove('hidden');}
 function switchWorkspace(ws){
   if(ws===currentWorkspace&&!currentTeamWorkspaceId){
@@ -3622,6 +3750,651 @@ function generatePDFReport(){
   doc.save('taskaura-'+safeName+'-'+today+'.pdf');
   showToast('PDF report generated!');
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ██  LEGAL TRACKER MODULE  (lt_ prefix to avoid conflicts)
+// ══════════════════════════════════════════════════════════════════════════════
+
+var LT_KEY={tasks:'tbws_tasks_v1',projects:'tbws_projects_v1',statuses:'tbws_statuses_v1'};
+var LT_PRIORITIES=['Critical','High','Medium','Low'];
+var LT_COUNSEL_TYPES=['Internal Counsel','External Counsel','DFW West'];
+var LT_ACTION_TYPES=['Drafting','Reviewing'];
+var LT_DEFAULT_PROJECTS=['General'];
+var LT_DEFAULT_STATUSES=['Upcoming','In Progress','Holding Pattern','Complete'];
+
+var lt_tasks=lt_safeJSON(localStorage.getItem(LT_KEY.tasks),[]);
+var lt_projects=lt_safeJSON(localStorage.getItem(LT_KEY.projects),LT_DEFAULT_PROJECTS.slice());
+var lt_statuses=lt_safeJSON(localStorage.getItem(LT_KEY.statuses),LT_DEFAULT_STATUSES.slice());
+var lt_sortField='project';
+var lt_sortAsc=true;
+var lt_editId=null;
+var lt_summaryHTML='';
+var lt_summaryText='';
+var lt_expandedCards=new Set();
+var lt_currentTab='tasks';
+
+var LT_PRIORITY_COLORS={'Critical':'#fecaca','High':'#fed7aa','Medium':'#ecfdf5','Low':'#dcfce7'};
+var LT_PRIORITY_COLORS_DARK={'Critical':'rgba(220,38,38,.15)','High':'rgba(249,115,22,.15)','Medium':'rgba(22,163,74,.1)','Low':'rgba(22,163,74,.08)'};
+
+function lt_safeJSON(text,fallback){try{return text?JSON.parse(text):fallback;}catch(e){return fallback;}}
+function lt_persist(){localStorage.setItem(LT_KEY.tasks,JSON.stringify(lt_tasks));localStorage.setItem(LT_KEY.projects,JSON.stringify(lt_projects));localStorage.setItem(LT_KEY.statuses,JSON.stringify(lt_statuses));}
+function lt_esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function lt_fmtDate(iso){if(!iso)return'—';var dt=new Date(iso+'T00:00:00');if(isNaN(dt.getTime()))return'—';return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function lt_isCompleteStatus(s){return String(s||'').toLowerCase().trim()==='complete';}
+
+function lt_weekRange(){var now=new Date();var day=now.getDay();var monday=new Date(now);monday.setDate(now.getDate()-(day===0?6:day-1));var friday=new Date(monday);friday.setDate(monday.getDate()+4);var opt={month:'short',day:'numeric',year:'numeric'};return monday.toLocaleDateString('en-US',opt)+' — '+friday.toLocaleDateString('en-US',opt);}
+
+function lt_calcPriority(due){
+  if(!due)return'Low';
+  var now=new Date();now.setHours(0,0,0,0);
+  var dueDate=new Date(due+'T00:00:00');
+  if(isNaN(dueDate.getTime()))return'Low';
+  var day=now.getDay();
+  var monday=new Date(now);monday.setDate(now.getDate()-(day===0?6:day-1));
+  var sundayThisWeek=new Date(monday);sundayThisWeek.setDate(monday.getDate()+6);sundayThisWeek.setHours(23,59,59,999);
+  var sundayNextWeek=new Date(monday);sundayNextWeek.setDate(monday.getDate()+13);sundayNextWeek.setHours(23,59,59,999);
+  var endOfMonth=new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59,999);
+  if(dueDate<=sundayThisWeek)return'Critical';
+  if(dueDate<=sundayNextWeek)return'High';
+  if(dueDate<=endOfMonth)return'Medium';
+  return'Low';
+}
+
+function lt_recalcPriorities(){lt_tasks.forEach(function(t){t.priority=lt_calcPriority(t.due);});lt_persist();}
+
+// ── Fill dropdowns ──────────────────────────────────────────────────────────
+function lt_fillSelect(id,list,withAll,allLabel){
+  var sel=document.getElementById(id);if(!sel)return;
+  var keep=sel.value;
+  sel.innerHTML=withAll?'<option value="">'+lt_esc(allLabel||'All')+'</option>':'';
+  list.forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});
+  if(keep)sel.value=keep;
+}
+function lt_fillDropdowns(){
+  lt_fillSelect('ltTaskProject',lt_projects);
+  lt_fillSelect('ltTaskStatus',lt_statuses);
+  lt_fillSelect('ltFilterProject',lt_projects,true,'All Projects');
+  lt_fillSelect('ltFilterPriority',LT_PRIORITIES,true,'All Priorities');
+  lt_fillSelect('ltFilterStatus',lt_statuses,true,'All Stages');
+  lt_fillSelect('ltTaskCounsel',LT_COUNSEL_TYPES);
+  lt_fillSelect('ltFilterCounsel',LT_COUNSEL_TYPES,true,'All Counsel Types');
+  lt_fillSelect('ltTaskAction',LT_ACTION_TYPES);
+  lt_fillSelect('ltFilterAction',LT_ACTION_TYPES,true,'All Actions');
+  lt_fillSelect('ltEProject',lt_projects);
+  lt_fillSelect('ltEStatus',lt_statuses);
+  lt_fillSelect('ltECounsel',LT_COUNSEL_TYPES);
+  lt_fillSelect('ltEAction',LT_ACTION_TYPES);
+  var tp=document.getElementById('ltTaskProject');
+  if(tp&&!tp.value)tp.value=lt_projects[0]||'General';
+  var ts=document.getElementById('ltTaskStatus');
+  if(ts&&!ts.value)ts.value=lt_statuses.includes('Upcoming')?'Upcoming':(lt_statuses[0]||'Upcoming');
+}
+
+// ── CRUD ────────────────────────────────────────────────────────────────────
+function lt_addTask(){
+  var name=(document.getElementById('ltTaskName').value||'').trim();
+  var project=document.getElementById('ltTaskProject').value;
+  var due=document.getElementById('ltTaskDue').value;
+  var counsel=document.getElementById('ltTaskCounsel').value||'Internal Counsel';
+  var action=document.getElementById('ltTaskAction').value||'Drafting';
+  var status=document.getElementById('ltTaskStatus').value||'Upcoming';
+  var notes=(document.getElementById('ltTaskNotes').value||'').trim();
+  if(!name){showToast('Task name is required');return;}
+  if(!project){showToast('Project is required');return;}
+  lt_tasks.push({id:Date.now()+Math.floor(Math.random()*1000),name:name,project:project,priority:lt_calcPriority(due),counsel:counsel,action:action,status:status,due:due,notes:notes,selected:true});
+  lt_persist();lt_clearForm();lt_render();showToast('Task added');
+}
+function lt_clearForm(){
+  var ids=['ltTaskName','ltTaskDue','ltTaskNotes'];ids.forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  var c=document.getElementById('ltTaskCounsel');if(c)c.value='Internal Counsel';
+  var a=document.getElementById('ltTaskAction');if(a)a.value='Drafting';
+  var s=document.getElementById('ltTaskStatus');if(s)s.value=lt_statuses.includes('Upcoming')?'Upcoming':(lt_statuses[0]||'Upcoming');
+}
+function lt_delTask(id){if(!confirm('Delete this task?'))return;lt_tasks=lt_tasks.filter(function(t){return t.id!==id;});lt_expandedCards.delete(id);lt_persist();lt_render();showToast('Task deleted');}
+
+function lt_openEdit(id){
+  var t=lt_tasks.find(function(x){return x.id===id;});if(!t)return;
+  lt_editId=id;lt_fillDropdowns();
+  document.getElementById('ltEName').value=t.name;
+  document.getElementById('ltEProject').value=t.project;
+  document.getElementById('ltECounsel').value=t.counsel||'Internal Counsel';
+  document.getElementById('ltEAction').value=t.action||'Drafting';
+  document.getElementById('ltEStatus').value=t.status;
+  document.getElementById('ltEDue').value=t.due||'';
+  document.getElementById('ltENotes').value=t.notes||'';
+  document.getElementById('ltEditOverlay').classList.add('active');
+}
+function lt_closeEdit(){document.getElementById('ltEditOverlay').classList.remove('active');lt_editId=null;}
+function lt_saveEdit(){
+  if(lt_editId===null)return;
+  var t=lt_tasks.find(function(x){return x.id===lt_editId;});if(!t)return;
+  t.name=(document.getElementById('ltEName').value||'').trim();
+  t.project=document.getElementById('ltEProject').value;
+  t.due=document.getElementById('ltEDue').value;
+  t.priority=lt_calcPriority(t.due);
+  t.counsel=document.getElementById('ltECounsel').value;
+  t.action=document.getElementById('ltEAction').value;
+  t.status=document.getElementById('ltEStatus').value;
+  t.notes=(document.getElementById('ltENotes').value||'').trim();
+  lt_persist();lt_closeEdit();lt_render();showToast('Task updated');
+}
+
+function lt_toggleSelect(id){var t=lt_tasks.find(function(x){return x.id===id;});if(!t)return;t.selected=!t.selected;lt_persist();lt_updateSelCount();}
+function lt_selectAll(val){var visible=lt_filteredTasks();var ids=new Set(visible.map(function(v){return v.id;}));lt_tasks.forEach(function(t){if(ids.has(t.id))t.selected=val;});lt_persist();lt_updateSelCount();lt_render();}
+function lt_archiveCompleted(){var before=lt_tasks.length;lt_tasks=lt_tasks.filter(function(t){return!lt_isCompleteStatus(t.status);});var removed=before-lt_tasks.length;lt_persist();lt_render();showToast(removed?'Archived '+removed+' completed task(s)':'No completed tasks to archive');}
+function lt_toggleCard(id,event){if(event&&event.target&&(event.target.classList.contains('lt-cb')||event.target.tagName==='INPUT'))return;if(lt_expandedCards.has(id))lt_expandedCards.delete(id);else lt_expandedCards.add(id);var cardEl=document.getElementById('lt-card-'+id);if(cardEl)cardEl.classList.toggle('expanded',lt_expandedCards.has(id));}
+
+// ── Inline project add ─────────────────────────────────────────────────────
+function lt_toggleInlineProject(){var row=document.getElementById('ltInlineProject');if(!row)return;var isHidden=row.style.display==='none'||row.style.display==='';row.style.display=isHidden?'flex':'none';document.getElementById('ltNewProject').value='';if(isHidden)setTimeout(function(){document.getElementById('ltNewProject').focus();},0);}
+function lt_addProjectInline(){var val=(document.getElementById('ltNewProject').value||'').trim();if(!val){showToast('Enter a project name');return;}if(!lt_projects.includes(val)){lt_projects.push(val);lt_projects.sort(function(a,b){return a.localeCompare(b);});lt_persist();}lt_fillDropdowns();document.getElementById('ltTaskProject').value=val;lt_toggleInlineProject();lt_render();showToast('Project added');}
+
+// ── Sorting & Filtering ────────────────────────────────────────────────────
+function lt_sortBy(field){
+  if(lt_sortField===field)lt_sortAsc=!lt_sortAsc;else{lt_sortField=field;lt_sortAsc=true;}
+  document.querySelectorAll('#legalView .lt-sort-link').forEach(function(el){el.classList.toggle('active',el.dataset.field===field);});
+  lt_render();
+}
+function lt_filteredTasks(){
+  var fp=document.getElementById('ltFilterProject');fp=fp?fp.value:'';
+  var fpr=document.getElementById('ltFilterPriority');fpr=fpr?fpr.value:'';
+  var fs=document.getElementById('ltFilterStatus');fs=fs?fs.value:'';
+  var fc=document.getElementById('ltFilterCounsel');fc=fc?fc.value:'';
+  var fa=document.getElementById('ltFilterAction');fa=fa?fa.value:'';
+  var q=document.getElementById('ltFilterSearch');q=q?q.value.toLowerCase():'';
+  var prOrder={};LT_PRIORITIES.forEach(function(p,i){prOrder[p]=i;});
+  var list=lt_tasks.filter(function(t){
+    if(fp&&t.project!==fp)return false;
+    if(fpr&&t.priority!==fpr)return false;
+    if(fs&&t.status!==fs)return false;
+    if(fc&&t.counsel!==fc)return false;
+    if(fa&&t.action!==fa)return false;
+    if(q){var hay=(t.name+' '+(t.notes||'')+' '+t.project+' '+t.priority+' '+t.status).toLowerCase();if(!hay.includes(q))return false;}
+    return true;
+  });
+  list.sort(function(a,b){
+    var va,vb;
+    if(lt_sortField==='priority'){va=prOrder[a.priority]||999;vb=prOrder[b.priority]||999;}
+    else if(lt_sortField==='name'){va=(a.name||'').toLowerCase();vb=(b.name||'').toLowerCase();}
+    else if(lt_sortField==='project'){va=(a.project||'').toLowerCase();vb=(b.project||'').toLowerCase();}
+    else if(lt_sortField==='due'){va=a.due||'9999-12-31';vb=b.due||'9999-12-31';}
+    else if(lt_sortField==='counsel'){va=(a.counsel||'').toLowerCase();vb=(b.counsel||'').toLowerCase();}
+    else if(lt_sortField==='action'){va=(a.action||'').toLowerCase();vb=(b.action||'').toLowerCase();}
+    else if(lt_sortField==='status'){va=(a.status||'').toLowerCase();vb=(b.status||'').toLowerCase();}
+    else{va=a.name;vb=b.name;}
+    if(va<vb)return lt_sortAsc?-1:1;
+    if(va>vb)return lt_sortAsc?1:-1;
+    return 0;
+  });
+  return list;
+}
+
+// ── Render ──────────────────────────────────────────────────────────────────
+function lt_updateSelCount(){var c=lt_tasks.filter(function(t){return t.selected;}).length;var el=document.getElementById('ltSelCount');if(el)el.textContent=c+' selected for summary';}
+
+function lt_updateStats(){
+  var total=lt_tasks.length;
+  var count=function(label){return lt_tasks.filter(function(t){return String(t.status||'')===label;}).length;};
+  var el=function(id){return document.getElementById(id);};
+  if(el('ltStatTotal'))el('ltStatTotal').textContent=total;
+  if(el('ltStatUpcoming'))el('ltStatUpcoming').textContent=count('Upcoming');
+  if(el('ltStatInProgress'))el('ltStatInProgress').textContent=count('In Progress');
+  if(el('ltStatHolding'))el('ltStatHolding').textContent=count('Holding Pattern');
+  if(el('ltStatComplete'))el('ltStatComplete').textContent=count('Complete');
+}
+
+function lt_renderView(){
+  var el=document.getElementById('legalView');if(!el)return;
+  var isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  var priColors=isDark?LT_PRIORITY_COLORS_DARK:LT_PRIORITY_COLORS;
+
+  var html='';
+  // Header bar
+  html+='<div class="lt-header"><h2>⚖ FOR DFW-West Legal Tracker</h2><div class="lt-header-actions">'+
+    '<span class="lt-sync-info" id="ltLastSync"></span>'+
+    '<button class="lt-header-btn" onclick="lt_syncGitHub()" title="Push to GitHub">🔄 Sync</button>'+
+    '<button class="lt-header-btn" onclick="lt_pullFromGitHub()" title="Pull from GitHub">⬇ Pull</button>'+
+    '<button class="lt-header-btn" onclick="lt_toggleGHSettings(event)" title="Settings">⚙</button>'+
+    '<button class="lt-header-btn" onclick="setView(\'dashboard\')" title="Back to Dashboard">← Dashboard</button>'+
+  '</div></div>';
+
+  // GH Settings dropdown
+  html+='<div class="lt-gh-settings" id="ltGHSettings">'+
+    '<h3 style="font-size:14px;margin:0 0 8px">GitHub Sync Settings</h3>'+
+    '<p style="font-size:11px;color:var(--muted);margin:0 0 10px">Repo: <strong>LandryStewart/Weekly-Legal-Priorities</strong> (main) · File: tasks.json</p>'+
+    '<label style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--text2)">Personal Access Token</label>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin:6px 0 10px">'+
+      '<input id="ltGHTokenInput" type="password" placeholder="ghp_xxxxxxxxxxxx" style="flex:1;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--bg);color:var(--text)">'+
+      '<button class="lt-btn primary" onclick="lt_saveGHToken()">Save</button>'+
+    '</div>'+
+    '<button class="lt-btn primary" style="width:100%" onclick="lt_syncGitHub()">🔄 Sync with GitHub</button>'+
+    '<div style="margin-top:6px;min-height:18px"><span id="ltGHStatus" style="font-size:12px;font-weight:700"></span></div>'+
+  '</div>';
+
+  // Body
+  html+='<div class="lt-body">';
+  // Tab bar
+  html+='<div class="lt-tab-bar">'+
+    '<button class="lt-tab-btn'+(lt_currentTab==='tasks'?' active':'')+'" data-tab="tasks" onclick="lt_switchTab(\'tasks\')">Tasks</button>'+
+    '<button class="lt-tab-btn'+(lt_currentTab==='summary'?' active':'')+'" data-tab="summary" onclick="lt_switchTab(\'summary\')">Summary</button>'+
+  '</div>';
+
+  // ═══ TASKS TAB ═══
+  html+='<div class="lt-tab-panel'+(lt_currentTab==='tasks'?' active':'')+'" id="ltTabTasks">';
+  html+='<div class="lt-card"><h3>➕ Add Task</h3>';
+  html+='<div class="lt-formgrid">';
+  html+='<div class="lt-field lt-col-6"><label>Task Name *</label><input id="ltTaskName" type="text" placeholder="e.g., Send draft to legal"></div>';
+  html+='<div class="lt-field lt-col-6"><label>Project *</label><div class="lt-plusline"><select id="ltTaskProject" style="flex:1"></select><button class="lt-btn primary" style="width:38px;min-width:38px;padding:8px 0" onclick="lt_toggleInlineProject()">＋</button></div>';
+  html+='<div id="ltInlineProject" style="display:none;margin-top:6px" class="lt-plusline"><input id="ltNewProject" type="text" placeholder="New project..." style="flex:1;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--bg);color:var(--text)"><button class="lt-btn primary" onclick="lt_addProjectInline()">Add</button><button class="lt-btn outline" onclick="lt_toggleInlineProject()">Cancel</button></div></div>';
+  html+='<div class="lt-field lt-col-3"><label>Counsel Type</label><select id="ltTaskCounsel"></select></div>';
+  html+='<div class="lt-field lt-col-3"><label>Action</label><select id="ltTaskAction"></select></div>';
+  html+='<div class="lt-field lt-col-3"><label>Stage / Status</label><select id="ltTaskStatus"></select></div>';
+  html+='<div class="lt-field lt-col-3"><label>Due Date</label><input id="ltTaskDue" type="date"></div>';
+  html+='<div class="lt-field lt-col-12"><label>Notes</label><textarea id="ltTaskNotes" placeholder="Context, blockers, who you\'re waiting on..."></textarea></div>';
+  html+='</div>';
+  html+='<div class="lt-row">'+
+    '<button class="lt-btn primary" onclick="lt_addTask()">Add Task</button>'+
+    '<button class="lt-btn outline" onclick="lt_clearForm()">Clear</button>'+
+    '<button class="lt-btn outline" onclick="lt_openManage()">Manage Projects/Stages</button>'+
+    '<button class="lt-btn outline" onclick="lt_exportJSON()">Export</button>'+
+    '<button class="lt-btn outline" onclick="document.getElementById(\'ltImportFile\').click()">Import</button>'+
+    '<input id="ltImportFile" type="file" accept="application/json" style="display:none" onchange="lt_importJSON(event)">'+
+  '</div>';
+  html+='<div class="lt-stats">'+
+    '<div class="lt-stat">Total: <span id="ltStatTotal">0</span></div>'+
+    '<div class="lt-stat">Upcoming: <span id="ltStatUpcoming">0</span></div>'+
+    '<div class="lt-stat">In Progress: <span id="ltStatInProgress">0</span></div>'+
+    '<div class="lt-stat">Holding Pattern: <span id="ltStatHolding">0</span></div>'+
+    '<div class="lt-stat">Complete: <span id="ltStatComplete">0</span></div>'+
+  '</div></div>';
+
+  // Filters
+  html+='<div class="lt-filters">'+
+    '<select id="ltFilterProject" onchange="lt_render()"><option value="">All Projects</option></select>'+
+    '<select id="ltFilterPriority" onchange="lt_render()"><option value="">All Priorities</option></select>'+
+    '<select id="ltFilterCounsel" onchange="lt_render()"><option value="">All Counsel Types</option></select>'+
+    '<select id="ltFilterAction" onchange="lt_render()"><option value="">All Actions</option></select>'+
+    '<select id="ltFilterStatus" onchange="lt_render()"><option value="">All Stages</option></select>'+
+    '<input id="ltFilterSearch" type="text" placeholder="Search..." oninput="lt_render()">'+
+  '</div>';
+
+  // Select/deselect
+  html+='<div class="lt-row" style="margin-top:0;margin-bottom:8px">'+
+    '<button class="lt-btn outline sm" onclick="lt_selectAll(true)">☑ Select All</button>'+
+    '<button class="lt-btn outline sm" onclick="lt_selectAll(false)">☐ Deselect All</button>'+
+    '<button class="lt-btn outline sm" onclick="lt_archiveCompleted()">🧹 Archive Completed</button>'+
+    '<span style="font-weight:800;font-size:12px;color:var(--muted)" id="ltSelCount">0 selected for summary</span>'+
+  '</div>';
+
+  // Sort bar
+  html+='<div class="lt-sort-bar" id="ltSortBar">'+
+    '<span class="lt-sort-label">Sort by:</span>'+
+    '<span class="lt-sort-link'+(lt_sortField==='due'?' active':'')+'" data-field="due" onclick="lt_sortBy(\'due\')">Due ⇅</span>'+
+    '<span class="lt-sort-link'+(lt_sortField==='name'?' active':'')+'" data-field="name" onclick="lt_sortBy(\'name\')">Name ⇅</span>'+
+    '<span class="lt-sort-link'+(lt_sortField==='project'?' active':'')+'" data-field="project" onclick="lt_sortBy(\'project\')">Project ⇅</span>'+
+    '<span class="lt-sort-link'+(lt_sortField==='priority'?' active':'')+'" data-field="priority" onclick="lt_sortBy(\'priority\')">Priority ⇅</span>'+
+    '<span class="lt-sort-link'+(lt_sortField==='counsel'?' active':'')+'" data-field="counsel" onclick="lt_sortBy(\'counsel\')">Counsel ⇅</span>'+
+    '<span class="lt-sort-link'+(lt_sortField==='action'?' active':'')+'" data-field="action" onclick="lt_sortBy(\'action\')">Action ⇅</span>'+
+    '<span class="lt-sort-link'+(lt_sortField==='status'?' active':'')+'" data-field="status" onclick="lt_sortBy(\'status\')">Stage ⇅</span>'+
+  '</div>';
+
+  // Task cards
+  html+='<div id="ltTaskCards"></div>';
+  html+='<div class="lt-empty" id="ltEmpty" style="display:none"><span style="font-size:24px;display:block;margin-bottom:4px">📭</span>No tasks yet. Add one above!</div>';
+  html+='</div>';
+
+  // ═══ SUMMARY TAB ═══
+  html+='<div class="lt-tab-panel'+(lt_currentTab==='summary'?' active':'')+'" id="ltTabSummary">';
+  html+='<div class="lt-card"><h3>📧 Weekly Summary</h3>';
+  html+='<p style="color:var(--muted);font-size:12px;margin-bottom:10px">Generate a weekly summary and copy it into an email.</p>';
+  // Email setup
+  html+='<div class="lt-email-setup"><h3 style="font-size:13px;border:none;padding:0;margin:0 0 10px">✉️ Email Setup</h3>';
+  html+='<div class="lt-email-row"><label>To:</label><div style="flex:1;display:flex;gap:6px"><input id="ltEmailTo" type="text" placeholder="Enter emails separated by semicolons..." oninput="lt_saveEmailFields()"><button class="lt-btn primary sm" onclick="lt_copyEmailTo()">Copy To</button></div></div>';
+  html+='<div class="lt-email-row"><label>Cc:</label><div style="flex:1;display:flex;gap:6px"><input id="ltEmailCc" type="text" placeholder="Optional CC recipients..." oninput="lt_saveEmailFields()"><button class="lt-btn primary sm" onclick="lt_copyEmailCc()">Copy Cc</button></div></div>';
+  html+='<div class="lt-email-row"><label>Subject:</label><div style="flex:1;display:flex;gap:6px"><input id="ltEmailSubject" type="text" readonly style="background:var(--border);font-weight:600"><button class="lt-btn primary sm" onclick="lt_copyEmailSubject()">Copy</button></div></div>';
+  html+='</div>';
+  // Scope
+  html+='<div class="lt-field" style="max-width:320px;margin-top:10px"><label>Summary Scope</label><select id="ltSummaryScope"><option value="selected">Selected tasks only</option><option value="visible">All visible (current filters)</option><option value="active">All active (not Complete)</option></select></div>';
+  html+='<div class="lt-row">'+
+    '<button class="lt-btn primary" onclick="lt_generateSummary()">Generate Weekly Summary</button>'+
+    '<button class="lt-btn primary" onclick="lt_generateExecutiveSummaryOnly()">Executive Summary Only</button>'+
+    '<button class="lt-btn outline" onclick="lt_copyText()">📋 Copy as Plain Text</button>'+
+  '</div>';
+  html+='<div id="ltSummary" class="lt-summary-box"></div>';
+  html+='</div></div>';
+
+  html+='</div>'; // close lt-body
+  el.innerHTML=html;
+
+  // Init dropdowns + stats
+  lt_fillDropdowns();
+  lt_updateStats();
+  lt_updateSelCount();
+  lt_loadGHToken();
+  lt_loadEmailFields();
+  lt_updateEmailSubject();
+  lt_updateLastSyncDisplay();
+  lt_renderTaskCards();
+}
+
+function lt_renderTaskCards(){
+  var isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  var priColors=isDark?LT_PRIORITY_COLORS_DARK:LT_PRIORITY_COLORS;
+  var list=lt_filteredTasks();
+  var container=document.getElementById('ltTaskCards');
+  var empty=document.getElementById('ltEmpty');
+  if(!container)return;
+  if(list.length===0){container.innerHTML='';if(empty)empty.style.display='block';return;}
+  if(empty)empty.style.display='none';
+
+  var cardsHTML='';
+  if(lt_sortField==='project'){
+    var grouped={};
+    list.forEach(function(t){var p=t.project||'General';var ct=t.counsel||'Internal Counsel';if(!grouped[p])grouped[p]={};if(!grouped[p][ct])grouped[p][ct]=[];grouped[p][ct].push(t);});
+    var projKeys=Object.keys(grouped).sort(function(a,b){return lt_sortAsc?a.localeCompare(b):b.localeCompare(a);});
+    projKeys.forEach(function(proj){
+      cardsHTML+='<div class="lt-group-header">'+lt_esc(proj)+'</div>';
+      var counselKeys=Object.keys(grouped[proj]).sort();
+      counselKeys.forEach(function(cType){
+        var cBg=cType==='External Counsel'?'#fef3c7':cType==='DFW West'?'#dbeafe':'#dcfce7';
+        var cBorder=cType==='External Counsel'?'#f59e0b':cType==='DFW West'?'#3b82f6':'#16a34a';
+        if(isDark){cBg=cType==='External Counsel'?'rgba(245,158,11,.1)':cType==='DFW West'?'rgba(59,130,246,.1)':'rgba(22,163,74,.1)';}
+        cardsHTML+='<div class="lt-counsel-header" style="background:'+cBg+';border-left:3px solid '+cBorder+'">'+lt_esc(cType)+'</div>';
+        grouped[proj][cType].forEach(function(t){cardsHTML+=lt_buildCard(t,priColors,false);});
+      });
+    });
+  }else{
+    list.forEach(function(t){cardsHTML+=lt_buildCard(t,priColors,true);});
+  }
+  container.innerHTML=cardsHTML;
+}
+
+function lt_buildCard(t,priColors,showProject){
+  var isExpanded=lt_expandedCards.has(t.id);
+  var priBg=priColors[t.priority]||priColors.Low;
+  var notes=t.notes?lt_esc(t.notes):'—';
+  var due=lt_fmtDate(t.due);
+  var cBg=(t.counsel||'Internal Counsel')==='External Counsel'?'#fef3c7':(t.counsel||'Internal Counsel')==='DFW West'?'#dbeafe':'#dcfce7';
+  var isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  if(isDark){cBg=(t.counsel||'Internal Counsel')==='External Counsel'?'rgba(245,158,11,.12)':(t.counsel||'Internal Counsel')==='DFW West'?'rgba(59,130,246,.12)':'rgba(22,163,74,.12)';}
+  var h='<div class="lt-task-card'+(isExpanded?' expanded':'')+'" id="lt-card-'+t.id+'" onclick="lt_toggleCard('+t.id+',event)"'+(showProject?' style="margin-left:0"':' style="margin-left:10px"')+'>';
+  h+='<div class="lt-task-card-header">';
+  h+='<input class="lt-cb" type="checkbox"'+(t.selected?' checked':'')+' onchange="lt_toggleSelect('+t.id+');lt_render()" onclick="event.stopPropagation()">';
+  h+='<strong style="flex:1;font-size:13px">'+lt_esc(t.name)+'</strong>';
+  if(showProject)h+='<span class="lt-badge" style="background:#e0e7ff;color:#3730a3;font-size:10px">'+lt_esc(t.project||'General')+'</span>';
+  if(showProject)h+='<span class="lt-badge" style="background:'+cBg+';font-size:10px">'+lt_esc(t.counsel||'Internal Counsel')+'</span>';
+  h+='<span class="lt-badge" style="background:#f3e8ff;color:#7c3aed;font-size:10px">'+lt_esc(t.action||'Drafting')+'</span>';
+  h+='<span class="lt-badge" style="background:'+priBg+'">'+lt_esc(t.priority)+'</span>';
+  h+='<span class="lt-badge" style="background:var(--bg)">'+lt_esc(t.status)+'</span>';
+  h+='<span class="lt-badge" style="background:var(--bg)">'+(t.due?'📅 '+lt_fmtDate(t.due):'📅 —')+'</span>';
+  h+='<span class="lt-chevron">▶</span>';
+  h+='</div>';
+  h+='<div class="lt-task-card-body">';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px">';
+  h+='<div><label style="font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted)">Counsel Type</label><p style="font-size:12px;margin-top:3px">'+lt_esc(t.counsel||'Internal Counsel')+'</p></div>';
+  h+='<div><label style="font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted)">Action</label><p style="font-size:12px;margin-top:3px">'+lt_esc(t.action||'Drafting')+'</p></div>';
+  h+='<div><label style="font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted)">Due Date</label><p style="font-size:12px;margin-top:3px">'+due+'</p></div>';
+  h+='<div><label style="font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted)">Notes</label><p style="font-size:12px;margin-top:3px;color:var(--text2)">'+notes+'</p></div>';
+  h+='</div>';
+  h+='<div style="display:flex;gap:6px">';
+  h+='<button class="lt-btn outline sm" onclick="lt_openEdit('+t.id+');event.stopPropagation()">✏️ Edit</button>';
+  h+='<button class="lt-btn danger sm" onclick="lt_delTask('+t.id+');event.stopPropagation()">🗑️ Delete</button>';
+  h+='</div></div></div>';
+  return h;
+}
+
+function lt_render(){
+  // If legalView hasn't been rendered yet, build it
+  var el=document.getElementById('legalView');
+  if(!el)return;
+  if(!el.querySelector('.lt-header')){lt_renderView();return;}
+  lt_fillDropdowns();lt_updateStats();lt_updateSelCount();lt_renderTaskCards();
+}
+
+function lt_switchTab(tab){
+  lt_currentTab=tab;
+  document.querySelectorAll('#legalView .lt-tab-panel').forEach(function(p){p.classList.toggle('active',p.id==='ltTab'+tab.charAt(0).toUpperCase()+tab.slice(1));});
+  document.querySelectorAll('#legalView .lt-tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.tab===tab);});
+}
+
+// ── Manage Modal ────────────────────────────────────────────────────────────
+function lt_openManage(){lt_renderManage();document.getElementById('ltManageOverlay').classList.add('active');}
+function lt_closeManage(){document.getElementById('ltManageOverlay').classList.remove('active');}
+function lt_renderManage(){
+  var pWrap=document.getElementById('ltMgrProjects');
+  pWrap.innerHTML=(lt_projects.length?lt_projects:['']).map(function(p){if(!p)return'<div style="color:var(--muted)">No projects</div>';return'<div class="lt-item"><strong>'+lt_esc(p)+'</strong><button class="lt-btn danger sm" onclick="lt_mgrRemove(\'project\',\''+p.replace(/'/g,"\\'")+'\')">Remove</button></div>';}).join('');
+  var sWrap=document.getElementById('ltMgrStatuses');
+  sWrap.innerHTML=(lt_statuses.length?lt_statuses:['']).map(function(s){if(!s)return'<div style="color:var(--muted)">No stages</div>';return'<div class="lt-item"><strong>'+lt_esc(s)+'</strong><button class="lt-btn danger sm" onclick="lt_mgrRemove(\'status\',\''+s.replace(/'/g,"\\'")+'\')">Remove</button></div>';}).join('');
+}
+function lt_mgrAdd(type){
+  if(type==='project'){var val=(document.getElementById('ltMgrNewProject').value||'').trim();if(!val)return;if(!lt_projects.includes(val)){lt_projects.push(val);lt_projects.sort(function(a,b){return a.localeCompare(b);});}document.getElementById('ltMgrNewProject').value='';}
+  if(type==='status'){var val2=(document.getElementById('ltMgrNewStatus').value||'').trim();if(!val2)return;if(!lt_statuses.includes(val2))lt_statuses.push(val2);document.getElementById('ltMgrNewStatus').value='';}
+  lt_persist();lt_fillDropdowns();lt_renderManage();lt_render();lt_updateStats();showToast('Added');
+}
+function lt_mgrRemove(type,val){
+  if(!confirm('Remove '+type+': '+val+'?'))return;
+  if(type==='project'){if(lt_projects.length<=1){showToast('Keep at least one project');return;}lt_projects=lt_projects.filter(function(p){return p!==val;});var fb=lt_projects[0]||'General';lt_tasks.forEach(function(t){if(t.project===val)t.project=fb;});}
+  if(type==='status'){if(lt_statuses.length<=1){showToast('Keep at least one stage');return;}lt_statuses=lt_statuses.filter(function(s){return s!==val;});var fb2=lt_statuses[0]||'Upcoming';lt_tasks.forEach(function(t){if(t.status===val)t.status=fb2;});}
+  lt_persist();lt_fillDropdowns();lt_renderManage();lt_render();lt_updateStats();showToast('Removed');
+}
+
+// ── Export / Import ─────────────────────────────────────────────────────────
+function lt_exportJSON(){
+  var payload={version:1,exportedAt:new Date().toISOString(),projects:lt_projects,statuses:lt_statuses,tasks:lt_tasks,emailTo:document.getElementById('ltEmailTo')?document.getElementById('ltEmailTo').value:'',emailCc:document.getElementById('ltEmailCc')?document.getElementById('ltEmailCc').value:''};
+  var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='legal-tracker-export.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);showToast('Exported');
+}
+function lt_importJSON(event){
+  var file=event.target.files&&event.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(){
+    try{
+      var data=JSON.parse(reader.result);
+      if(Array.isArray(data.projects))lt_projects=data.projects;
+      if(Array.isArray(data.statuses))lt_statuses=data.statuses;
+      if(Array.isArray(data.tasks))lt_tasks=data.tasks;
+      if(!lt_projects||!lt_projects.length)lt_projects=LT_DEFAULT_PROJECTS.slice();
+      if(!lt_statuses||!lt_statuses.length)lt_statuses=LT_DEFAULT_STATUSES.slice();
+      lt_tasks=(lt_tasks||[]).map(function(t){return{id:t.id||(Date.now()+Math.floor(Math.random()*1000)),name:String(t.name||'').trim(),project:t.project||(lt_projects[0]||'General'),priority:'Low',status:t.status||(lt_statuses[0]||'Upcoming'),due:t.due||'',notes:t.notes||'',counsel:t.counsel||'Internal Counsel',action:t.action||'Drafting',selected:t.selected!==undefined?!!t.selected:true};}).filter(function(t){return t.name.length;});
+      lt_recalcPriorities();lt_persist();lt_renderView();showToast('Imported');
+    }catch(e){showToast('Could not import');}
+  };
+  reader.readAsText(file);event.target.value='';
+}
+
+// ── GitHub Sync ─────────────────────────────────────────────────────────────
+var LT_GH_OWNER='LandryStewart';
+var LT_GH_REPO='Weekly-Legal-Priorities';
+var LT_GH_BRANCH='main';
+var LT_GH_FILE='tasks.json';
+var LT_GH_TOKEN_KEY='tbws_gh_token';
+
+function lt_ghStatus(msg,color){var el=document.getElementById('ltGHStatus');if(el){el.textContent=msg;el.style.color=color||'var(--muted)';}}
+function lt_saveGHToken(){var val=(document.getElementById('ltGHTokenInput').value||'').trim();if(!val){showToast('Enter a token');return;}localStorage.setItem(LT_GH_TOKEN_KEY,val);showToast('Token saved');lt_ghStatus('Token saved ✓','#16a34a');}
+function lt_loadGHToken(){var t=localStorage.getItem(LT_GH_TOKEN_KEY)||'';var el=document.getElementById('ltGHTokenInput');if(el)el.value=t;}
+function lt_getGHToken(){return localStorage.getItem(LT_GH_TOKEN_KEY)||'';}
+function lt_toggleGHSettings(e){if(e)e.stopPropagation();var panel=document.getElementById('ltGHSettings');if(!panel)return;panel.style.display=panel.style.display==='block'?'none':'block';}
+
+async function lt_pushToGitHub(){
+  var token=lt_getGHToken();if(!token){showToast('Save your GitHub token first');lt_ghStatus('No token configured','#dc2626');return;}
+  var apiUrl='https://api.github.com/repos/'+LT_GH_OWNER+'/'+LT_GH_REPO+'/contents/'+LT_GH_FILE;
+  var payload={version:1,exportedAt:new Date().toISOString(),projects:lt_projects,statuses:lt_statuses,tasks:lt_tasks,emailTo:document.getElementById('ltEmailTo')?document.getElementById('ltEmailTo').value:'',emailCc:document.getElementById('ltEmailCc')?document.getElementById('ltEmailCc').value:''};
+  var content=btoa(unescape(encodeURIComponent(JSON.stringify(payload,null,2))));
+  lt_ghStatus('⏳ Pushing to GitHub...','#16a34a');
+  try{
+    var sha=null;
+    try{var getRes=await fetch(apiUrl+'?ref='+LT_GH_BRANCH,{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github.v3+json'}});if(getRes.ok){var getData=await getRes.json();sha=getData.sha;}}catch(e){}
+    var body={message:'Update tasks - '+new Date().toLocaleString(),content:content,branch:LT_GH_BRANCH};
+    if(sha)body.sha=sha;
+    var putRes=await fetch(apiUrl,{method:'PUT',headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!putRes.ok){var err=await putRes.json().catch(function(){return{};});throw new Error(err.message||('HTTP '+putRes.status));}
+    var now=new Date().toLocaleTimeString();lt_ghStatus('✅ Pushed at '+now,'#16a34a');showToast('Tasks pushed to GitHub');
+  }catch(e){lt_ghStatus('❌ Push failed: '+e.message,'#dc2626');showToast('Push failed');}
+}
+
+async function lt_pullFromGitHub(){
+  var token=lt_getGHToken();if(!token){showToast('Save your GitHub token first');lt_ghStatus('No token configured','#dc2626');return;}
+  var apiUrl='https://api.github.com/repos/'+LT_GH_OWNER+'/'+LT_GH_REPO+'/contents/'+LT_GH_FILE+'?ref='+LT_GH_BRANCH;
+  lt_ghStatus('⏳ Pulling from GitHub...','#16a34a');
+  try{
+    var res=await fetch(apiUrl,{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github.v3+json'}});
+    if(!res.ok){if(res.status===404){lt_ghStatus('No tasks.json found yet. Push first!','#e67e22');showToast('No data found — push first');return;}var err2=await res.json().catch(function(){return{};});throw new Error(err2.message||('HTTP '+res.status));}
+    var fileData=await res.json();
+    var decoded=decodeURIComponent(escape(atob(fileData.content.replace(/\n/g,''))));
+    var data=JSON.parse(decoded);
+    if(Array.isArray(data.projects)&&data.projects.length)lt_projects=data.projects;
+    if(Array.isArray(data.statuses)&&data.statuses.length)lt_statuses=data.statuses;
+    if(Array.isArray(data.tasks)){
+      lt_tasks=data.tasks.map(function(t){return{id:t.id||(Date.now()+Math.floor(Math.random()*1000)),name:String(t.name||'').trim(),project:t.project||(lt_projects[0]||'General'),priority:'Low',status:t.status||(lt_statuses[0]||'Upcoming'),due:t.due||'',notes:t.notes||'',counsel:t.counsel||'Internal Counsel',action:t.action||'Drafting',selected:t.selected!==undefined?!!t.selected:true};}).filter(function(t){return t.name.length;});
+    }
+    lt_recalcPriorities();
+    if(data.emailTo!==undefined){var etEl=document.getElementById('ltEmailTo');if(etEl)etEl.value=data.emailTo;localStorage.setItem('tbws_email_to',data.emailTo);}
+    if(data.emailCc!==undefined){var ecEl=document.getElementById('ltEmailCc');if(ecEl)ecEl.value=data.emailCc;localStorage.setItem('tbws_email_cc',data.emailCc);}
+    lt_persist();lt_renderView();
+    var now=new Date().toLocaleTimeString();lt_ghStatus('✅ Pulled at '+now+' ('+lt_tasks.length+' tasks)','#16a34a');showToast('Tasks pulled from GitHub');
+    localStorage.setItem('tbws_last_sync',new Date().toISOString());lt_updateLastSyncDisplay();
+  }catch(e){lt_ghStatus('❌ Pull failed: '+e.message,'#dc2626');showToast('Pull failed');}
+}
+
+async function lt_syncGitHub(){
+  var token=lt_getGHToken();if(!token){showToast('Set your GitHub token first');lt_ghStatus('No token configured','#dc2626');return;}
+  lt_ghStatus('🔄 Pushing...','#16a34a');
+  try{await lt_pushToGitHub();localStorage.setItem('tbws_last_sync',new Date().toISOString());lt_updateLastSyncDisplay();}
+  catch(e){lt_ghStatus('❌ Sync failed: '+e.message,'#dc2626');showToast('Sync failed');}
+}
+
+function lt_updateLastSyncDisplay(){
+  var el=document.getElementById('ltLastSync');if(!el)return;
+  var stored=localStorage.getItem('tbws_last_sync');
+  if(stored){var d=new Date(stored);if(!isNaN(d.getTime())){el.textContent='Last sync: '+d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}else{el.textContent='Not synced yet';}}
+  else{el.textContent='Not synced yet';}
+}
+
+// ── Email Functions ─────────────────────────────────────────────────────────
+function lt_updateEmailSubject(){
+  var now=new Date();var day=now.getDay();var monday=new Date(now);monday.setDate(now.getDate()-(day===0?6:day-1));var friday=new Date(monday);friday.setDate(monday.getDate()+4);
+  var opt={month:'short',day:'numeric',year:'numeric'};var range=monday.toLocaleDateString('en-US',opt)+' - '+friday.toLocaleDateString('en-US',opt);
+  var el=document.getElementById('ltEmailSubject');if(el)el.value='Legal Weekly Tracker — '+range;
+}
+function lt_saveEmailFields(){localStorage.setItem('tbws_email_to',document.getElementById('ltEmailTo')?document.getElementById('ltEmailTo').value:'');localStorage.setItem('tbws_email_cc',document.getElementById('ltEmailCc')?document.getElementById('ltEmailCc').value:'');}
+function lt_loadEmailFields(){var to=localStorage.getItem('tbws_email_to');var cc=localStorage.getItem('tbws_email_cc');var etEl=document.getElementById('ltEmailTo');if(etEl&&to)etEl.value=to;var ecEl=document.getElementById('ltEmailCc');if(ecEl&&cc)ecEl.value=cc;}
+
+async function lt_copyEmailTo(){var val=(document.getElementById('ltEmailTo').value||'').trim();if(!val){showToast('Enter at least one email address');return;}try{await navigator.clipboard.writeText(val);showToast('To addresses copied');}catch(e){lt_fallbackCopy(val);showToast('To addresses copied');}}
+async function lt_copyEmailCc(){var val=(document.getElementById('ltEmailCc').value||'').trim();if(!val){showToast('No CC addresses to copy');return;}try{await navigator.clipboard.writeText(val);showToast('CC addresses copied');}catch(e){lt_fallbackCopy(val);showToast('CC addresses copied');}}
+async function lt_copyEmailSubject(){var val=(document.getElementById('ltEmailSubject').value||'').trim();try{await navigator.clipboard.writeText(val);showToast('Subject line copied');}catch(e){lt_fallbackCopy(val);showToast('Subject line copied');}}
+function lt_fallbackCopy(text){var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+
+// ── Summary Generation ──────────────────────────────────────────────────────
+function lt_buildSummaryList(scope){
+  if(scope==='selected')return lt_tasks.filter(function(t){return t.selected;});
+  if(scope==='visible')return lt_filteredTasks();
+  if(scope==='active')return lt_tasks.filter(function(t){return!lt_isCompleteStatus(t.status);});
+  return lt_tasks.filter(function(t){return t.selected;});
+}
+
+function lt_generateSummary(){
+  var scope=document.getElementById('ltSummaryScope').value;
+  var chosen=lt_buildSummaryList(scope);
+  if(chosen.length===0){showToast('No tasks to summarize for that scope');return;}
+  var byProject={};chosen.forEach(function(t){var p=t.project||'General';if(!byProject[p])byProject[p]=[];byProject[p].push(t);});
+  var prOrder={};LT_PRIORITIES.forEach(function(p,i){prOrder[p]=i;});
+  Object.keys(byProject).forEach(function(p){byProject[p].sort(function(a,b){var pa=prOrder[a.priority]||999;var pb=prOrder[b.priority]||999;if(pa!==pb)return pa-pb;var da=a.due||'9999-12-31';var db=b.due||'9999-12-31';if(da!==db)return da<db?-1:1;return(a.name||'').localeCompare(b.name||'');});});
+  var projectsSorted=Object.keys(byProject).sort(function(a,b){return a.localeCompare(b);});
+  var range=lt_weekRange();
+  var counts={};chosen.forEach(function(t){counts[t.status]=(counts[t.status]||0)+1;});
+  var chips=Object.entries(counts).map(function(e){return e[0]+': '+e[1];}).join(' · ');
+  var sortedAll=chosen.slice().sort(function(a,b){var da=a.due||'9999-12-31';var db=b.due||'9999-12-31';return da<db?-1:da>db?1:0;});
+
+  // HTML version
+  var html='<div style="font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;max-width:760px;margin:0 auto;">';
+  html+='<h1 style="margin:0 0 4px;font-size:18px;color:#1a3c2a;">Weekly Task Summary</h1>';
+  html+='<p style="margin:0 0 2px;font-size:12px;color:#6c757d;">'+range+'</p>';
+  html+='<p style="margin:0 0 10px;font-size:11px;color:#6c757d;"><strong>'+chosen.length+'</strong> tasks · '+lt_esc(chips)+'</p>';
+  html+='<hr style="border:none;border-top:2px solid #1a3c2a;margin:0 0 10px;">';
+  // Executive summaries by counsel type
+  var intTasks=sortedAll.filter(function(t){return(t.counsel||'Internal Counsel')==='Internal Counsel';});
+  var extTasks=sortedAll.filter(function(t){return(t.counsel||'Internal Counsel')==='External Counsel';});
+  var dfwTasks=sortedAll.filter(function(t){return(t.counsel||'Internal Counsel')==='DFW West';});
+  if(intTasks.length){html+='<div style="border-left:3px solid #16a34a;padding:6px 12px;margin:0 0 12px;background:#f0fdf4;border-radius:0 8px 8px 0;"><h2 style="font-size:13px;color:#1a3c2a;margin:0 0 6px;font-weight:800;">Executive Summary — Internal Counsel</h2>';intTasks.forEach(function(t,i){html+='<p style="margin:0 0 3px;font-size:11px;line-height:1.4;"><strong>'+(i+1)+'.</strong> '+lt_esc(t.name)+' — <em>'+lt_esc(t.project||'General')+'</em> | '+lt_esc(t.priority)+' | '+lt_fmtDate(t.due)+' | <strong>'+lt_esc(t.status)+'</strong></p>';});html+='</div>';}
+  if(extTasks.length){html+='<div style="border-left:3px solid #f59e0b;padding:6px 12px;margin:0 0 12px;background:#fffaf5;border-radius:0 8px 8px 0;"><h2 style="font-size:13px;color:#1a3c2a;margin:0 0 6px;font-weight:800;">Executive Summary — External Counsel</h2>';extTasks.forEach(function(t,i){html+='<p style="margin:0 0 3px;font-size:11px;line-height:1.4;"><strong>'+(i+1)+'.</strong> '+lt_esc(t.name)+' — <em>'+lt_esc(t.project||'General')+'</em> | '+lt_esc(t.priority)+' | '+lt_fmtDate(t.due)+' | <strong>'+lt_esc(t.status)+'</strong></p>';});html+='</div>';}
+  if(dfwTasks.length){html+='<div style="border-left:3px solid #3b82f6;padding:6px 12px;margin:0 0 12px;background:#eff6ff;border-radius:0 8px 8px 0;"><h2 style="font-size:13px;color:#1a3c2a;margin:0 0 6px;font-weight:800;">Executive Summary — DFW West</h2>';dfwTasks.forEach(function(t,i){html+='<p style="margin:0 0 3px;font-size:11px;line-height:1.4;"><strong>'+(i+1)+'.</strong> '+lt_esc(t.name)+' — <em>'+lt_esc(t.project||'General')+'</em> | '+lt_esc(t.action||'Drafting')+' | '+lt_esc(t.priority)+' | '+lt_fmtDate(t.due)+' | <strong>'+lt_esc(t.status)+'</strong></p>';});html+='</div>';}
+  // Project details
+  projectsSorted.forEach(function(proj){
+    html+='<div style="margin:8px 0;"><h3 style="font-size:12px;color:#fff;background:#1a3c2a;padding:5px 10px;margin:0;border-radius:6px 6px 0 0;">'+lt_esc(proj)+'</h3><div style="border:1px solid #dee2e6;border-top:none;border-radius:0 0 6px 6px;padding:6px 10px;">';
+    var byCounsel={};byProject[proj].forEach(function(t){var ct=t.counsel||'Internal Counsel';if(!byCounsel[ct])byCounsel[ct]=[];byCounsel[ct].push(t);});
+    Object.keys(byCounsel).sort().forEach(function(cType){
+      var cBg2=cType==='External Counsel'?'#fef3c7':cType==='DFW West'?'#dbeafe':'#dcfce7';
+      var cBorder2=cType==='External Counsel'?'#f59e0b':cType==='DFW West'?'#3b82f6':'#16a34a';
+      html+='<div style="margin:6px 0 4px;padding:4px 8px;background:'+cBg2+';border-left:3px solid '+cBorder2+';border-radius:0 6px 6px 0;font-weight:800;font-size:11px;color:#1a3c2a;">'+lt_esc(cType)+'</div>';
+      byCounsel[cType].forEach(function(t,i){
+        var borderBot=i<byCounsel[cType].length-1?'border-bottom:1px solid #eee;':'';
+        html+='<div style="padding:4px 0 4px 12px;'+borderBot+'font-size:11px;line-height:1.5;"><strong>'+lt_esc(t.name)+'</strong><span style="color:#6c757d;"> — '+lt_esc(t.priority)+' | '+lt_fmtDate(t.due)+' | '+lt_esc(t.status)+'</span>';
+        if(t.notes)html+='<br><span style="color:#888;font-size:10px;">→ '+lt_esc(t.notes)+'</span>';
+        html+='</div>';
+      });
+    });
+    html+='</div></div>';
+  });
+  html+='<p style="font-size:9px;color:#adb5bd;margin-top:10px;border-top:1px solid #dee2e6;padding-top:6px;">Generated by DFW-West Legal Tracker</p></div>';
+  lt_summaryHTML=html;
+
+  // Plain text
+  var txt='WEEKLY TASK SUMMARY\n'+range+'\n'+chosen.length+' tasks · '+chips+'\n'+'═'.repeat(60)+'\n\n';
+  if(intTasks.length){txt+='EXECUTIVE SUMMARY — INTERNAL COUNSEL\n'+'─'.repeat(50)+'\n';intTasks.forEach(function(t,i){txt+=String(i+1).padStart(2,' ')+'. '+t.name+' — '+(t.project||'General')+' | '+(t.action||'Drafting')+' | Priority: '+t.priority+' | Due: '+lt_fmtDate(t.due)+' | Stage: '+t.status+'\n';});txt+='\n';}
+  if(extTasks.length){txt+='EXECUTIVE SUMMARY — EXTERNAL COUNSEL\n'+'─'.repeat(50)+'\n';extTasks.forEach(function(t,i){txt+=String(i+1).padStart(2,' ')+'. '+t.name+' — '+(t.project||'General')+' | '+(t.action||'Drafting')+' | Priority: '+t.priority+' | Due: '+lt_fmtDate(t.due)+' | Stage: '+t.status+'\n';});txt+='\n';}
+  if(dfwTasks.length){txt+='EXECUTIVE SUMMARY — DFW WEST\n'+'─'.repeat(50)+'\n';dfwTasks.forEach(function(t,i){txt+=String(i+1).padStart(2,' ')+'. '+t.name+' — '+(t.project||'General')+' | '+(t.action||'Drafting')+' | Priority: '+t.priority+' | Due: '+lt_fmtDate(t.due)+' | Stage: '+t.status+'\n';});txt+='\n';}
+  txt+='═'.repeat(60)+'\n\n';
+  projectsSorted.forEach(function(proj){
+    txt+='\n'+'═'.repeat(4)+' '+proj.toUpperCase()+' '+'═'.repeat(Math.max(2,52-proj.length))+'\n\n';
+    var byCounsel2={};byProject[proj].forEach(function(t){var ct=t.counsel||'Internal Counsel';if(!byCounsel2[ct])byCounsel2[ct]=[];byCounsel2[ct].push(t);});
+    Object.keys(byCounsel2).sort().forEach(function(cType){
+      txt+='  --- '+cType.toUpperCase()+' ---\n';
+      byCounsel2[cType].forEach(function(t){txt+='    ▪ '+t.name+'\n      '+t.priority+' | Due: '+lt_fmtDate(t.due)+' | Stage: '+t.status+'\n';if(t.notes)txt+='      Notes: '+t.notes+'\n';txt+='\n';});
+    });
+  });
+  lt_summaryText=txt;
+  document.getElementById('ltSummary').innerHTML='<pre style="white-space:pre-wrap;word-wrap:break-word;font-family:Consolas,Courier New,monospace;font-size:12px;line-height:1.6;color:var(--text);padding:10px;margin:0;background:var(--bg);border-radius:8px;">'+lt_esc(lt_summaryText)+'</pre>';
+  showToast('Summary generated');
+}
+
+function lt_generateExecutiveSummaryOnly(){
+  var scope=document.getElementById('ltSummaryScope').value;
+  var chosen=lt_buildSummaryList(scope);
+  if(chosen.length===0){showToast('No tasks to summarize for that scope');return;}
+  var range=lt_weekRange();
+  var counts={};chosen.forEach(function(t){counts[t.status]=(counts[t.status]||0)+1;});
+  var chips=Object.entries(counts).map(function(e){return e[0]+': '+e[1];}).join(' · ');
+  var sortedAll=chosen.slice().sort(function(a,b){var da=a.due||'9999-12-31';var db=b.due||'9999-12-31';return da<db?-1:da>db?1:0;});
+  var txt='EXECUTIVE SUMMARY\n'+range+'\n'+chosen.length+' tasks · '+chips+'\n'+'═'.repeat(60)+'\n\n';
+  var intT=sortedAll.filter(function(t){return(t.counsel||'Internal Counsel')==='Internal Counsel';});
+  var extT=sortedAll.filter(function(t){return(t.counsel||'Internal Counsel')==='External Counsel';});
+  var dfwT=sortedAll.filter(function(t){return(t.counsel||'Internal Counsel')==='DFW West';});
+  if(intT.length){txt+='INTERNAL COUNSEL\n'+'─'.repeat(50)+'\n';intT.forEach(function(t,i){txt+=String(i+1).padStart(2,' ')+'. '+t.name+' — '+(t.project||'General')+' | '+(t.action||'Drafting')+' | Priority: '+t.priority+' | Due: '+lt_fmtDate(t.due)+' | Stage: '+t.status+'\n';});txt+='\n';}
+  if(extT.length){txt+='EXTERNAL COUNSEL\n'+'─'.repeat(50)+'\n';extT.forEach(function(t,i){txt+=String(i+1).padStart(2,' ')+'. '+t.name+' — '+(t.project||'General')+' | '+(t.action||'Drafting')+' | Priority: '+t.priority+' | Due: '+lt_fmtDate(t.due)+' | Stage: '+t.status+'\n';});txt+='\n';}
+  if(dfwT.length){txt+='DFW WEST\n'+'─'.repeat(50)+'\n';dfwT.forEach(function(t,i){txt+=String(i+1).padStart(2,' ')+'. '+t.name+' — '+(t.project||'General')+' | '+(t.action||'Drafting')+' | Priority: '+t.priority+' | Due: '+lt_fmtDate(t.due)+' | Stage: '+t.status+'\n';});txt+='\n';}
+  txt+='═'.repeat(60)+'\n';
+  lt_summaryText=txt;
+  document.getElementById('ltSummary').innerHTML='<pre style="white-space:pre-wrap;word-wrap:break-word;font-family:Consolas,Courier New,monospace;font-size:12px;line-height:1.6;color:var(--text);padding:10px;margin:0;background:var(--bg);border-radius:8px;">'+lt_esc(lt_summaryText)+'</pre>';
+  showToast('Executive Summary generated');
+}
+
+async function lt_copyText(){
+  var txt=lt_summaryText||'Generate a summary first.';
+  try{await navigator.clipboard.writeText(txt);showToast('Copied plain text');}catch(e){lt_fallbackCopy(txt);showToast('Copied plain text');}
+}
+
+// Close GH settings when clicking outside
+document.addEventListener('click',function(e){var panel=document.getElementById('ltGHSettings');if(panel&&panel.style.display==='block'){if(!panel.contains(e.target)){var gear=e.target.closest&&e.target.closest('.lt-header-btn[title="Settings"]');if(!gear)panel.style.display='none';}}});
+
+// Init legal tracker data on load
+(function lt_init(){
+  if(!lt_projects||!lt_projects.length)lt_projects=LT_DEFAULT_PROJECTS.slice();
+  if(!lt_statuses||!lt_statuses.length)lt_statuses=LT_DEFAULT_STATUSES.slice();
+  lt_recalcPriorities();
+})();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ██  END LEGAL TRACKER MODULE
+// ══════════════════════════════════════════════════════════════════════════════
 
 </script>
 

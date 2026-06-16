@@ -1453,8 +1453,8 @@ async function switchToTeamWorkspace(id){
   document.getElementById('togDark').checked=!!state.darkMode;
   document.getElementById('togCompact').checked=!!state.compact;
   renderWorkspaceTabs();
-  // Auto-switch to dashboard when opening a team workspace
-  if(currentView!=='dashboard'){setView('dashboard');}else{render();}
+  // Auto-switch to board when opening a team workspace
+  setView('board');
   // Real-time sync: listen for changes from teammates
   realtimeChannel=_supabase.channel('team_'+id)
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'team_workspaces',filter:'id=eq.'+id},function(payload){
@@ -1845,7 +1845,7 @@ function renderPersonalDashboard(el){
         '<h2 style="color:var(--text);margin-bottom:8px;font-size:20px;font-weight:800">Welcome'+(myName?', '+esc(myName.split(' ')[0]):'')+'!</h2>'+
         '<p style="color:var(--text2);margin-bottom:24px;font-size:14px;max-width:420px;margin-left:auto;margin-right:auto">This dashboard tracks your tasks across every workspace. Create your first task to get started, or join your team with an invite code.</p>'+
         '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'+
-          '<button class="pd-action-btn primary" style="max-width:220px;justify-content:center" onclick="setView(\'board\');openNewTask()">＋ Create your first task</button>'+
+          '<button class="pd-action-btn primary" style="max-width:220px;justify-content:center" onclick="enterPersonalWorkspace();setTimeout(openNewTask,200)">＋ Create your first task</button>'+
           '<button class="pd-action-btn" style="max-width:220px;justify-content:center" onclick="openTeamPanel()">👥 Join a team</button>'+
         '</div>'+
       '</div>';
@@ -1999,9 +1999,29 @@ function renderPersonalDashboard(el){
     '</div>'+
 
     // Team workspace cards (right after KPIs, before bento panels)
-    (teamWorkspaces.length?
-      '<div style="margin-top:4px;margin-bottom:18px"><div class="pd-panel-title" style="margin-bottom:10px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">Team Workspaces</div>'+
-      '<div class="pd-team-grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">'+teamWorkspaces.map(function(tw){
+    // Workspace cards — personal + teams
+    (function(){
+      var pTasks=(function(){try{var r=localStorage.getItem('wm_workspaces');if(r){var d=JSON.parse(r);return(d.work||{}).tasks||[];}return[];}catch(e){return[];}})();
+      var pTotal=pTasks.length;
+      var pDone=pTasks.filter(function(t){return(t.pct||0)>=100;}).length;
+      var pOverdue=pTasks.filter(function(t){if((t.pct||0)>=100||!t.due)return false;return t.due<todayStr();}).length;
+      var pPct=pTotal?Math.round(pDone/pTotal*100):0;
+      var html='<div style="margin-top:4px;margin-bottom:18px">'+
+        '<div class="pd-panel-title" style="margin-bottom:10px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">My Workspaces</div>'+
+        '<div class="pd-team-grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">'+
+        // Personal workspace card
+        '<div class="pd-team-card" style="padding:24px 22px" onclick="enterPersonalWorkspace()">'+
+          '<div class="pd-team-card-name" style="font-size:17px;margin-bottom:10px"><span class="tc-icon" style="font-size:22px">🏠</span>Personal</div>'+
+          '<div class="pd-team-card-stats" style="font-size:13px;gap:16px;margin-bottom:12px">'+
+            '<span class="pd-team-card-stat">📋 '+pTotal+' tasks</span>'+
+            '<span class="pd-team-card-stat" style="color:var(--low)">✓ '+pDone+' done</span>'+
+            (pOverdue?'<span class="pd-team-card-stat" style="color:var(--crit)">⚠ '+pOverdue+' overdue</span>':'')+
+          '</div>'+
+          '<div class="pd-team-card-bar" style="height:6px;margin-bottom:12px"><div class="pd-team-card-bar-fill" style="width:'+pPct+'%"></div></div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:4px">Private — only you can see this</div>'+
+        '</div>';
+      // Team cards
+      teamWorkspaces.forEach(function(tw){
         var twTasks=[];
         try{var k='wm_team_'+tw.id;var raw=localStorage.getItem(k);if(raw){var d=JSON.parse(raw);twTasks=d.tasks||[];}}catch(e){}
         var twTotal=twTasks.length;
@@ -2010,9 +2030,8 @@ function renderPersonalDashboard(el){
         var twPct=twTotal?Math.round(twDone/twTotal*100):0;
         var members=(function(){try{var k2='wm_team_'+tw.id;var r2=localStorage.getItem(k2);if(r2){var d2=JSON.parse(r2);return d2.teamMembers||[];}return[];}catch(e){return[];}})();
         var memAvatars=members.slice(0,5).map(function(m){return'<div class="pd-team-card-avatar" style="background:'+avatarColor(m)+'">'+initials(m)+'</div>';}).join('');
-        if(members.length>5)memAvatars+='<div class="pd-team-card-avatar" style="background:var(--border);color:var(--text2)">+'+
-          (members.length-5)+'</div>';
-        return'<div class="pd-team-card" style="padding:24px 22px" onclick="switchToTeamWorkspace(\''+tw.id+'\')">'+
+        if(members.length>5)memAvatars+='<div class="pd-team-card-avatar" style="background:var(--border);color:var(--text2)">+'+(members.length-5)+'</div>';
+        html+='<div class="pd-team-card" style="padding:24px 22px" onclick="switchToTeamWorkspace(\''+tw.id+'\')">'+
           '<div class="pd-team-card-name" style="font-size:17px;margin-bottom:10px"><span class="tc-icon" style="font-size:22px">👥</span>'+esc(tw.name)+'</div>'+
           '<div class="pd-team-card-stats" style="font-size:13px;gap:16px;margin-bottom:12px">'+
             '<span class="pd-team-card-stat">📋 '+twTotal+' tasks</span>'+
@@ -2022,10 +2041,13 @@ function renderPersonalDashboard(el){
           '<div class="pd-team-card-bar" style="height:6px;margin-bottom:12px"><div class="pd-team-card-bar-fill" style="width:'+twPct+'%"></div></div>'+
           (memAvatars?'<div class="pd-team-card-members" style="margin-top:4px">'+memAvatars+'</div>':'')+
         '</div>';
-      }).join('')+
-      '<div class="pd-team-card pd-team-add" onclick="openTeamPanel()" style="display:flex;align-items:center;justify-content:center;min-height:120px;border-style:dashed;opacity:.7;padding:24px 22px">'+
+      });
+      // Add team button
+      html+='<div class="pd-team-card pd-team-add" onclick="openTeamPanel()" style="display:flex;align-items:center;justify-content:center;min-height:120px;border-style:dashed;opacity:.7;padding:24px 22px">'+
         '<div style="text-align:center;color:var(--text2)"><div style="font-size:28px;margin-bottom:6px">＋</div><div style="font-size:13px;font-weight:600">New Team</div></div>'+
-      '</div></div></div>':'')+
+      '</div></div></div>';
+      return html;
+    })()+
     // Data panels (bento)
     '<div class="pd-panels">'+
       '<div class="pd-panel pd-span4">'+
@@ -2039,10 +2061,6 @@ function renderPersonalDashboard(el){
           '<button class="pd-action-btn secondary" onclick="openTeamPanel()">Create / Join Team</button>'+
           '<button class="pd-action-btn secondary" onclick="generatePDFReport()">Export PDF Report</button>'+
         '</div>'+
-      '</div>'+
-      '<div class="pd-panel pd-span2">'+
-        '<div class="pd-panel-title">My Workspaces</div>'+
-        '<div class="pd-ws-bar">'+wsHTML+'</div>'+
       '</div>'+
       '<div class="pd-panel pd-span4">'+
         '<div class="pd-panel-title">My Priorities</div>'+
@@ -2248,14 +2266,25 @@ function escAttr(s){return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot
 function avatarColor(name){if(!name)return'var(--pri)';let h=0;for(let i=0;i<name.length;i++)h=name.charCodeAt(i)+((h<<5)-h);const c=['#8b5cf6','#0891b2','#ec4899','#f97316','#16a34a','#dc2626','#2563eb','#d97706','#7c3aed','#059669'];return c[Math.abs(h)%c.length];}
 function todayStr(){const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');}
 let currentView='dashboard';
-function setView(v){if(v==='schedules'&&!hasTeamPlan()){showToast('🔒 Schedules is a Team plan feature.');return;}currentView=v;if(isMobile())closeMobileSidebar();['dashboard','board','list','calendar','notes','schedules','chat'].forEach(t=>{const el=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',v===t);});document.getElementById('dashboardView').style.display=v==='dashboard'?'flex':'none';document.getElementById('boardView').style.display=v==='board'?'flex':'none';document.getElementById('listView').style.display=v==='list'?'block':'none';document.getElementById('calendarView').style.display=v==='calendar'?'flex':'none';document.getElementById('notesView').style.display=v==='notes'?'flex':'none';document.getElementById('schedulesView').style.display=v==='schedules'?'flex':'none';document.getElementById('chatView').style.display=v==='chat'?'flex':'none';document.querySelectorAll('.mobile-bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));render();}
+function setView(v){if(v==='schedules'&&!hasTeamPlan()){showToast('🔒 Schedules is a Team plan feature.');return;}currentView=v;if(isMobile())closeMobileSidebar();['dashboard','board','list','calendar','notes','schedules','chat'].forEach(t=>{const el=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',v===t);});document.getElementById('dashboardView').style.display=v==='dashboard'?'flex':'none';document.getElementById('boardView').style.display=v==='board'?'flex':'none';document.getElementById('listView').style.display=v==='list'?'block':'none';document.getElementById('calendarView').style.display=v==='calendar'?'flex':'none';document.getElementById('notesView').style.display=v==='notes'?'flex':'none';document.getElementById('schedulesView').style.display=v==='schedules'?'flex':'none';document.getElementById('chatView').style.display=v==='chat'?'flex':'none';document.querySelectorAll('.mobile-bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+// Hide sidebar on master dashboard, show when inside a workspace
+var sb=document.getElementById('sidebar');if(sb&&!isMobile()){if(v==='dashboard'&&!currentTeamWorkspaceId){sb.style.display='none';}else{sb.style.display='';sb.classList.remove('collapsed');}}
+render();}
+function enterPersonalWorkspace(){
+  if(currentTeamWorkspaceId){save();if(realtimeChannel)realtimeChannel.unsubscribe();currentTeamWorkspaceId=null;currentWorkspace='work';load();renderWorkspaceTabs();}
+  setView('board');
+}
 function render(){document.querySelectorAll('.workspace-tab').forEach(t=>{t.classList.toggle('active',t.dataset.ws===currentWorkspace);});updateFilters();renderSidebarFilters();updateStats();updateFilterChips();updateTodayBadge();renderPresets();updateDashboardNav();// Show/hide chat nav item
 const chatNav=document.getElementById('navChat');if(chatNav){if(currentTeamWorkspaceId)chatNav.classList.remove('hidden');else{chatNav.classList.add('hidden');if(currentView==='chat'){currentView='dashboard';}}}
 updateChatUnread();
 if(currentView==='dashboard')renderDashboard();else if(currentView==='board')renderBoard();else if(currentView==='list')renderList();else if(currentView==='calendar')renderCalendar();else if(currentView==='notes')renderNotesView();else if(currentView==='schedules')renderSchedules();else if(currentView==='chat')renderChat();save();}
 function updateDashboardNav(){const navEl=document.getElementById('navDashboard');if(navEl)navEl.classList.remove('hidden');}
 function switchWorkspace(ws){
-  if(ws===currentWorkspace&&!currentTeamWorkspaceId)return;
+  if(ws===currentWorkspace&&!currentTeamWorkspaceId){
+    // Still navigate to dashboard even if already on this workspace
+    if(currentView!=='dashboard')setView('dashboard');
+    return;
+  }
   save();
   if(currentTeamWorkspaceId&&realtimeChannel)realtimeChannel.unsubscribe();
   currentTeamWorkspaceId=null;
@@ -2367,10 +2396,10 @@ function renameFolder(id){var f=state.folders.find(x=>x.id===id);if(!f)return;va
 function deleteFolder(id){var f=state.folders.find(x=>x.id===id);if(!f)return;var removed=f;state.notes.forEach(n=>{if(n.folderId===id)n.folderId=null;});state.folders=state.folders.filter(x=>x.id!==id);if(activeFolderFilter===id)activeFolderFilter=null;save();renderNotesView();showToast('Folder "'+removed.name+'" deleted',function(){state.folders.push(removed);save();renderNotesView();});}
 function selectFolder(id){activeFolderFilter=id;renderNotesSidebar();}
 function moveNoteToFolder(noteId,folderId){var note=state.notes.find(n=>n.id===noteId);if(!note)return;note.folderId=folderId?parseInt(folderId):null;note.updated=new Date().toISOString();save();renderNotesView();}
-function newNote(){var fid=(activeFolderFilter&&activeFolderFilter!=='unfiled')?activeFolderFilter:null;var note={id:state.nextNoteId++,title:'',content:'',folderId:fid,linkedTaskId:null,created:new Date().toISOString(),updated:new Date().toISOString()};state.notes.unshift(note);activeNoteId=note.id;save();renderNotesView();setTimeout(function(){var el=document.getElementById('noteTitleInput');if(el)el.focus();},50);}
+function newNote(){var fid=(activeFolderFilter&&activeFolderFilter!=='unfiled')?activeFolderFilter:null;var note={id:state.nextNoteId++,title:'',content:'',folderId:fid,linkedTaskId:null,created:new Date().toISOString(),updated:new Date().toISOString()};state.notes.unshift(note);activeNoteId=note.id;logActivity('Note created','New note');save();renderNotesView();setTimeout(function(){var el=document.getElementById('noteTitleInput');if(el)el.focus();},50);}
 function selectNote(id){activeNoteId=id;renderNotesView();}
-function autoSaveNote(){if(noteTimer)clearTimeout(noteTimer);noteTimer=setTimeout(function(){var note=state.notes.find(n=>n.id===activeNoteId);if(!note)return;var ti=document.getElementById('noteTitleInput');var ci=document.getElementById('noteContentInput');if(ti)note.title=ti.value;if(ci)note.content=ci.value;note.updated=new Date().toISOString();save();renderNotesSidebar();},400);}
-function deleteNote(){var note=state.notes.find(n=>n.id===activeNoteId);if(!note)return;var removed=note,idx=state.notes.indexOf(note);state.notes=state.notes.filter(n=>n.id!==activeNoteId);activeNoteId=state.notes.length?state.notes[0].id:null;renderNotesView();save();showToast('Note deleted',function(){state.notes.splice(idx,0,removed);activeNoteId=removed.id;renderNotesView();save();});}
+function autoSaveNote(){if(noteTimer)clearTimeout(noteTimer);noteTimer=setTimeout(function(){var note=state.notes.find(n=>n.id===activeNoteId);if(!note)return;var ti=document.getElementById('noteTitleInput');var ci=document.getElementById('noteContentInput');var oldTitle=note.title,oldContent=note.content;if(ti)note.title=ti.value;if(ci)note.content=ci.value;if(note.title!==oldTitle||note.content!==oldContent){logActivity('Note edited',note.title||'Untitled note');}note.updated=new Date().toISOString();save();renderNotesSidebar();},400);}
+function deleteNote(){var note=state.notes.find(n=>n.id===activeNoteId);if(!note)return;logActivity('Note deleted',note.title||'Untitled note');var removed=note,idx=state.notes.indexOf(note);state.notes=state.notes.filter(n=>n.id!==activeNoteId);activeNoteId=state.notes.length?state.notes[0].id:null;renderNotesView();save();showToast('Note deleted',function(){state.notes.splice(idx,0,removed);activeNoteId=removed.id;renderNotesView();save();});}
 let dragFolderId=null,dragNoteId=null;
 function folderDragStart(e,id){dragFolderId=id;dragNoteId=null;e.dataTransfer.effectAllowed='move';e.currentTarget.classList.add('dragging');}
 function folderDragEnd(e){e.currentTarget.classList.remove('dragging');dragFolderId=null;document.querySelectorAll('.folder-tab').forEach(t=>t.classList.remove('drag-over'));}

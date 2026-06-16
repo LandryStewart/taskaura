@@ -1553,7 +1553,7 @@ async function switchToTeamWorkspace(id){
   currentTeamWorkspaceId=id;
   currentWorkspace='team_'+id;
   const tw=teamWorkspaces.find(w=>w.id===id);
-  if(tw&&tw.data&&tw.data.tasks){state=tw.data;}
+  if(tw&&tw.data&&(tw.data.tasks||tw.data.workspaceType==='legal')){state=tw.data;}
   else{state=getDefaultState();if(tw)state.projectName=tw.name;await syncToCloud();}
   // Ensure my name→userId mapping exists in this workspace (for ID-based assignee matching)
   if(currentUser){

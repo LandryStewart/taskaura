@@ -1475,11 +1475,7 @@ function renderWorkspaceTabs(){
   const tabs=document.getElementById('workspaceTabs');if(!tabs)return;
   const isWork=!currentTeamWorkspaceId&&currentWorkspace==='work';
   let html='<div class="workspace-tab '+(isWork?'active':'')+'" onclick="switchWorkspace(\'work\')">Personal Dashboard <span class="tab-dot"></span></div>';
-  // Team workspaces shown as cards on dashboard instead of tabs
-  if(currentTeamWorkspaceId){
-    var tw=teamWorkspaces.find(function(w){return w.id===currentTeamWorkspaceId;});
-    if(tw)html+='<div class="workspace-tab team-tab active">'+esc(tw.name)+' <span class="tab-dot"></span></div>';
-  }
+  // Team workspaces shown as cards on dashboard — no tabs
   html+='<div class="workspace-tab add-team-tab" onclick="openTeamPanel()">＋ Team</div>';
   tabs.innerHTML=html;
 }
@@ -2002,6 +1998,34 @@ function renderPersonalDashboard(el){
       '</div>'+
     '</div>'+
 
+    // Team workspace cards (right after KPIs, before bento panels)
+    (teamWorkspaces.length?
+      '<div style="margin-top:4px;margin-bottom:18px"><div class="pd-panel-title" style="margin-bottom:10px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">Team Workspaces</div>'+
+      '<div class="pd-team-grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">'+teamWorkspaces.map(function(tw){
+        var twTasks=[];
+        try{var k='wm_team_'+tw.id;var raw=localStorage.getItem(k);if(raw){var d=JSON.parse(raw);twTasks=d.tasks||[];}}catch(e){}
+        var twTotal=twTasks.length;
+        var twDone=twTasks.filter(function(t){return(t.pct||0)>=100;}).length;
+        var twOverdue=twTasks.filter(function(t){if((t.pct||0)>=100||!t.due)return false;return t.due<todayStr();}).length;
+        var twPct=twTotal?Math.round(twDone/twTotal*100):0;
+        var members=(function(){try{var k2='wm_team_'+tw.id;var r2=localStorage.getItem(k2);if(r2){var d2=JSON.parse(r2);return d2.teamMembers||[];}return[];}catch(e){return[];}})();
+        var memAvatars=members.slice(0,5).map(function(m){return'<div class="pd-team-card-avatar" style="background:'+avatarColor(m)+'">'+initials(m)+'</div>';}).join('');
+        if(members.length>5)memAvatars+='<div class="pd-team-card-avatar" style="background:var(--border);color:var(--text2)">+'+
+          (members.length-5)+'</div>';
+        return'<div class="pd-team-card" style="padding:24px 22px" onclick="switchToTeamWorkspace(\''+tw.id+'\')">'+
+          '<div class="pd-team-card-name" style="font-size:17px;margin-bottom:10px"><span class="tc-icon" style="font-size:22px">👥</span>'+esc(tw.name)+'</div>'+
+          '<div class="pd-team-card-stats" style="font-size:13px;gap:16px;margin-bottom:12px">'+
+            '<span class="pd-team-card-stat">📋 '+twTotal+' tasks</span>'+
+            '<span class="pd-team-card-stat" style="color:var(--low)">✓ '+twDone+' done</span>'+
+            (twOverdue?'<span class="pd-team-card-stat" style="color:var(--crit)">⚠ '+twOverdue+' overdue</span>':'')+
+          '</div>'+
+          '<div class="pd-team-card-bar" style="height:6px;margin-bottom:12px"><div class="pd-team-card-bar-fill" style="width:'+twPct+'%"></div></div>'+
+          (memAvatars?'<div class="pd-team-card-members" style="margin-top:4px">'+memAvatars+'</div>':'')+
+        '</div>';
+      }).join('')+
+      '<div class="pd-team-card pd-team-add" onclick="openTeamPanel()" style="display:flex;align-items:center;justify-content:center;min-height:120px;border-style:dashed;opacity:.7;padding:24px 22px">'+
+        '<div style="text-align:center;color:var(--text2)"><div style="font-size:28px;margin-bottom:6px">＋</div><div style="font-size:13px;font-weight:600">New Team</div></div>'+
+      '</div></div></div>':'')+
     // Data panels (bento)
     '<div class="pd-panels">'+
       '<div class="pd-panel pd-span4">'+
@@ -2025,34 +2049,6 @@ function renderPersonalDashboard(el){
         prioritiesHTML+
       '</div>'+
     '</div>'+
-    // Team workspace cards
-    (teamWorkspaces.length?
-      '<div style="margin-top:20px"><div class="pd-panel-title" style="margin-bottom:10px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">Team Workspaces</div>'+
-      '<div class="pd-team-grid">'+teamWorkspaces.map(function(tw){
-        var twTasks=[];
-        try{var k='wm_team_'+tw.id;var raw=localStorage.getItem(k);if(raw){var d=JSON.parse(raw);twTasks=d.tasks||[];}}catch(e){}
-        var twTotal=twTasks.length;
-        var twDone=twTasks.filter(function(t){return(t.pct||0)>=100;}).length;
-        var twOverdue=twTasks.filter(function(t){if((t.pct||0)>=100||!t.due)return false;return t.due<todayStr();}).length;
-        var twPct=twTotal?Math.round(twDone/twTotal*100):0;
-        var members=(function(){try{var k2='wm_team_'+tw.id;var r2=localStorage.getItem(k2);if(r2){var d2=JSON.parse(r2);return d2.teamMembers||[];}return[];}catch(e){return[];}})();
-        var memAvatars=members.slice(0,5).map(function(m){return'<div class="pd-team-card-avatar" style="background:'+avatarColor(m)+'">'+initials(m)+'</div>';}).join('');
-        if(members.length>5)memAvatars+='<div class="pd-team-card-avatar" style="background:var(--border);color:var(--text2)">+'+
-          (members.length-5)+'</div>';
-        return'<div class="pd-team-card" onclick="switchToTeamWorkspace(\''+tw.id+'\')">'+
-          '<div class="pd-team-card-name"><span class="tc-icon">👥</span>'+esc(tw.name)+'</div>'+
-          '<div class="pd-team-card-stats">'+
-            '<span class="pd-team-card-stat">📋 '+twTotal+'</span>'+
-            '<span class="pd-team-card-stat" style="color:var(--low)">✓ '+twDone+'</span>'+
-            (twOverdue?'<span class="pd-team-card-stat" style="color:var(--crit)">⚠ '+twOverdue+'</span>':'')+
-          '</div>'+
-          '<div class="pd-team-card-bar"><div class="pd-team-card-bar-fill" style="width:'+twPct+'%"></div></div>'+
-          (memAvatars?'<div class="pd-team-card-members">'+memAvatars+'</div>':'')+
-        '</div>';
-      }).join('')+
-      '<div class="pd-team-card pd-team-add" onclick="openTeamPanel()" style="display:flex;align-items:center;justify-content:center;min-height:100px;border-style:dashed;opacity:.7">'+
-        '<div style="text-align:center;color:var(--text2)"><div style="font-size:24px;margin-bottom:4px">＋</div><div style="font-size:12px;font-weight:600">New Team</div></div>'+
-      '</div></div></div>':'')+
     // Activity log (today's session)
     (function(){
       var log=(state.activityLog||[]);

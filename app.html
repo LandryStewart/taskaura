@@ -393,7 +393,7 @@ tr:hover td{background:var(--pri-l);}
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/vendor/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script>
@@ -435,8 +435,10 @@ async function doLogin() {
   if (!email || !pw) { err.textContent = 'Enter email and password.'; return; }
   const btn = document.querySelector('#authFormSignIn .auth-btn');
   btn.textContent = 'Signing in...'; btn.disabled = true;
-  const result = await _supabase.auth.signInWithPassword({ email, password: pw });
-  if (result.error) { err.textContent = result.error.message; btn.textContent = 'Sign In'; btn.disabled = false; }
+  try {
+    const result = await _supabase.auth.signInWithPassword({ email, password: pw });
+    if (result.error) { err.textContent = result.error.message; btn.textContent = 'Sign In'; btn.disabled = false; }
+  } catch (e) { err.textContent = 'Connection error: ' + e.message; btn.textContent = 'Sign In'; btn.disabled = false; }
 }
 
 async function doSignUp() {

@@ -353,7 +353,7 @@ tr:hover td{background:var(--pri-l);}
 </div>
 
 <!-- App Container -->
-<div id="appContainer" class="hidden" style="flex:1;display:flex;flex-direction:column;min-height:0;">
+<div id="appContainer" style="flex:1;display:none;flex-direction:column;min-height:0;">
 <!-- Topbar -->
 <div class="topbar">
 <div class="logo"><span class="logo-tile">T</span>Task<span style="color:var(--pri)">Aura</span></div>
@@ -457,9 +457,17 @@ async function doSignUp() {
 
 function showSignUp() { document.getElementById('authFormSignIn').style.display = 'none'; document.getElementById('authFormSignUp').style.display = 'block'; document.getElementById('authSub').textContent = 'Create a new account'; document.getElementById('loginError').textContent = ''; }
 function showSignIn() { document.getElementById('authFormSignUp').style.display = 'none'; document.getElementById('authFormSignIn').style.display = 'block'; document.getElementById('authSub').textContent = 'Sign in to your account'; document.getElementById('loginError').textContent = ''; }
-function showPendingApproval() { document.getElementById('authOverlay').classList.add('hidden'); document.getElementById('appContainer').classList.add('hidden'); document.getElementById('pendingOverlay').classList.remove('hidden'); }
-function showLoginScreen() { window.location.href = '/'; }
-function doLogout() { _supabase.auth.signOut().then(() => { window.location.href = '/'; }); }
+function showPendingApproval() { document.getElementById('authOverlay').classList.add('hidden'); document.getElementById('appContainer').style.display = 'none'; document.getElementById('pendingOverlay').classList.remove('hidden'); }
+function showLoginScreen() {
+  document.getElementById('authOverlay').classList.remove('hidden');
+  document.getElementById('appContainer').style.display = 'none';
+  document.getElementById('pendingOverlay').classList.add('hidden');
+}
+function doLogout() {
+  _supabase.auth.signOut().then(() => {
+    showLoginScreen();
+  });
+}
 
 async function unlockApp() {
   if (_unlockingApp) return;
@@ -475,7 +483,6 @@ async function unlockApp() {
   }
   document.getElementById('authOverlay').classList.add('hidden');
   document.getElementById('pendingOverlay').classList.add('hidden');
-  document.getElementById('appContainer').classList.remove('hidden');
   document.getElementById('appContainer').style.display = 'flex';
   loadState();
   if (currentUser) {

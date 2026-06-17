@@ -1003,7 +1003,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 <script src="/vendor/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-<div class="auth-overlay" id="authOverlay">
+<div class="auth-overlay hidden" id="authOverlay">
  <div class="auth-card">
   <h1 style="font-family:'General Sans',sans-serif;font-weight:700;letter-spacing:-0.035em;">Task<span style="color:#f97316;font-weight:600;letter-spacing:-0.12em;margin:0 .05em">//</span>Aura</h1>
   <p class="auth-sub" id="authSub">Sign in to your account</p>
@@ -1276,7 +1276,7 @@ function initSupabaseAuth() {
   _supabase.auth.onAuthStateChange(function(event, session) {
     if (session && session.user) {
       currentUser = session.user;
-      if (document.getElementById('authOverlay').classList.contains('hidden') === false && !_unlockingApp) {
+      if (!_unlockingApp) {
         unlockApp();
       }
     } else {
@@ -1289,7 +1289,7 @@ function initSupabaseAuth() {
   _supabase.auth.getSession().then(function(result) {
     if (result.data && result.data.session) {
       currentUser = result.data.session.user;
-      if (!_unlockingApp && document.getElementById('authOverlay').classList.contains('hidden') === false) {
+      if (!_unlockingApp) {
         unlockApp();
       }
     } else {

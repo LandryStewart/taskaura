@@ -4676,7 +4676,10 @@ function renderTeamSidebarProjects(){
   var _devNames=(typeof devData!=='undefined'&&devData&&devData.projects)?devData.projects.map(function(p){return p.name;}):[];
   var projects=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]),..._devNames,...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])];
   var items=projects.map(function(p,i){
-    return'<div class="team-proj-item '+(selectedTeamProject===p?'active':'')+'" data-projidx="'+i+'" onclick="selectTeamProject(window.__devProjs[this.dataset.projidx])">'+esc(p)+'</div>';
+    return'<div class="team-proj-item '+(selectedTeamProject===p?'active':'')+'" data-projidx="'+i+'" style="display:flex;align-items:center;justify-content:space-between;gap:4px;">'+
+      '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" onclick="selectTeamProject(window.__devProjs[this.closest(\'[data-projidx]\').dataset.projidx])">'+esc(p)+'</span>'+
+      '<button onclick="deleteProject(window.__devProjs[this.closest(\'[data-projidx]\').dataset.projidx])" title="Delete project" style="background:none;border:none;color:var(--text2);font-size:14px;line-height:1;padding:0 2px;cursor:pointer;opacity:.5;flex-shrink:0;" onmouseover="this.style.opacity=1;this.style.color=\'#dc2626\'" onmouseout="this.style.opacity=.5;this.style.color=\'var(--text2)\'">×</button>'+
+    '</div>';
   }).join('');
   window.__devProjs=projects;
   projDiv.innerHTML=
@@ -4848,6 +4851,23 @@ function renderEntitlementTab(el){
 }
 
 function selectTeamProject(p){selectedTeamProject=p||null;renderDashboard();}
+function deleteProject(name){
+  if(!name||!confirm('Delete project "'+name+'"?\n\nTasks assigned to this project will keep their data but lose the project assignment.'))return;
+  // Remove from state.projects
+  if(state.projects)state.projects=state.projects.filter(function(p){return p!==name;});
+  if(state.scheduleProjects)state.scheduleProjects=state.scheduleProjects.filter(function(p){return p!==name;});
+  // Remove from devData.projects (keep tasks but unlink)
+  if(typeof devData!=='undefined'&&devData&&devData.projects){
+    devData.projects=devData.projects.filter(function(p){return p.name!==name;});
+    dev_syncProjectsToState();
+    state.developmentData=devData;
+  }
+  // Clear project field from tasks that referenced this project
+  (state.tasks||[]).forEach(function(t){if(t.project===name)t.project='';});
+  if(selectedTeamProject===name)selectedTeamProject=null;
+  save();
+  renderDashboard();
+}
 function openUnifiedProjectModal(){
   // Ensure devData is loaded before opening the dev project modal
   if(typeof devData==='undefined'||!devData){devData=dev_loadData();}

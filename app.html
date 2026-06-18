@@ -1527,28 +1527,6 @@ const SUPABASE_URL = 'https://kxidfwesywhhdifekkqo.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Mpf3fQxq5253lluxVGdXxA_Se4rBp9z';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null;
-
-// ✅ Restore session before login check
-async function __restoreSession(){
-  try{
-    if(_supabase && _supabase.auth){
-      const { data } = await _supabase.auth.getSession();
-      if(data && data.session && data.session.user){
-        currentUser = data.session.user;
-        console.log('Session restored:', currentUser.email);
-        return true;
-      }
-    }
-    const stored = localStorage.getItem('taskaura_user');
-    if(stored){
-      currentUser = { id: stored, email: stored };
-      console.log('Session from localStorage:', stored);
-      return true;
-    }
-  }catch(e){console.warn('restore failed',e);} 
-  return false;
-}
-
 let _unlockingApp = false;
 
 function initSupabaseAuth() {

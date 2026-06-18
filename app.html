@@ -2099,8 +2099,9 @@ function renderDashboard(){
     '<button onclick="switchTeamDeptTab(\'legal\')" class="'+(teamDeptTab==='legal'?'active':'')+'">Legal</button>'+
     '<button onclick="switchTeamDeptTab(\'summary\')" class="summary-tab '+(teamDeptTab==='summary'?'active':'')+'">📊 Summary</button>'+
   '</div>'+
-  '<div id="deptTabContent" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;"></div>';
+  '<div id="deptTabContent" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;"></div>';
 
+  var sbEl=document.getElementById('statsBar');if(sbEl)sbEl.style.display='none';
   var tabEl=document.getElementById('deptTabContent');
   if(teamDeptTab==='acquisition')renderAcquisitionTab(tabEl);
   else if(teamDeptTab==='entitlement')renderEntitlementTab(tabEl);
@@ -2552,8 +2553,12 @@ let entSubView='board';
 let deptFilter=null;
 function setView(v){if(v==='schedules'&&!hasTeamPlan()){showToast('🔒 Schedules is a Team plan feature.');return;}
 // If leaving dashboard view, restore sidebar
-if(v!=='dashboard'){var sidebarEl2=document.getElementById('sidebar');if(sidebarEl2)sidebarEl2.classList.remove('team-dashboard-mode');var teamProjSection2=document.getElementById('teamProjSidebarSection');if(teamProjSection2)teamProjSection2.remove();}
-currentView=v;if(isMobile())closeMobileSidebar();['dashboard','board','list','calendar','notes','schedules','chat','mastercal'].forEach(t=>{const el=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',v===t);});document.getElementById('dashboardView').style.display=v==='dashboard'?'flex':'none';document.getElementById('boardView').style.display=v==='board'?'flex':'none';document.getElementById('listView').style.display=v==='list'?'block':'none';document.getElementById('calendarView').style.display=v==='calendar'?'flex':'none';document.getElementById('notesView').style.display=v==='notes'?'flex':'none';document.getElementById('schedulesView').style.display=v==='schedules'?'flex':'none';document.getElementById('chatView').style.display=v==='chat'?'flex':'none';var lv=document.getElementById('legalView');if(lv)lv.style.display=v==='legal'?'flex':'none';var mcv=document.getElementById('masterCalView');if(mcv)mcv.style.display=v==='mastercal'?'flex':'none';document.querySelectorAll('.mobile-bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+if(v!=='dashboard'){var sidebarEl2=document.getElementById('sidebar');if(sidebarEl2)sidebarEl2.classList.remove('team-dashboard-mode');var teamProjSection2=document.getElementById('teamProjSidebarSection');if(teamProjSection2)teamProjSection2.remove();
+// Restore all sidebar-sections visibility
+document.querySelectorAll('.sidebar .sidebar-section').forEach(function(s){s.style.display='';});
+var fcb2=document.getElementById('filterChipsBar');if(fcb2)fcb2.style.display='';
+var sb2=document.getElementById('statsBar');if(sb2)sb2.style.display='';}
+currentView=v;if(isMobile())closeMobileSidebar();['dashboard','board','list','calendar','notes','schedules','chat','mastercal'].forEach(t=>{const el=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',v===t);});document.getElementById('dashboardView').style.display=v==='dashboard'?'flex':'none';if(v==='dashboard'){document.getElementById('dashboardView').style.flexDirection='column';}document.getElementById('boardView').style.display=v==='board'?'flex':'none';document.getElementById('listView').style.display=v==='list'?'block':'none';document.getElementById('calendarView').style.display=v==='calendar'?'flex':'none';document.getElementById('notesView').style.display=v==='notes'?'flex':'none';document.getElementById('schedulesView').style.display=v==='schedules'?'flex':'none';document.getElementById('chatView').style.display=v==='chat'?'flex':'none';var lv=document.getElementById('legalView');if(lv)lv.style.display=v==='legal'?'flex':'none';var mcv=document.getElementById('masterCalView');if(mcv)mcv.style.display=v==='mastercal'?'flex':'none';document.querySelectorAll('.mobile-bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
 // Hide sidebar on legal view and master dashboard, show when inside a workspace
 var sb=document.getElementById('sidebar');if(sb&&!isMobile()){if((v==='dashboard'&&!currentTeamWorkspaceId)||v==='legal'){sb.style.display='none';}else{sb.style.display='';sb.classList.remove('collapsed');}}
 // Hide filter chips and stats bar on legal view
@@ -2564,6 +2569,10 @@ function enterPersonalWorkspace(){
   var pdfBtn=document.getElementById('pdfExportBtn');if(pdfBtn)pdfBtn.style.display='none';
   var sidebarEl=document.getElementById('sidebar');if(sidebarEl)sidebarEl.classList.remove('team-dashboard-mode');
   var teamProjSection=document.getElementById('teamProjSidebarSection');if(teamProjSection)teamProjSection.remove();
+  // Restore all sidebar-sections visibility
+  document.querySelectorAll('.sidebar .sidebar-section').forEach(function(s){s.style.display='';});
+  var fcbR=document.getElementById('filterChipsBar');if(fcbR)fcbR.style.display='';
+  var sbR=document.getElementById('statsBar');if(sbR)sbR.style.display='';
   setView('board');
 }
 function render(){document.querySelectorAll('.workspace-tab').forEach(t=>{t.classList.toggle('active',t.dataset.ws===currentWorkspace);});updateFilters();renderSidebarFilters();updateStats();updateFilterChips();updateTodayBadge();renderPresets();updateDashboardNav();// Show/hide chat nav item
@@ -2627,7 +2636,7 @@ function expandBucket(bucketName){var overlay=document.getElementById('bucketOve
 function closeBucketExpand(){document.getElementById('bucketOverlay').classList.remove('show');document.body.style.overflow='';}
 function toggleBucketCollapse(bucket){if(!state.collapsedBuckets)state.collapsedBuckets=[];const idx=state.collapsedBuckets.indexOf(bucket);if(idx>=0)state.collapsedBuckets.splice(idx,1);else state.collapsedBuckets.push(bucket);save();renderBoard();}
 function cardHTML(t){const od=isOverdue(t),cl=(t.checklist||[]),cd=cl.filter(c=>c.done).length,ct=cl.length,sel=selectedTaskIds.has(t.id);let ringHTML='';if(ct>0){const pct=ct?Math.round(cd/ct*100):0,r=9,circ=2*Math.PI*r,offset=circ-(pct/100)*circ,col2=pct>=100?'var(--low)':'var(--pri)';ringHTML='<div class="card-cl-ring"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="'+r+'" fill="none" stroke="var(--border)" stroke-width="2.5"/><circle cx="12" cy="12" r="'+r+'" fill="none" stroke="'+col2+'" stroke-width="2.5" stroke-dasharray="'+circ.toFixed(1)+'" stroke-dashoffset="'+offset.toFixed(1)+'" transform="rotate(-90 12 12)" stroke-linecap="round"/></svg><span>'+cd+'/'+ct+'</span></div>';}return'<div class="card '+priClass(t.priority)+(od?' overdue':'')+(sel?' selected':'')+'" draggable="true" ondragstart="dragStart(event,'+t.id+')" ondragend="dragEnd(event)" onclick="openEditTask('+t.id+')"><input type="checkbox" class="card-select" '+(sel?'checked':'')+' onclick="event.stopPropagation();toggleCardSelect('+t.id+',this)"><div class="card-quick-edit"><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'assignee\',event)" title="Edit assignee">👤</button><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'due\',event)" title="Edit due">📅</button><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'priority\',event)" title="Edit priority">⚡</button></div><div class="card-title">'+esc(t.title)+'</div><div class="card-meta">'+(t.assignee?'<span class="card-avatar" style="background:'+avatarColor(t.assignee)+'" title="'+esc(t.assignee)+'">'+initials(t.assignee)+'</span>':'')+(t.due?'<span class="card-due '+(od?'overdue-text':'')+'">📅 '+fmtDate(t.due)+'</span>':'')+'<span class="card-pri '+priBadge(t.priority)+'">'+(t.priority||'Medium')+'</span></div>'+((t.labels||[]).length?'<div class="card-labels">'+(t.labels||[]).map(l=>{const lb=state.labels.find(x=>x.name===l);return'<span class="card-label" style="background:'+(lb?lb.color:'#888')+'">'+esc(l)+'</span>';}).join('')+'</div>':'')+(t.pct>0?'<div class="card-progress"><div class="card-prog-bg"><div class="card-prog-fill" style="width:'+t.pct+'%"></div></div><span class="card-prog-pct">'+t.pct+'%</span></div>':'')+(t.filePath?'<div class="card-filepath" title="'+esc(t.filePath)+'">📂 <span>'+esc(t.filePath.length>35?t.filePath.slice(-35):t.filePath)+'</span></div>':'')+ringHTML+(function(){var lnks=state.notes.filter(function(n){return n.linkedTaskId===t.id;});if(!lnks.length)return'';return lnks.map(function(n){return'<div class="card-linked-note" onclick="event.stopPropagation();jumpToLinkedNote('+n.id+')" title="Open: '+esc(n.title||'Untitled')+'">📝 '+(esc(n.title||'Linked Note'))+'</div>';}).join('');}())+'</div>';}
-function quickAdd(bucket,el){const title=el.value.trim();if(!title)return;const newTask={id:state.nextId++,title:title,bucket:bucket,priority:'Medium',pct:0,labels:[],checklist:[],filePath:'',created:new Date().toISOString().split('T')[0],history:[]};logTaskChange(newTask,'Created','Quick-added to '+bucket);logActivity('Task created',title);state.tasks.push(newTask);el.value='';render();}
+function quickAdd(bucket,el){const title=el.value.trim();if(!title)return;const newTask={id:state.nextId++,title:title,bucket:bucket,priority:'Medium',pct:0,labels:[],checklist:[],filePath:'',created:new Date().toISOString().split('T')[0],history:[],department:deptFilter||'General'};logTaskChange(newTask,'Created','Quick-added to '+bucket);logActivity('Task created',title);state.tasks.push(newTask);el.value='';render();}
 function addBucketFromBoard(){const name=prompt('New bucket name:');if(name&&name.trim()){state.buckets.push(name.trim());save();render();}}
 function moveBucket(idx,dir){var ni=idx+dir;if(ni<0||ni>=state.buckets.length)return;var t=state.buckets[idx];state.buckets[idx]=state.buckets[ni];state.buckets[ni]=t;save();render();}
 function showQuickEdit(taskId,field,event){closeAllQuickEdits();const card=event.target.closest('.card');if(!card)return;const t=state.tasks.find(x=>x.id===taskId);if(!t)return;const popup=document.createElement('div');popup.className='qe-popup';popup.onclick=function(e){e.stopPropagation();};if(field==='due')popup.innerHTML='<label>Due Date</label><input type="date" id="qeVal" value="'+(t.due||'')+'"><button onclick="applyQuickEdit('+taskId+',\'due\')">Save</button>';else if(field==='assignee')popup.innerHTML='<label>Assignee</label><input type="text" id="qeVal" value="'+esc(t.assignee||'')+'"><button onclick="applyQuickEdit('+taskId+',\'assignee\')">Save</button>';else if(field==='priority')popup.innerHTML='<label>Priority</label><select id="qeVal"><option '+(t.priority==='Critical'?'selected':'')+'>Critical</option><option '+(t.priority==='High'?'selected':'')+'>High</option><option '+(t.priority==='Medium'?'selected':'')+'>Medium</option><option '+(t.priority==='Low'?'selected':'')+'>Low</option></select><button onclick="applyQuickEdit('+taskId+',\'priority\')">Save</button>';card.appendChild(popup);var inp=popup.querySelector('#qeVal');if(inp)inp.focus();}
@@ -4531,10 +4540,29 @@ async function lt_copyText(){
 // ══════════════════════════════════════════════════════════════════════════════
 
 // ── Team Department Tab Functions ────────────────────────────────────────────
-function switchTeamDeptTab(name){teamDeptTab=name;renderDashboard();}
+function switchTeamDeptTab(name){
+  // If leaving development, restore app sidebar
+  if(teamDeptTab==='development'){
+    var sidebarEl=document.getElementById('sidebar');
+    if(sidebarEl)sidebarEl.style.display='';
+  }
+  teamDeptTab=name;
+  renderDashboard();
+}
 
 function renderTeamSidebarProjects(){
   var sidebarEl=document.getElementById('sidebar');if(!sidebarEl)return;
+
+  // Hide all existing sidebar-sections (Views, Filters, Saved Filters, mobile actions)
+  // except what we're about to inject
+  sidebarEl.querySelectorAll('.sidebar-section').forEach(function(s){
+    if(s.id!=='teamProjSidebarSection')s.style.display='none';
+  });
+
+  // Also hide filter-chips-bar and stats-bar
+  var fcb=document.getElementById('filterChipsBar');if(fcb)fcb.style.display='none';
+  var sb=document.getElementById('statsBar');if(sb)sb.style.display='none';
+
   var projDiv=document.getElementById('teamProjSidebarSection');
   if(!projDiv){
     projDiv=document.createElement('div');
@@ -4544,7 +4572,7 @@ function renderTeamSidebarProjects(){
     if(toggle&&toggle.nextSibling)sidebarEl.insertBefore(projDiv,toggle.nextSibling);
     else sidebarEl.insertBefore(projDiv,sidebarEl.firstChild);
   }
-  var projects=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]).map(function(sp){return sp.name;}).filter(Boolean),...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])];
+  var projects=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]),...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])];
   var items=projects.map(function(p){
     return'<div class="team-proj-item '+(selectedTeamProject===p?'active':'')+'" onclick="selectedTeamProject='+JSON.stringify(p)+';renderDashboard()">'+esc(p)+'</div>';
   }).join('');
@@ -4584,12 +4612,12 @@ function deptKanban(tasks){
 
 function renderBoardInto(el){
   var tasks=getFilteredTasks();
-  var buckets=state.buckets||['To Do','In Progress','Under Review','Complete'];
+  var buckets=['To Do','In Progress','Under Review','Complete'];
   var html=buckets.map(function(b){
     var bTasks=tasks.filter(function(t){return(t.bucket||'To Do')===b;});
     return'<div class="bucket">'+
       '<div class="bucket-hdr"><span class="bucket-title">'+esc(b)+'</span><span class="bucket-count">'+bTasks.length+'</span></div>'+
-      '<div class="bucket-cards">'+bTasks.map(function(t){return cardHTML(t);}).join('')+'</div>'+
+      '<div class="bucket-cards" ondragover="dragOver(event)" ondrop="drop(event,\''+esc(b)+'\')">'+bTasks.map(function(t){return cardHTML(t);}).join('')+'</div>'+
       '<div class="bucket-quick-add"><input class="quick-add-input" placeholder="+ Add task..." onkeydown="if(event.key===\'Enter\'&&this.value.trim()){quickAdd(\''+esc(b)+'\',this);}"><div class="quick-add-hint">Press Enter to add</div></div>'+
     '</div>';
   }).join('');
@@ -4653,7 +4681,8 @@ function renderAcquisitionTab(el){
     '<button class="dept-sub-btn'+(acqSubView==='list'?' active':'')+'" onclick="acqSubView=\'list\';renderDashboard()">≡ List</button>'+
     '<button class="dept-sub-btn'+(acqSubView==='calendar'?' active':'')+'" onclick="acqSubView=\'calendar\';renderDashboard()">◻ Calendar</button>'+
   '</div>';
-  el.innerHTML=subNav+'<div id="acqViewContainer" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;"></div>';
+  el.innerHTML=subNav+'<div id="acqViewContainer" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;min-height:400px;"></div>';
+  el.style.display='flex';el.style.flexDirection='column';el.style.flex='1';el.style.minHeight='0';el.style.overflow='hidden';
   var container=document.getElementById('acqViewContainer');
   if(acqSubView==='board'){
     container.style.overflow='hidden';
@@ -4682,7 +4711,8 @@ function renderEntitlementTab(el){
     '<button class="dept-sub-btn'+(entSubView==='list'?' active':'')+'" onclick="entSubView=\'list\';renderDashboard()">≡ List</button>'+
     '<button class="dept-sub-btn'+(entSubView==='calendar'?' active':'')+'" onclick="entSubView=\'calendar\';renderDashboard()">◻ Calendar</button>'+
   '</div>';
-  el.innerHTML=subNav+'<div id="entViewContainer" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;"></div>';
+  el.innerHTML=subNav+'<div id="entViewContainer" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;min-height:400px;"></div>';
+  el.style.display='flex';el.style.flexDirection='column';el.style.flex='1';el.style.minHeight='0';el.style.overflow='hidden';
   var container=document.getElementById('entViewContainer');
   if(entSubView==='board'){
     container.style.overflow='hidden';
@@ -4714,41 +4744,44 @@ function timeSince(ts){
 }
 
 function renderDevelopmentTab(el){
+  // Hide the entire app sidebar — dev app has its own sidebar
+  var sidebarEl=document.getElementById('sidebar');if(sidebarEl)sidebarEl.style.display='none';
+  var teamProjSection=document.getElementById('teamProjSidebarSection');if(teamProjSection)teamProjSection.style.display='none';
   el.innerHTML='<div class="dev-app" id="devAppContainer" style="flex:1;display:flex;flex-direction:column;height:100%;overflow:hidden;position:relative;"></div>';
   devData = dev_loadData();
   dev_render();
 }
 
 function renderLegalTab(el){
-  var projects=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]).map(function(sp){return sp.name;}).filter(Boolean),...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])];
-  var filterHTML='<div style="padding:10px 14px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;">'+
+  // Project filter header
+  var projects=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]),...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])];
+  var filterHTML='<div style="padding:8px 14px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0;">'+
     '<label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2)">Project:</label>'+
     '<select onchange="selectedTeamProject=this.value||null;renderDashboard()" style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg)">'+
     '<option value="">All Projects</option>'+
     projects.map(function(p){return'<option value="'+esc(p)+'" '+(selectedTeamProject===p?'selected':'')+'>'+esc(p)+'</option>';}).join('')+
     '</select>'+
-    '<span class="auto-sync-badge">🔄 Auto-synced · '+timeSince(state._lastSaved)+'</span>'+
+    '<span class="auto-sync-badge">🔄 Auto-synced</span>'+
   '</div>';
-  // Render legal tasks as a simple table from state.tasks
-  var legalTasks=(state.tasks||[]).filter(function(t){return t.department==='Legal'&&(!selectedTeamProject||t.project===selectedTeamProject);});
-  var tableHTML='<div class="dev-table-wrap"><table class="dev-table">'+
-    '<thead><tr><th>Project</th><th>Task</th><th>Due Date</th><th>Actual Date</th><th>Notes</th><th>Priority</th></tr></thead><tbody>';
-  if(legalTasks.length){
-    legalTasks.forEach(function(t){
-      tableHTML+='<tr onclick="openEditTask('+t.id+')" style="cursor:pointer">'+
-        '<td>'+esc(t.project||'—')+'</td>'+
-        '<td><strong>'+esc(t.title||t.text||'')+'</strong></td>'+
-        '<td>'+(t.due?fmtDate(t.due):'—')+'</td>'+
-        '<td>'+(t.actualDate?fmtDate(t.actualDate):'—')+'</td>'+
-        '<td style="max-width:200px;white-space:normal">'+esc(t.notes||'')+'</td>'+
-        '<td>'+priBadge(t.priority)+'</td>'+
-      '</tr>';
-    });
-  }else{
-    tableHTML+='<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">No Legal tasks yet. Create a task and set its department to Legal.</td></tr>';
+  // The legal view renders into a dedicated div that lt_renderView expects
+  var legalDiv=document.getElementById('legalView');
+  if(!legalDiv){
+    legalDiv=document.createElement('div');
+    legalDiv.id='legalView';
+    legalDiv.style.flex='1';
+    legalDiv.style.display='flex';
+    legalDiv.style.flexDirection='column';
+    legalDiv.style.minHeight='0';
+    legalDiv.style.overflow='hidden';
   }
-  tableHTML+='</tbody></table></div>';
-  el.innerHTML=filterHTML+tableHTML;
+  el.style.display='flex';
+  el.style.flexDirection='column';
+  el.style.flex='1';
+  el.style.overflow='hidden';
+  el.innerHTML=filterHTML;
+  el.appendChild(legalDiv);
+  if(typeof lt_loadFromState==='function')lt_loadFromState();
+  if(typeof lt_renderView==='function')lt_renderView();
 }
 
 function renderSummaryTab(el){

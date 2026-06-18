@@ -1123,10 +1123,20 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 [data-theme="dark"] .dev-app .card { background: var(--card) !important; }
 [data-theme="dark"] .dev-app .main { background: var(--bg) !important; }
 [data-theme="dark"] .dev-app .card-header { background: var(--card) !important; }
+/* Dev modal inherits theme even when appended to body */
+.dev-modal { background: var(--card); color: var(--text); }
+.dev-modal input, .dev-modal select, .dev-modal textarea { background: var(--bg) !important; color: var(--text) !important; border: 1px solid var(--border) !important; border-radius:6px; padding:6px 10px; outline:none; font-family:inherit; font-size:13px; width:100%; }
+.dev-modal input:focus, .dev-modal select:focus, .dev-modal textarea:focus { border-color:#f97316 !important; box-shadow:0 0 0 2px rgba(249,115,22,.15) !important; }
+.dev-modal label { font-size:12px; font-weight:600; color:var(--text2); display:block; margin-bottom:4px; }
+.dev-modal .form-group { margin-bottom:14px; }
+.dev-modal .form-row { display:flex; gap:12px; }
+.dev-modal .form-row .form-group { flex:1; }
+.dev-modal textarea { min-height:60px; resize:vertical; }
+.dev-modal h3, .dev-modal h4 { color:var(--text); }
 .dev-app * { box-sizing:border-box; }
 .dev-app button { cursor:pointer; font-family:inherit; font-size:13px; }
-.dev-app input,.dev-app select,.dev-app textarea { font-family:inherit; font-size:13px; border:1px solid #dde5d9; border-radius:6px; padding:6px 10px; outline:none; }
-.dev-app input:focus,.dev-app select:focus,.dev-app textarea:focus { border-color:#4d7831; box-shadow:0 0 0 2px rgba(77,120,49,.15); }
+.dev-app input,.dev-app select,.dev-app textarea { font-family:inherit; font-size:13px; border:1px solid var(--border); border-radius:6px; padding:6px 10px; outline:none; background:var(--bg); color:var(--text); }
+.dev-app input:focus,.dev-app select:focus,.dev-app textarea:focus { border-color:#f97316; box-shadow:0 0 0 2px rgba(249,115,22,.15); }
 .dev-app textarea { resize:vertical; min-height:60px; }
 .dev-app .app-header { position:sticky; top:0; height:56px; background:#2d412b; color:#fff; display:flex; align-items:center; padding:0 20px; z-index:100; gap:16px; flex-shrink:0; }
 .dev-app .app-header .header-mark { width:28px; height:28px; border-radius:6px; background:#5a8c3a; color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -1145,7 +1155,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .dev-app .sidebar-add { color:#4d7831; font-size:12px; }
 .dev-app .sidebar-divider { height:1px; background:#dde5d9; margin:8px 16px; }
 .dev-app .main { margin-left:260px; padding:24px; min-height:100%; overflow-y:auto; }
-.dev-app .card { background:#fff; border:1px solid #dde5d9; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.1); }
+.dev-app .card { background:var(--card); border:1px solid var(--border); border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.1); }
 .dev-app .card-header { padding:14px 18px; border-bottom:1px solid #dde5d9; display:flex; align-items:center; justify-content:space-between; }
 .dev-app .card-header h2 { font-size:15px; font-weight:600; }
 .dev-app .card-body { padding:18px; }
@@ -1164,11 +1174,11 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .dev-app td { padding:8px 12px; border-bottom:1px solid #dde5d9; vertical-align:top; }
 .dev-app tr:hover td { background:#edf2eb; }
 .dev-app .table-actions { display:flex; gap:4px; }
-.dev-app .table-actions button { padding:3px 8px; font-size:11px; border-radius:4px; border:1px solid #dde5d9; background:#fff; }
+.dev-app .table-actions button { padding:3px 8px; font-size:11px; border-radius:4px; border:1px solid var(--border); background:var(--card); color:var(--text); }
 .dev-app .table-actions button:hover { background:#edf2eb; }
 .dev-app .table-actions .btn-del { color:#e53e3e; border-color:#fed7d7; }
 .dev-app .table-actions .btn-del:hover { background:#fed7d7; }
-.dev-app .btn { padding:7px 16px; border-radius:6px; font-size:13px; font-weight:500; border:1px solid #dde5d9; background:#fff; color:#1a202c; }
+.dev-app .btn { padding:7px 16px; border-radius:6px; font-size:13px; font-weight:500; border:1px solid var(--border); background:var(--card); color:var(--text); }
 .dev-app .btn:hover { background:#edf2eb; }
 .dev-app .btn-primary { background:#4d7831; color:#fff; border-color:#4d7831; }
 .dev-app .btn-primary:hover { background:#2d412b; }
@@ -1216,10 +1226,10 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .dev-app .section-header h2 { font-size:17px; font-weight:600; }
 .dev-app .empty-state { text-align:center; padding:40px 20px; color:#5f6d5a; }
 .dev-app .phase-tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
-.dev-app .phase-tab { padding:6px 14px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; border:1px solid #dde5d9; background:#fff; }
+.dev-app .phase-tab { padding:6px 14px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--border); background:var(--card); color:var(--text); }
 .dev-app .phase-tab.active { background:#4d7831; color:#fff; border-color:#4d7831; }
 .dev-app .delay-badge { background:#fed7d7; color:#e53e3e; padding:1px 6px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer; }
-.dev-app .view-toggle { display:inline-flex; border:1px solid #dde5d9; border-radius:6px; overflow:hidden; }
+.dev-app .view-toggle { display:inline-flex; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
 .dev-app .view-toggle button { padding:5px 14px; font-size:12px; border:none; background:#fff; color:#5f6d5a; }
 .dev-app .view-toggle button:hover { background:#edf2eb; }
 .dev-app .view-toggle button.vt-active { background:#4d7831; color:#fff; font-weight:600; }
@@ -1235,7 +1245,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .dev-app .toast-dev { position:fixed; bottom:24px; right:24px; background:#2d412b; color:#fff; padding:12px 20px; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,.2); z-index:600; font-size:13px; opacity:0; transition:opacity .3s; pointer-events:none; }
 .dev-app .toast-dev.show { opacity:1; }
 .dev-app .tile-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(310px,1fr)); gap:14px; }
-.dev-app .tile { border-radius:6px; border:1px solid #dde5d9; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.1); border-left:4px solid #c2ccbd; display:flex; flex-direction:column; transition:box-shadow .15s; }
+.dev-app .tile { border-radius:6px; border:1px solid var(--border); background:var(--card); box-shadow:0 1px 3px rgba(0,0,0,.1); border-left:4px solid var(--muted); display:flex; flex-direction:column; transition:box-shadow .15s; }
 .dev-app .tile:hover { box-shadow:0 4px 12px rgba(0,0,0,.08); }
 .dev-app .tile.pri-urgent { border-left-color:#e53e3e; }
 .dev-app .tile.pri-high { border-left-color:#dd6b20; }
@@ -1251,7 +1261,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .dev-app .tile-foot { padding:8px 14px; border-top:1px solid #dde5d9; display:flex; align-items:center; justify-content:space-between; font-size:11px; color:#5f6d5a; gap:8px; margin-top:auto; }
 .dev-app .tile-foot .overdue { color:#e53e3e; font-weight:700; }
 .dev-app .tile-actions { display:flex; gap:4px; flex-shrink:0; }
-.dev-app .tile-actions button { padding:2px 8px; font-size:11px; border-radius:4px; border:1px solid #dde5d9; background:#fff; cursor:pointer; }
+.dev-app .tile-actions button { padding:2px 8px; font-size:11px; border-radius:4px; border:1px solid var(--border); background:var(--card); color:var(--text); cursor:pointer; }
 .dev-app .tile-actions button:hover { background:#edf2eb; }
 .dev-app .tile-actions .btn-del { color:#e53e3e; border-color:#fed7d7; }
 .dev-app .backup-banner { display:none; }
@@ -2619,6 +2629,7 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function escAttr(s){return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');}
 function avatarColor(name){if(!name)return'var(--pri)';let h=0;for(let i=0;i<name.length;i++)h=name.charCodeAt(i)+((h<<5)-h);const c=['#8b5cf6','#0891b2','#ec4899','#f97316','#16a34a','#dc2626','#2563eb','#d97706','#7c3aed','#059669'];return c[Math.abs(h)%c.length];}
 function todayStr(){const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).substr(2,6);}
 let currentView='dashboard';
 let teamDeptTab='acquisition';
 let selectedTeamProject=null;
@@ -4875,6 +4886,12 @@ function renderDevelopmentTab(el){
   var teamProjSection=document.getElementById('teamProjSidebarSection');if(teamProjSection)teamProjSection.style.display='none';
   el.innerHTML='<div class="dev-app" id="devAppContainer" style="flex:1;display:flex;flex-direction:column;height:100%;overflow:hidden;position:relative;"></div>';
   devData = dev_loadData();
+  // If a project is selected in the sidebar, auto-navigate to it in the dev tab
+  if(selectedTeamProject && devData.projects){
+    var matchProj=devData.projects.find(function(p){return p.name===selectedTeamProject;});
+    if(matchProj){devView='project';devCurrentProjectId=matchProj.id;}
+    else{devView='home';}
+  }
   dev_render();
 }
 
@@ -5168,7 +5185,7 @@ function dev_showToast(msg) {
 function dev_openModal(title, bodyHtml, onSave) {
   const ov = document.createElement('div'); ov.className='modal-overlay'; ov.id='dev-modal-overlay';
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:flex;align-items:center;justify-content:center;';
-  ov.innerHTML = `<div style="background:#fff;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:90%;max-width:600px;max-height:85vh;overflow-y:auto;" class="dev-modal"><div style="padding:16px 20px;border-bottom:1px solid #dde5d9;display:flex;align-items:center;justify-content:space-between;"><h3 style="font-size:16px;font-weight:600;font-family:inherit;">${esc(title)}</h3><button style="background:none;border:none;font-size:20px;color:#5f6d5a;cursor:pointer;" onclick="dev_closeModal()">&times;</button></div><div style="padding:20px;" class="dev-modal-body">${bodyHtml}</div><div style="padding:12px 20px;border-top:1px solid #dde5d9;display:flex;justify-content:flex-end;gap:8px;"><button style="padding:7px 16px;border-radius:6px;font-size:13px;border:1px solid #dde5d9;background:#fff;cursor:pointer;" onclick="dev_closeModal()">Cancel</button><button style="padding:7px 16px;border-radius:6px;font-size:13px;background:#4d7831;color:#fff;border:1px solid #4d7831;cursor:pointer;" id="dev-modal-save">Save</button></div></div>`;
+  ov.innerHTML = `<div style="background:var(--card);color:var(--text);border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.35);width:90%;max-width:600px;max-height:85vh;overflow-y:auto;" class="dev-modal"><div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;"><h3 style="font-size:16px;font-weight:600;font-family:inherit;">${esc(title)}</h3><button style="background:none;border:none;font-size:20px;color:var(--text2);cursor:pointer;" onclick="dev_closeModal()">&times;</button></div><div style="padding:20px;" class="dev-modal-body">${bodyHtml}</div><div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;"><button style="padding:7px 16px;border-radius:6px;font-size:13px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;" onclick="dev_closeModal()">Cancel</button><button style="padding:7px 16px;border-radius:6px;font-size:13px;background:#ea580c;color:#fff;border:1px solid #ea580c;cursor:pointer;" id="dev-modal-save">Save</button></div></div>`;
   document.body.appendChild(ov);
   ov.querySelector('#dev-modal-save').onclick = () => { if(onSave()===false) return; dev_closeModal(); };
   ov.onclick = e => { if(e.target===ov) dev_closeModal(); };
@@ -6100,7 +6117,7 @@ function dev_renderMilestones() {
   const milestoneFields = ['earthwork','wetUtilities','paving','accountingSC','legalSC'];
   const milestoneLabels = ['Earthwork','Wet Utilities','Paving','Accounting SC','Legal SC'];
   const projOpts = devData.projects.map(p=>`<option value="${p.id}" ${devCurrentProjectId===p.id?'selected':''}>${esc(p.name)}</option>`).join('');
-  const projSelect = devData.projects.length ? `<select id="dms-proj-select" onchange="dev_switchMilestoneProject(this.value)" style="font-size:13px;padding:5px 10px;border-radius:6px;border:1px solid #dde5d9"><option value="">— Select Project —</option>${projOpts}</select>` : '';
+  const projSelect = devData.projects.length ? `<select id="dms-proj-select" onchange="dev_switchMilestoneProject(this.value)" style="font-size:13px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text)"><option value="">— Select Project —</option>${projOpts}</select>` : '';
   const proj = devCurrentProjectId ? devData.projects.find(p=>p.id===devCurrentProjectId) : null;
   const pv = proj ? dev_visiblePhases(proj) : [];
   let tableHtml = '';

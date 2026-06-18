@@ -4749,7 +4749,7 @@ function renderBoardInto(el){
     });
     return'<div class="bucket">'+
       '<div class="bucket-hdr"><span class="bucket-title">'+esc(b)+'</span><span class="bucket-count">'+bTasks.length+'</span></div>'+
-      '<div class="bucket-cards" ondragover="dragOver(event)" ondrop="drop(event,\''+esc(b)+'\')">'+bTasks.map(function(t){return cardHTML(t);}).join('')+'</div>'+
+      '<div class="bucket-cards" data-bucket="'+esc(b)+'" ondragover="dragOver(event)" ondrop="drop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">'+bTasks.map(function(t){return cardHTML(t);}).join('')+'</div>'+
       '<div class="bucket-quick-add"><input class="quick-add-input" placeholder="+ Add task..." onkeydown="if(event.key===\'Enter\'&&this.value.trim()){quickAdd(\''+esc(b)+'\',this);}"><div class="quick-add-hint">Press Enter to add</div></div>'+
     '</div>';
   }).join('');

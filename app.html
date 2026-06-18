@@ -2118,11 +2118,21 @@ function getPersonalTasks(){
 // Navigate to a task in its workspace and open it
 function jumpToTask(wsId,taskId){
   if(wsId){
-    switchToTeamWorkspace(wsId);
-    setTimeout(()=>{setView('board');openEditTask(taskId);},600);
+    if(currentTeamWorkspaceId===wsId){
+      setView('board');
+      setTimeout(()=>{openEditTask(taskId);},50);
+    }else{
+      switchToTeamWorkspace(wsId);
+      setTimeout(()=>{setView('board');openEditTask(taskId);},650);
+    }
   }else{
-    switchWorkspace('work');
-    setTimeout(()=>{setView('board');openEditTask(taskId);},400);
+    if(!currentTeamWorkspaceId&&currentWorkspace==='work'){
+      setView('board');
+      setTimeout(()=>{openEditTask(taskId);},50);
+    }else{
+      switchWorkspace('work');
+      setTimeout(()=>{setView('board');openEditTask(taskId);},450);
+    }
   }
 }
 
@@ -2777,7 +2787,8 @@ function openMasterCalDay(ds,tasksJSON){
   var body=document.getElementById('calDayBody'),html='';
   if(!tasks.length)html='<div class="cal-day-no-tasks">No tasks on this day</div>';
   else tasks.forEach(function(t){
-    html+='<div class="cal-day-task" style="cursor:pointer" onclick="closeCalDay();openEditTask('+t.id+')">'+
+    var wsId=(t._wsId||'').replace(/'/g,"\'");
+    html+='<div class="cal-day-task" style="cursor:pointer" onclick="closeCalDay();jumpToTask(\''+wsId+'\','+t.id+');return false;">'+
       (t._wsLabel?'<span style="font-size:9px;background:var(--pri);color:#fff;padding:1px 5px;border-radius:3px;margin-right:6px">'+esc(t._wsLabel)+'</span>':'')+
       '<div class="cal-day-task-title">'+esc(t.title||t.text||'')+'</div>'+
       (t.assignee?'<span class="cal-day-task-assignee">'+esc(t.assignee)+'</span>':'')+
@@ -5262,11 +5273,11 @@ function renderMasterCalendar(){
   var allTasks=[];
   (state.tasks||[]).forEach(function(t){
     var label=inferTaskWorkspaceLabel(t,'Personal');
-    allTasks.push(Object.assign({},t,{_wsLabel:label,_wsSource:(label&&label!=='Personal')?'team':'personal'}));
+    allTasks.push(Object.assign({},t,{_wsLabel:label,_wsSource:(label&&label!=='Personal')?'team':'personal',_wsId:''}));
   });
   teamWorkspaces.forEach(function(tw){
     ((tw.data||{}).tasks||[]).forEach(function(t){
-      allTasks.push(Object.assign({},t,{_wsLabel:inferTaskWorkspaceLabel(t,tw.name||'Team'),_wsSource:'team'}));
+      allTasks.push(Object.assign({},t,{_wsLabel:inferTaskWorkspaceLabel(t,tw.name||'Team'),_wsSource:'team',_wsId:tw.id||''}));
     });
   });
   allTasks=dedupeMasterCalendarTasks(allTasks);
@@ -5292,10 +5303,11 @@ function renderMasterCalendar(){
     html+='<div class="cal-cell'+(isToday?' today':'')+'">'+
       '<div class="cal-date">'+(isToday?'<span class="today-num">'+d+'</span>':d)+'</div>'+
       '<div class="cal-tasks">';
-    var maxVisible=8;
+    var maxVisible=5;
     dayTasks.slice(0,maxVisible).forEach(function(t){
       var wsLabel=inferTaskWorkspaceLabel(t,t._wsLabel||'Personal');
-      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" title="'+esc((t.title||t.text||''))+'" onclick="openEditTask('+t.id+')">'+
+      var wsId=(t._wsId||'').replace(/'/g,"\'");
+      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" title="'+esc((t.title||t.text||''))+'" onclick="jumpToTask(\''+wsId+'\','+t.id+');return false;">'+
         '<span style="font-size:9px;background:var(--pri);color:#fff;padding:1px 4px;border-radius:3px;margin-right:3px;flex-shrink:0">'+esc(wsLabel)+'</span>'+
         esc(((t.title||t.text||'')).substring(0,20))+
       '</div>';

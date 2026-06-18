@@ -1422,7 +1422,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 <div class="modal-overlay" id="scheduleModal"><div class="modal" style="width:420px"><div class="modal-hdr"><h2 id="scheduleModalTitle">Add Task</h2><button class="modal-close" onclick="closeScheduleModal()">×</button></div><div class="modal-body"><input type="hidden" id="sProjectId" value=""><div><label>Task Name *</label><input type="text" id="sName" placeholder="e.g. Site Grading..."></div><div class="modal-row"><div><label>Start Date</label><input type="date" id="sStart"></div><div><label>End Date</label><input type="date" id="sEnd"></div></div><div class="modal-row"><div><label>Color</label><input type="color" id="sColor" value="#2563eb"></div><div><label>Progress %</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="sProg" min="0" max="100" value="0" oninput="document.getElementById('sProgVal').textContent=this.value+'%'" style="flex:1"><span id="sProgVal" style="font-size:13px;font-weight:600;min-width:32px">0%</span></div></div></div></div><div class="modal-footer"><button class="btn-delete hidden" id="btnDeleteSchedule" onclick="deleteScheduleTask()">Delete</button><button class="btn-cancel" onclick="closeScheduleModal()">Cancel</button><button class="btn-save" onclick="saveScheduleTask()">Save</button></div></div></div>
 <div class="cal-day-modal" id="calDayModal"><div class="cal-day-panel"><div class="cal-day-panel-hdr"><h3 id="calDayTitle"></h3><button class="cal-day-panel-close" onclick="closeCalDay()">×</button></div><div class="cal-day-panel-body" id="calDayBody"></div></div></div>
 <div class="modal-overlay" id="taskModal"><div class="modal"><div class="modal-hdr"><div><h2 id="modalTitle">New Task</h2><div class="modal-breadcrumb" id="modalBreadcrumb"></div></div><button class="modal-close" onclick="closeTaskModal()">×</button></div><div class="modal-body"><div><label>Task Title *</label><input type="text" id="mTitle" placeholder="Enter task title..."></div><datalist id="assigneeList"></datalist>
-<div class="modal-row"><div><label>Assignee</label><input type="text" id="mAssignee" placeholder="Name" list="assigneeList" autocomplete="off"></div><div><label>Bucket</label><select id="mBucket"></select></div></div><div class="modal-row"><div><label>Due Date</label><input type="date" id="mDue"></div><div><label>Priority</label><select id="mPriority"><option value="Medium">Medium</option><option value="Critical">Critical</option><option value="High">High</option><option value="Low">Low</option></select></div></div><div class="modal-row"><div><label>Department</label><select id="mDepartment"><option value="General">General</option><option value="Acquisition">Acquisition</option><option value="Entitlements">Entitlements</option><option value="Development">Development</option><option value="Legal">Legal</option></select></div><div><label>Actual Date</label><input type="date" id="mActualDate"></div></div><div class="modal-row"><div><label>% Complete</label><div style="display:flex;align-items:center;gap:10px"><input type="range" id="mPct" min="0" max="100" value="0" oninput="document.getElementById('mPctVal').textContent=this.value+'%'" style="flex:1"><span id="mPctVal" style="font-size:13px;font-weight:600;min-width:36px">0%</span></div></div></div><div><label>Labels</label><div class="label-chips" id="mLabels"></div></div><div><label>Description / Notes</label><textarea id="mNotes" placeholder="Add details..."></textarea></div><div><label>FILE PATH</label>
+<div class="modal-row"><div><label>Assignee</label><input type="text" id="mAssignee" placeholder="Name" list="assigneeList" autocomplete="off"></div><div><label>Bucket</label><select id="mBucket"></select></div></div><div class="modal-row"><div><label>Due Date</label><input type="date" id="mDue"></div><div><label>Priority</label><select id="mPriority"><option value="Medium">Medium</option><option value="Critical">Critical</option><option value="High">High</option><option value="Low">Low</option></select></div></div><div class="modal-row"><div><label>Department</label><select id="mDepartment"><option value="General">General</option><option value="Acquisition">Acquisition</option><option value="Entitlements">Entitlements</option><option value="Development">Development</option><option value="Legal">Legal</option></select></div><div><label>Project</label><select id="mProject"><option value="">— None —</option></select></div></div><div class="modal-row"><div><label>Actual Date</label><input type="date" id="mActualDate"></div></div><div class="modal-row"><div><label>% Complete</label><div style="display:flex;align-items:center;gap:10px"><input type="range" id="mPct" min="0" max="100" value="0" oninput="document.getElementById('mPctVal').textContent=this.value+'%'" style="flex:1"><span id="mPctVal" style="font-size:13px;font-weight:600;min-width:36px">0%</span></div></div></div><div><label>Labels</label><div class="label-chips" id="mLabels"></div></div><div><label>Description / Notes</label><textarea id="mNotes" placeholder="Add details..."></textarea></div><div><label>FILE PATH</label>
 <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">
 <input id="mFilePath" class="form-control" placeholder="e.g. R:\DFW\b. Active\Saddleside..." style="flex:1;">
 <button type="button" class="btn-fp" onclick="copyFilePath()" title="Copy to clipboard">Copy</button>
@@ -2819,6 +2819,15 @@ function populateModal(t){
   document.getElementById('mTitle').value=t.title||'';document.getElementById('mAssignee').value=t.assignee||'';const bs=document.getElementById('mBucket');if(bs){const stageBuckets=currentTeamWorkspaceId?['To Do','In Progress','Under Review','Complete']:(state.buckets||['To Do','In Progress','Under Review','Complete']);bs.innerHTML=stageBuckets.map(b=>'<option value="'+esc(b)+'" '+(b===(t.bucket||stageBuckets[0])?'selected':'')+'>'+esc(b)+'</option>').join('');}document.getElementById('mDue').value=t.due||'';document.getElementById('mPriority').value=t.priority||'Medium';document.getElementById('mPct').value=t.pct||0;document.getElementById('mPctVal').textContent=(t.pct||0)+'%';document.getElementById('mNotes').value=t.notes||'';
 if(document.getElementById('mDepartment'))document.getElementById('mDepartment').value=t.department||'General';
 if(document.getElementById('mActualDate'))document.getElementById('mActualDate').value=t.actualDate||'';
+// Populate project dropdown from all sources (state.projects, devData.projects names, task projects)
+(function(){
+  var ps=document.getElementById('mProject');if(!ps)return;
+  var devProjNames=(typeof devData!=='undefined'&&devData&&devData.projects)?devData.projects.map(function(p){return p.name;}):[];
+  var allProjs=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]),...devProjNames,...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])].sort();
+  var cur=t.project||(selectedTeamProject||'');
+  ps.innerHTML='<option value="">— None —</option>'+allProjs.map(function(p){return'<option value="'+esc(p)+'" '+(p===cur?'selected':'')+'>'+esc(p)+'</option>';}).join('');
+  if(!t.project&&selectedTeamProject)ps.value=selectedTeamProject;
+})();
 document.getElementById('mFilePath').value=t.filePath||'';document.getElementById('mLabels').innerHTML=state.labels.map(l=>'<span class="label-chip '+((t.labels||[]).includes(l.name)?'selected':'')+'" style="background:'+l.color+'" data-label="'+esc(l.name)+'" onclick="this.classList.toggle(\'selected\')">'+esc(l.name)+'</span>').join('');const cl=document.getElementById('mChecklist');cl.innerHTML='';(t.checklist||[]).forEach(c=>addChecklistItem(c.text,c.done));
 var lnSec=document.getElementById('mLinkedNotesSection');
 if(lnSec){
@@ -2850,7 +2859,7 @@ if(histSec){
 }
 }
 function addChecklistItem(text,done){const cl=document.getElementById('mChecklist'),div=document.createElement('div');div.className='cl-item';const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!done;const inp=document.createElement('input');inp.type='text';inp.value=text||'';inp.placeholder='Checklist item...';const rm=document.createElement('button');rm.className='cl-rm';rm.innerHTML='×';rm.onclick=()=>div.remove();div.appendChild(cb);div.appendChild(inp);div.appendChild(rm);cl.appendChild(div);}
-function saveTask(){const title=document.getElementById('mTitle').value.trim();if(!title){showToast('Task title is required.');return;}const _assigneeName=document.getElementById('mAssignee').value.trim();const data={title,assignee:_assigneeName,assigneeId:(_assigneeName&&(state.memberIds||{})[_assigneeName])||null,bucket:document.getElementById('mBucket').value,due:document.getElementById('mDue').value,priority:document.getElementById('mPriority').value,pct:parseInt(document.getElementById('mPct').value)||0,notes:document.getElementById('mNotes').value,filePath:document.getElementById('mFilePath').value.trim(),labels:[...document.querySelectorAll('#mLabels .label-chip.selected')].map(e=>e.dataset.label),checklist:[...document.querySelectorAll('#mChecklist .cl-item')].map(e=>({text:e.querySelector('input[type=text]').value,done:e.querySelector('input[type=checkbox]').checked})),department:document.getElementById('mDepartment')?document.getElementById('mDepartment').value:'General',actualDate:document.getElementById('mActualDate')?document.getElementById('mActualDate').value:''};if(editingId!=null){const t=state.tasks.find(x=>x.id===editingId);if(t){const changes=[];if(t.title!==data.title)changes.push('Title: '+t.title+' → '+data.title);if(t.bucket!==data.bucket)changes.push('Moved: '+t.bucket+' → '+data.bucket);if(t.priority!==data.priority)changes.push('Priority: '+t.priority+' → '+data.priority);if(t.due!==data.due)changes.push('Due: '+(t.due||'none')+' → '+(data.due||'none'));if(t.assignee!==data.assignee)changes.push('Assignee: '+(t.assignee||'none')+' → '+(data.assignee||'none'));if(t.pct!==data.pct)changes.push('Progress: '+t.pct+'% → '+data.pct+'%');if(JSON.stringify(t.labels||[])!==JSON.stringify(data.labels))changes.push('Labels updated');if(changes.length){logTaskChange(t,'Edited',changes.join('; '));logActivity('Task edited',t.title+(changes.length>1?' ('+changes.length+' changes)':''));}Object.assign(t,data);}}else{data.id=state.nextId++;data.created=new Date().toISOString().split('T')[0];data.history=[];logTaskChange(data,'Created','Created via modal');logActivity('Task created',data.title);state.tasks.push(data);}closeTaskModal();render();}
+function saveTask(){const title=document.getElementById('mTitle').value.trim();if(!title){showToast('Task title is required.');return;}const _assigneeName=document.getElementById('mAssignee').value.trim();const data={title,assignee:_assigneeName,assigneeId:(_assigneeName&&(state.memberIds||{})[_assigneeName])||null,bucket:document.getElementById('mBucket').value,due:document.getElementById('mDue').value,priority:document.getElementById('mPriority').value,pct:parseInt(document.getElementById('mPct').value)||0,notes:document.getElementById('mNotes').value,filePath:document.getElementById('mFilePath').value.trim(),labels:[...document.querySelectorAll('#mLabels .label-chip.selected')].map(e=>e.dataset.label),checklist:[...document.querySelectorAll('#mChecklist .cl-item')].map(e=>({text:e.querySelector('input[type=text]').value,done:e.querySelector('input[type=checkbox]').checked})),department:document.getElementById('mDepartment')?document.getElementById('mDepartment').value:'General',actualDate:document.getElementById('mActualDate')?document.getElementById('mActualDate').value:'',project:document.getElementById('mProject')?document.getElementById('mProject').value:''};if(editingId!=null){const t=state.tasks.find(x=>x.id===editingId);if(t){const changes=[];if(t.title!==data.title)changes.push('Title: '+t.title+' → '+data.title);if(t.bucket!==data.bucket)changes.push('Moved: '+t.bucket+' → '+data.bucket);if(t.priority!==data.priority)changes.push('Priority: '+t.priority+' → '+data.priority);if(t.due!==data.due)changes.push('Due: '+(t.due||'none')+' → '+(data.due||'none'));if(t.assignee!==data.assignee)changes.push('Assignee: '+(t.assignee||'none')+' → '+(data.assignee||'none'));if(t.pct!==data.pct)changes.push('Progress: '+t.pct+'% → '+data.pct+'%');if(JSON.stringify(t.labels||[])!==JSON.stringify(data.labels))changes.push('Labels updated');if(changes.length){logTaskChange(t,'Edited',changes.join('; '));logActivity('Task edited',t.title+(changes.length>1?' ('+changes.length+' changes)':''));}Object.assign(t,data);}}else{data.id=state.nextId++;data.created=new Date().toISOString().split('T')[0];data.history=[];logTaskChange(data,'Created','Created via modal');logActivity('Task created',data.title);state.tasks.push(data);}closeTaskModal();render();}
 function deleteTask(){const t=state.tasks.find(x=>x.id===editingId);if(!t)return;const removed=t,idx=state.tasks.indexOf(t);state.tasks=state.tasks.filter(x=>x.id!==editingId);closeTaskModal();render();showToast('Task "'+removed.title+'" deleted',function(){state.tasks.splice(idx,0,removed);render();});}
 function completeTaskConfirm(){const t=state.tasks.find(x=>x.id===editingId);if(!t)return;if(!confirm('Mark "'+t.title+'" as complete?\n\nThis will move it to the Complete bucket and clear its due date, assignee, and labels.'))return;const completeBucket=state.buckets.find(b=>b.toLowerCase().includes('complet'))||state.buckets[state.buckets.length-1];const oldData={bucket:t.bucket,due:t.due,assignee:t.assignee,assigneeId:t.assigneeId,labels:t.labels?[...t.labels]:[],pct:t.pct};logTaskChange(t,'Completed','Moved to '+completeBucket+', progress set to 100%');logActivity('Task completed',t.title);t.bucket=completeBucket;t.due='';t.assignee='';t.assigneeId=null;t.labels=[];t.pct=100;closeTaskModal();render();showToast('✅ "'+t.title+'" completed!',function(){t.bucket=oldData.bucket;t.due=oldData.due;t.assignee=oldData.assignee;t.assigneeId=oldData.assigneeId;t.labels=oldData.labels;t.pct=oldData.pct;render();});}
 function openSettings(){
@@ -4660,7 +4669,8 @@ function renderTeamSidebarProjects(){
     else sidebarEl.insertBefore(projDiv,sidebarEl.firstChild);
   }
   projDiv.style.display='';
-  var projects=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]),...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])];
+  var _devNames=(typeof devData!=='undefined'&&devData&&devData.projects)?devData.projects.map(function(p){return p.name;}):[];
+  var projects=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]),..._devNames,...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])];
   var items=projects.map(function(p,i){
     return'<div class="team-proj-item '+(selectedTeamProject===p?'active':'')+'" data-projidx="'+i+'" onclick="selectTeamProject(window.__devProjs[this.dataset.projidx])">'+esc(p)+'</div>';
   }).join('');
@@ -4671,7 +4681,7 @@ function renderTeamSidebarProjects(){
       '<div class="team-proj-item '+(selectedTeamProject===null?'active':'')+'" onclick="selectedTeamProject=null;renderDashboard()">All Projects</div>'+
       items+
     '</div>'+
-    '<div style="padding:6px 12px"><button class="top-btn" style="width:100%;justify-content:center;font-size:11px" onclick="(function(){var n=prompt(\'New project name:\');if(n&&n.trim()){state.projects=state.projects||[];if(!state.projects.includes(n.trim()))state.projects.push(n.trim());save();renderDashboard();}})()">+ New Project</button></div>';
+    '<div style="padding:6px 12px"><button class="top-btn" style="width:100%;justify-content:center;font-size:11px" onclick="openUnifiedProjectModal()">+ New Project</button></div>';
 }
 
 function deptKanban(tasks){
@@ -4834,6 +4844,19 @@ function renderEntitlementTab(el){
 }
 
 function selectTeamProject(p){selectedTeamProject=p||null;renderDashboard();}
+function openUnifiedProjectModal(){
+  // Ensure devData is loaded before opening the dev project modal
+  if(typeof devData==='undefined'||!devData){devData=dev_loadData();}
+  dev_openProjectModal();
+}
+// After dev_openProjectModal saves, sync project names back to state.projects
+// We patch dev_saveData to keep state.projects in sync with devData.projects
+var _origDevSaveData=null;
+function dev_syncProjectsToState(){
+  if(!devData||!devData.projects)return;
+  state.projects=state.projects||[];
+  devData.projects.forEach(function(p){if(p.name&&!state.projects.includes(p.name))state.projects.push(p.name);});
+}
 
 function migrateTasksToEntitlements(){
   var count=0;
@@ -4897,10 +4920,12 @@ function renderDevelopmentTab(el){
 
 function renderLegalTab(el){
   // Project filter header
-  var projects=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]),...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])];
+  // Build unified project list from all sources including dev projects
+  var _devProjNames=(typeof devData!=='undefined'&&devData&&devData.projects)?devData.projects.map(function(p){return p.name;}):[];
+  var projects=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]),..._devProjNames,...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])].sort();
   var filterHTML='<div style="padding:8px 14px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0;">'+
     '<label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2)">Project:</label>'+
-    '<select onchange="selectedTeamProject=this.value||null;renderDashboard()" style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg)">'+
+    '<select onchange="selectedTeamProject=this.value||null;renderDashboard()" style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg);color:var(--text)">'+
     '<option value="">All Projects</option>'+
     projects.map(function(p){return'<option value="'+esc(p)+'" '+(selectedTeamProject===p?'selected':'')+'>'+esc(p)+'</option>';}).join('')+
     '</select>'+
@@ -5154,6 +5179,7 @@ function dev_loadData() {
   return (state.developmentData) ? JSON.parse(JSON.stringify(state.developmentData)) : dev_defaultData();
 }
 function dev_saveData() {
+  dev_syncProjectsToState(); // keep state.projects in sync with dev projects
   state.developmentData = devData;
   state._lastSaved = new Date().toISOString();
   save();

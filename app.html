@@ -7004,3 +7004,90 @@ function dev_wxEnsureSettings() {
 
 </body>
 </html>
+
+<script>
+
+function exportTeamPDF(tasks, teamName) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const priorityRank = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+
+    tasks.sort((a, b) => {
+        if (a.department !== b.department) {
+            return a.department.localeCompare(b.department);
+        }
+        return priorityRank[a.priority] - priorityRank[b.priority];
+    });
+
+    const criticalTasks = tasks.filter(t => t.priority === "Critical");
+    const otherTasks = tasks.filter(t => t.priority !== "Critical");
+
+    function groupByDepartment(taskList) {
+        return taskList.reduce((acc, task) => {
+            if (!acc[task.department]) acc[task.department] = [];
+            acc[task.department].push(task);
+            return acc;
+        }, {});
+    }
+
+    const criticalByDept = groupByDepartment(criticalTasks);
+    const otherByDept = groupByDepartment(otherTasks);
+
+    doc.setFontSize(16);
+    doc.text(`${teamName} - Critical Summary`, 14, 15);
+
+    let y = 25;
+
+    Object.keys(criticalByDept).forEach(dept => {
+        doc.setFontSize(12);
+        doc.text(dept, 14, y);
+        y += 4;
+
+        doc.autoTable({
+            startY: y,
+            head: [["Task", "Project", "Priority"]],
+            body: criticalByDept[dept].map(t => [t.title, t.project, t.priority]),
+            theme: "grid",
+            styles: { fontSize: 9, textColor: [0,0,0] },
+            headStyles: { fillColor: [255,255,255], textColor: [0,0,0] },
+            bodyStyles: { textColor: [0,0,0] }
+        });
+
+        y = doc.lastAutoTable.finalY + 10;
+    });
+
+    doc.addPage();
+
+    doc.setFontSize(16);
+    doc.text(`${teamName} - All Tasks`, 14, 15);
+
+    y = 25;
+
+    Object.keys(otherByDept).forEach(dept => {
+        if (y > 260) {
+            doc.addPage();
+            y = 20;
+        }
+
+        doc.setFontSize(12);
+        doc.text(dept, 14, y);
+        y += 4;
+
+        doc.autoTable({
+            startY: y,
+            head: [["Task", "Project", "Priority"]],
+            body: otherByDept[dept].map(t => [t.title, t.project, t.priority]),
+            theme: "grid",
+            styles: { fontSize: 9, textColor: [0,0,0] },
+            headStyles: { fillColor: [255,255,255], textColor: [0,0,0] },
+            bodyStyles: { textColor: [0,0,0] }
+        });
+
+        y = doc.lastAutoTable.finalY + 10;
+    });
+
+    doc.save(`${teamName}_Tasks.pdf`);
+}
+
+</script>

@@ -1526,80 +1526,20 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 const SUPABASE_URL = 'https://kxidfwesywhhdifekkqo.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Mpf3fQxq5253lluxVGdXxA_Se4rBp9z';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-let currentUser /*patched*/ = null;
-
-// ✅ Restore session before login check
-async 
-// ✅ FIXED AUTH FLOW (wait before deciding login)
-(async function initAuth(){
-  try{
-    let restored = false;
-
-    // 1. Supabase session
-    if(typeof _supabase !== 'undefined' && _supabase.auth){
-// removed stray await
-      if(data && data.session && data.session.user){
-        currentUser = data.session.user;
-        console.log('✅ Supabase session restored:', currentUser.email);
-        restored = true;
-      }
-    }
-
-    // 2. fallback
-    if(!restored){
-      const stored = localStorage.getItem('taskaura_user');
-      if(stored){
-        currentUser = { id: stored, email: stored };
-        console.log('✅ Local session restored:', stored);
-        restored = true;
-      }
-    }
-
-    // 3. decision
-    if(!restored){
-      console.log('❌ No session → showing login');
-      showLogin();
-    } else {
-      console.log('✅ User ready → loading app');
-      renderDashboard();
-    }
-
-  }catch(e){
-    console.error('Auth init failed',e);
-    showLogin();
-  }
-})();
-function __restoreSession(){
-  try{
-    if(_supabase && _supabase.auth){
-// removed stray await
-      if(data && data.session && data.session.user){
-        currentUser = data.session.user;
-        console.log('Session restored:', currentUser.email);
-        return true;
-      }
-    }
-    const stored = localStorage.getItem('taskaura_user');
-    if(stored){
-      currentUser = { id: stored, email: stored };
-      console.log('Session from localStorage:', stored);
-      return true;
-    }
-  }catch(e){console.warn('restore failed',e);} 
-  return false;
-}
-
+let currentUser = null;
 let _unlockingApp = false;
 
 function initSupabaseAuth() {
   _supabase.auth.onAuthStateChange(function(event, session) {
     if (session && session.user) {
       currentUser = session.user;
+      try{ localStorage.setItem('taskaura_user', currentUser.email || currentUser.id || ''); }catch(e){}
       if (document.getElementById('authOverlay').classList.contains('hidden') === false && !_unlockingApp) {
         unlockApp();
       }
     } else {
       currentUser = null;
+      try{ localStorage.removeItem('taskaura_user'); }catch(e){}
       _unlockingApp = false;
       showLoginScreen();
     }
@@ -1608,10 +1548,12 @@ function initSupabaseAuth() {
   _supabase.auth.getSession().then(function(result) {
     if (result.data && result.data.session) {
       currentUser = result.data.session.user;
+      try{ localStorage.setItem('taskaura_user', currentUser.email || currentUser.id || ''); }catch(e){}
       if (!_unlockingApp && document.getElementById('authOverlay').classList.contains('hidden') === false) {
         unlockApp();
       }
     } else {
+      // fallback: allow previously remembered user to see login form prefilled, but do not auto-unlock
       showLoginScreen();
     }
   });
@@ -1677,7 +1619,7 @@ function showPendingApproval(){
   document.getElementById('pendingOverlay').classList.remove('hidden');
 }
 
-let currentUser /*patched*/Plan='free';
+let currentUserPlan='free';
 function hasTeamPlan(){return true;} // All features free for everyone (was: plan-gated)
 function applyPlanGates(){
   const teamOk=hasTeamPlan();
@@ -1740,8 +1682,22 @@ async function unlockApp() {
 }
 
 function showLoginScreen() {
-  // Redirect to landing page instead of showing inline lockscreen
-  window.location.href = '/';
+  var auth = document.getElementById('authOverlay');
+  var app  = document.getElementById('appContainer');
+  var pending = document.getElementById('pendingOverlay');
+  if(pending) pending.classList.add('hidden');
+  if(app) app.classList.remove('hidden');
+  if(auth) auth.classList.remove('hidden');
+  var err = document.getElementById('loginError');
+  if(err) err.textContent='';
+  // prefill remembered email if available
+  try {
+    var stored = localStorage.getItem('taskaura_user');
+    if(stored && document.getElementById('loginEmail') && !document.getElementById('loginEmail').value){
+      document.getElementById('loginEmail').value = stored;
+    }
+  } catch(e) {}
+  showSignIn();
 }
 
 function doLogout() {
@@ -2418,8 +2374,8 @@ function renderPersonalDashboard(el){
         var twData=tw.data||{};
         var isLegalWs=twData.workspaceType==='legal';
         var members=twData.teamMembers||[];
-        var memAvatars=members.slice(0,5).map(function(m){return'<div class="pd-team-card-avatar" style="background:#f3f4f6;color:#111; color:#111;}).join('');
-        if(members.length>5)memAvatars+='<div class="pd-team-card-avatar" style="background:#f3f4f6;color:#111; color:#111;color:var(--text2)">+'+(members.length-5)+'</div>';
+        var memAvatars=members.slice(0,5).map(function(m){return'<div class="pd-team-card-avatar" style="background:'+avatarColor(m)+'">'+initials(m)+'</div>';}).join('');
+        if(members.length>5)memAvatars+='<div class="pd-team-card-avatar" style="background:var(--border);color:var(--text2)">+'+(members.length-5)+'</div>';
 
         if(isLegalWs){
           // Legal workspace card
@@ -6469,13 +6425,30 @@ function dev_openMilestoneModal(projectId, phaseId) {
   if(!devData.milestones) devData.milestones=[];
   const ms = dev_getMilestoneData(projectId, phaseId) || {};
   const body = `
-    <div class="form-group"><label>Phase</label><input value="${esc(phase.name)}" disabled style="background:#f3f4f6;color:#111; color:#111;
-  dev_openModal(`'Milestones' — ${esc(phase.name)}`, body, () => {
-    const vals = {projectId, phaseId, startDate:document.getElementById('dmf-startDate').value, earthwork:document.getElementById('dmf-earthwork').value, wetUtilities:document.getElementById('dmf-wetUtilities').value, paving:document.getElementById('dmf-paving').value, accountingSC:document.getElementById('dmf-accountingSC').value, legalSC:document.getElementById('dmf-legalSC').value};
+    <div class="form-group"><label>Phase</label><input value="${esc(phase.name)}" disabled style="background:#f3f4f6;color:#111;"></div>
+    <div class="form-grid form-grid-2">
+      <div class="form-group"><label>Start Date</label><input id="dmf-startDate" type="date" value="${esc(ms.startDate||'')}"></div>
+      <div class="form-group"><label>Earthwork</label><input id="dmf-earthwork" type="date" value="${esc(ms.earthwork||'')}"></div>
+      <div class="form-group"><label>Wet Utilities</label><input id="dmf-wetUtilities" type="date" value="${esc(ms.wetUtilities||'')}"></div>
+      <div class="form-group"><label>Paving</label><input id="dmf-paving" type="date" value="${esc(ms.paving||'')}"></div>
+      <div class="form-group"><label>Accounting SC</label><input id="dmf-accountingSC" type="date" value="${esc(ms.accountingSC||'')}"></div>
+      <div class="form-group"><label>Legal SC</label><input id="dmf-legalSC" type="date" value="${esc(ms.legalSC||'')}"></div>
+    </div>`;
+  dev_openModal(`Milestones — ${esc(phase.name)}`, body, () => {
+    const vals = {
+      projectId, phaseId,
+      startDate:document.getElementById('dmf-startDate').value,
+      earthwork:document.getElementById('dmf-earthwork').value,
+      wetUtilities:document.getElementById('dmf-wetUtilities').value,
+      paving:document.getElementById('dmf-paving').value,
+      accountingSC:document.getElementById('dmf-accountingSC').value,
+      legalSC:document.getElementById('dmf-legalSC').value
+    };
     const existing = devData.milestones.find(m=>m.projectId===projectId && m.phaseId===phaseId);
     if(existing) Object.assign(existing, vals); else devData.milestones.push({id:uid(), ...vals});
-    dev_logChange(proj.name, ''Milestones'', `Updated milestones for ${phase.name}`);
-    dev_saveData(); dev_render();
+    dev_logChange(proj.name, 'Milestones', `Updated milestones for ${phase.name}`);
+    dev_saveData();
+    dev_render();
   });
 }
 

@@ -2834,7 +2834,7 @@ function populateModal(t){
     const combined=[...new Set([...teamMembers,...existing])].sort();
     dl.innerHTML=combined.map(n=>'<option value="'+esc(n)+'">').join('');
   }
-  document.getElementById('mTitle').value=t.title||'';document.getElementById('mAssignee').value=t.assignee||'';const bs=document.getElementById('mBucket');if(bs){const stageBuckets=currentTeamWorkspaceId?['To Do','In Progress','Under Review','Complete']:(state.buckets||['To Do','In Progress','Under Review','Complete']);bs.innerHTML=stageBuckets.map(b=>'<option value="'+esc(b)+'" '+(b===(t.bucket||stageBuckets[0])?'selected':'')+'>'+esc(b)+'</option>').join('');}document.getElementById('mDue').value=t.due||'';document.getElementById('mPriority').value=t.priority||'Medium';document.getElementById('mPct').value=t.pct||0;document.getElementById('mPctVal').textContent=(t.pct||0)+'%';document.getElementById('mNotes').value=t.notes||'';
+  document.getElementById('mTitle').value=t.title||'';document.getElementById('mAssignee').value=t.assignee||'';const bs=document.getElementById('mBucket');if(bs){var __deptKey=(typeof teamDeptTab!=='undefined'&&teamDeptTab)?(teamDeptTab==='acquisition'?'acquisition':teamDeptTab==='entitlement'?'entitlement':teamDeptTab==='development'?'development':teamDeptTab==='legal'?'legal':null):null;var stageBuckets;if(__deptKey&&state.deptBuckets&&state.deptBuckets[__deptKey]&&state.deptBuckets[__deptKey].length){stageBuckets=state.deptBuckets[__deptKey];}else if(currentTeamWorkspaceId){stageBuckets=['To Do','In Progress','Under Review','Complete'];}else{stageBuckets=state.buckets||['To Do','In Progress','Under Review','Complete'];}bs.innerHTML=stageBuckets.map(b=>'<option value="'+esc(b)+'" '+(b===(t.bucket||stageBuckets[0])?'selected':'')+'>'+esc(b)+'</option>').join('');}document.getElementById('mDue').value=t.due||'';document.getElementById('mPriority').value=t.priority||'Medium';document.getElementById('mPct').value=t.pct||0;document.getElementById('mPctVal').textContent=(t.pct||0)+'%';document.getElementById('mNotes').value=t.notes||'';
 if(document.getElementById('mDepartment'))document.getElementById('mDepartment').value=t.department||'General';
 if(document.getElementById('mActualDate'))document.getElementById('mActualDate').value=t.actualDate||'';
 // Populate project dropdown from all sources (state.projects, devData.projects names, task projects)
@@ -6525,8 +6525,15 @@ function dev_wxEnsureSettings() {
     return Object.keys(byId).map(function(k){ return byId[k]; });
   }
 
-  window.openMoveToTeam = function(){
+  window.openMoveToTeam = async function(){
     console.log('[Move to Team] openMoveToTeam called. editingId=', (typeof editingId!=='undefined'?editingId:'(undef)'), 'currentTeamWorkspaceId=', (typeof currentTeamWorkspaceId!=='undefined'?currentTeamWorkspaceId:'(undef)'));
+    // Refresh teamWorkspaces from Supabase before discovery so users see cloud teams
+    if(typeof window.loadTeamWorkspaces==='function' && typeof currentUser!=='undefined' && currentUser){
+      try{ await window.loadTeamWorkspaces(); console.log('[Move to Team] cloud team refresh complete. teamWorkspaces.length=', (window.teamWorkspaces||[]).length); }
+      catch(e){ console.warn('[Move to Team] cloud refresh failed:', e); }
+    } else {
+      console.log('[Move to Team] No currentUser or loadTeamWorkspaces — skipping cloud refresh.');
+    }
     if(typeof editingId==='undefined' || editingId===null){
       _toast('Save the task first, then use Move to Team.');
       return;
@@ -6556,8 +6563,23 @@ function dev_wxEnsureSettings() {
       var teamSel=_qs('mttTeam');
       teamSel.innerHTML = teams.map(function(t){
         return '<option value="'+_esc(t.id)+'">'+_esc(t.name)
-             + (t.source==='local'?' (local)':'')+'</option>';
+             + (t.source==='local'?' (local only)':' (cloud)')+'</option>';
       }).join('');
+      // Inject a refresh row inside the body so users can manually re-pull cloud teams
+      var bodyEl = document.getElementById('mttBody');
+      if(bodyEl && !document.getElementById('mttRefreshBtn')){
+        var rr = document.createElement('div');
+        rr.style.cssText = 'text-align:right;margin-top:-6px;margin-bottom:6px;';
+        rr.innerHTML = '<button type="button" id="mttRefreshBtn" onclick="window.__mttRefreshTeams()" style="background:none;border:1px solid var(--border);color:var(--text2);font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer">&#x21bb; Refresh teams from cloud</button>';
+        var fields = document.getElementById('mttFields');
+        if(fields) bodyEl.insertBefore(rr, fields);
+      }
+      var teamHintRow = document.getElementById('mttTeamHint');
+      if(teamHintRow){
+        var cloudCnt = teams.filter(function(x){return x.source==='cloud';}).length;
+        var localCnt = teams.filter(function(x){return x.source==='local';}).length;
+        teamHintRow.textContent = cloudCnt+' cloud team(s), '+localCnt+' local-only';
+      }
       window.__mttTeams = teams; // cache for refresh calls
 
       // Default department from task if already labeled
@@ -6773,6 +6795,34 @@ function dev_wxEnsureSettings() {
     } else {
       _toast('Task moved to '+(t.name||'team'));
     }
+  };
+
+  window.__mttRefreshTeams = async function(){
+    var btn = document.getElementById('mttRefreshBtn');
+    if(btn){ btn.disabled = true; btn.textContent = '...refreshing'; }
+    try{
+      if(typeof window.loadTeamWorkspaces==='function' && typeof currentUser!=='undefined' && currentUser){
+        await window.loadTeamWorkspaces();
+      }
+    }catch(e){ console.warn('[Move to Team] manual refresh failed', e); }
+    var teams = discoverTeams();
+    window.__mttTeams = teams;
+    var teamSel = document.getElementById('mttTeam');
+    if(teamSel){
+      var prev = teamSel.value;
+      teamSel.innerHTML = teams.map(function(t){
+        return '<option value="'+_esc(t.id)+'">'+_esc(t.name) + (t.source==='local'?' (local only)':' (cloud)') +'</option>';
+      }).join('');
+      if(prev && teams.find(function(x){return String(x.id)===String(prev);})) teamSel.value = prev;
+      window.__mttRefreshProjects();
+    }
+    var hint = document.getElementById('mttTeamHint');
+    if(hint){
+      var cloudCnt = teams.filter(function(x){return x.source==='cloud';}).length;
+      var localCnt = teams.filter(function(x){return x.source==='local';}).length;
+      hint.textContent = cloudCnt+' cloud team(s), '+localCnt+' local-only';
+    }
+    if(btn){ btn.disabled = false; btn.innerHTML = '&#x21bb; Refresh teams from cloud'; }
   };
 
   function ensureMoveButton(){

@@ -1702,7 +1702,8 @@ function migrateWorkspaces(){let allWs=JSON.parse(localStorage.getItem('wm_works
 let state=getDefaultState();
 let _cloudLoaded=false;
 function save(){if(!_cloudLoaded)return;state.projectName=document.getElementById('projName').value;state._lastSaved=new Date().toISOString();let allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');allWs[currentWorkspace]=state;localStorage.setItem('wm_workspaces',JSON.stringify(allWs));localStorage.setItem('wm_state',JSON.stringify(state));if(currentTeamWorkspaceId){const tw=teamWorkspaces.find(w=>w.id===currentTeamWorkspaceId);if(tw)tw.data=JSON.parse(JSON.stringify(state));}debouncedCloudSave();}
-function load(){var allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');if(allWs[currentWorkspace]){state=JSON.parse(JSON.stringify(allWs[currentWorkspace]));}else{state=getDefaultState();}if(!state.notes)state.notes=[];if(!state.nextNoteId)state.nextNoteId=1;if(!state.folders)state.folders=[];if(!state.nextFolderId)state.nextFolderId=1;if(!state.filterPresets)state.filterPresets=[];if(state.sidebarCollapsed===undefined)state.sidebarCollapsed=false;if(!state.scheduleProjects)state.scheduleProjects=[];if(!state.nextProjectId)state.nextProjectId=1;if(!state.nextScheduleTaskId)state.nextScheduleTaskId=1;if(!state.teamMembers)state.teamMembers=[];if(!state.collapsedBuckets)state.collapsedBuckets=[];if(!state.chatMessages)state.chatMessages=[];if(!state.activityLog)state.activityLog=[];state.tasks.forEach(function(t){if(!t.history)t.history=[];});(state.tasks||[]).forEach(function(t){if(!t.priority)t.priority='Medium';if(!t.department)t.department='General';});if(state.scheduleItems&&state.scheduleItems.length){var migProj={id:state.nextProjectId++,name:"Imported Schedule",color:"#2563eb",collapsed:false,tasks:state.scheduleItems.map(function(si){return{id:si.id,name:si.name,startDate:si.startDate,endDate:si.endDate,color:si.color,progress:si.progress||0};})};state.scheduleProjects.push(migProj);delete state.scheduleItems;}state.notes.forEach(n=>{if(n.folderId===undefined)n.folderId=null;if(n.linkedTaskId===undefined)n.linkedTaskId=null;});document.getElementById('projName').value=state.projectName||'My Project';if(state.darkMode)document.documentElement.setAttribute('data-theme','dark');else document.documentElement.removeAttribute('data-theme');document.getElementById('togDark').checked=!!state.darkMode;document.getElementById('togCompact').checked=!!state.compact;if(typeof currentUser!=='undefined'&&currentUser){const _an=(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];if(_an)state.myName=_an;}const sb=document.getElementById('sidebar');if(state.sidebarCollapsed)sb.classList.add('collapsed');else sb.classList.remove('collapsed');}
+function load(){var allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');if(allWs[currentWorkspace]){state=JSON.parse(JSON.stringify(allWs[currentWorkspace]));}else{state=getDefaultState();}if(!state.notes)state.notes=[];if(!state.nextNoteId)state.nextNoteId=1;if(!state.folders)state.folders=[];if(!state.nextFolderId)state.nextFolderId=1;if(!state.filterPresets)state.filterPresets=[];if(state.sidebarCollapsed===undefined)state.sidebarCollapsed=false;if(!state.scheduleProjects)state.scheduleProjects=[];if(!state.nextProjectId)state.nextProjectId=1;if(!state.nextScheduleTaskId)state.nextScheduleTaskId=1;if(!state.teamMembers)state.teamMembers=[];if(!state.collapsedBuckets)state.collapsedBuckets=[];if(!state.chatMessages)state.chatMessages=[];if(!state.activityLog)state.activityLog=[];state.tasks.forEach(function(t){if(!t.history)t.history=[];});(state.tasks||[]).forEach(function(t){if(!t.priority)t.priority='Medium';if(!t.department)t.department='General';});
+if(!state.deptBuckets)state.deptBuckets={acquisition:['To Do','In Progress','Under Review','Complete'],entitlement:['To Do','In Progress','Under Review','Complete'],development:['To Do','In Progress','Under Review','Complete'],legal:['To Do','In Progress','Under Review','Complete']};if(state.scheduleItems&&state.scheduleItems.length){var migProj={id:state.nextProjectId++,name:"Imported Schedule",color:"#2563eb",collapsed:false,tasks:state.scheduleItems.map(function(si){return{id:si.id,name:si.name,startDate:si.startDate,endDate:si.endDate,color:si.color,progress:si.progress||0};})};state.scheduleProjects.push(migProj);delete state.scheduleItems;}state.notes.forEach(n=>{if(n.folderId===undefined)n.folderId=null;if(n.linkedTaskId===undefined)n.linkedTaskId=null;});document.getElementById('projName').value=state.projectName||'My Project';if(state.darkMode)document.documentElement.setAttribute('data-theme','dark');else document.documentElement.removeAttribute('data-theme');document.getElementById('togDark').checked=!!state.darkMode;document.getElementById('togCompact').checked=!!state.compact;if(typeof currentUser!=='undefined'&&currentUser){const _an=(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];if(_an)state.myName=_an;}const sb=document.getElementById('sidebar');if(state.sidebarCollapsed)sb.classList.add('collapsed');else sb.classList.remove('collapsed');}
 // ── Supabase Data Sync (Phase 2) ─────────────────────────────────────────────
 let syncTimer=null,teamWorkspaces=[],currentTeamWorkspaceId=null,realtimeChannel=null;
 
@@ -4647,10 +4648,12 @@ function renderTeamSidebarProjects(){
     if(toggle&&toggle.nextSibling)sidebarEl.insertBefore(projDiv,toggle.nextSibling);
     else sidebarEl.insertBefore(projDiv,sidebarEl.firstChild);
   }
+  projDiv.style.display='';
   var projects=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]),...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])];
-  var items=projects.map(function(p){
-    return'<div class="team-proj-item '+(selectedTeamProject===p?'active':'')+'" onclick="selectedTeamProject='+JSON.stringify(p)+';renderDashboard()">'+esc(p)+'</div>';
+  var items=projects.map(function(p,i){
+    return'<div class="team-proj-item '+(selectedTeamProject===p?'active':'')+'" data-projidx="'+i+'" onclick="selectTeamProject(window.__devProjs[this.dataset.projidx])">'+esc(p)+'</div>';
   }).join('');
+  window.__devProjs=projects;
   projDiv.innerHTML=
     '<div class="sidebar-section-title">Projects</div>'+
     '<div class="team-proj-list">'+
@@ -4687,7 +4690,8 @@ function deptKanban(tasks){
 
 function renderBoardInto(el){
   var tasks=getFilteredTasks();
-  var buckets=['To Do','In Progress','Under Review','Complete'];
+  var deptKey=teamDeptTab==='acquisition'?'acquisition':teamDeptTab==='entitlement'?'entitlement':teamDeptTab==='development'?'development':'legal';
+  var buckets=(state.deptBuckets&&state.deptBuckets[deptKey])||['To Do','In Progress','Under Review','Complete'];
   var html=buckets.map(function(b){
     var bTasks=tasks.filter(function(t){return(t.bucket||'To Do')===b;});
     return'<div class="bucket">'+
@@ -4755,6 +4759,7 @@ function renderAcquisitionTab(el){
     '<button class="dept-sub-btn'+(acqSubView==='board'?' active':'')+'" onclick="acqSubView=\'board\';renderDashboard()">⊞ Board</button>'+
     '<button class="dept-sub-btn'+(acqSubView==='list'?' active':'')+'" onclick="acqSubView=\'list\';renderDashboard()">≡ List</button>'+
     '<button class="dept-sub-btn'+(acqSubView==='calendar'?' active':'')+'" onclick="acqSubView=\'calendar\';renderDashboard()">◻ Calendar</button>'+
+    '<button class="dept-sub-btn" style="margin-left:auto" onclick="openBucketEditor(\'acquisition\')" title="Edit bucket columns">⚙ Buckets</button>'+
   '</div>';
   el.innerHTML=subNav+'<div id="acqViewContainer" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;min-height:400px;"></div>';
   el.style.display='flex';el.style.flexDirection='column';el.style.flex='1';el.style.minHeight='0';el.style.overflow='hidden';
@@ -4785,8 +4790,16 @@ function renderEntitlementTab(el){
     '<button class="dept-sub-btn'+(entSubView==='board'?' active':'')+'" onclick="entSubView=\'board\';renderDashboard()">⊞ Board</button>'+
     '<button class="dept-sub-btn'+(entSubView==='list'?' active':'')+'" onclick="entSubView=\'list\';renderDashboard()">≡ List</button>'+
     '<button class="dept-sub-btn'+(entSubView==='calendar'?' active':'')+'" onclick="entSubView=\'calendar\';renderDashboard()">◻ Calendar</button>'+
+    '<button class="dept-sub-btn" style="margin-left:auto" onclick="openBucketEditor(\'entitlement\')" title="Edit bucket columns">⚙ Buckets</button>'+
   '</div>';
-  el.innerHTML=subNav+'<div id="entViewContainer" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;min-height:400px;"></div>';
+  var generalTasks=(state.tasks||[]).filter(function(t){return !t.department||t.department==='General';});
+  var migBanner=generalTasks.length?
+    '<div style="padding:8px 14px;background:#fff7ed;border-bottom:2px solid #f97316;display:flex;align-items:center;gap:12px;font-size:13px;flex-shrink:0;">'+
+      '<span>⚠ <strong>'+generalTasks.length+' existing tasks</strong> have no department assigned.</span>'+
+      '<button class="top-btn" style="background:#f97316;color:#fff;border-color:#f97316;font-size:11px" onclick="migrateTasksToEntitlements()">→ Assign all to Entitlements</button>'+
+      '<button class="top-btn" style="font-size:11px" onclick="this.parentElement.style.display=\'none\'">Dismiss</button>'+
+    '</div>':'';
+  el.innerHTML=migBanner+subNav+'<div id="entViewContainer" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;min-height:400px;"></div>';
   el.style.display='flex';el.style.flexDirection='column';el.style.flex='1';el.style.minHeight='0';el.style.overflow='hidden';
   var container=document.getElementById('entViewContainer');
   if(entSubView==='board'){
@@ -4807,6 +4820,44 @@ function renderEntitlementTab(el){
     renderCalendarInto(calEl);
   }
   deptFilter=null;
+}
+
+function selectTeamProject(p){selectedTeamProject=p||null;renderDashboard();}
+
+function migrateTasksToEntitlements(){
+  var count=0;
+  (state.tasks||[]).forEach(function(t){
+    if(!t.department||t.department==='General'){t.department='Entitlements';count++;}
+  });
+  save();
+  showToast(count+' tasks assigned to Entitlements');
+  renderDashboard();
+}
+
+function openBucketEditor(deptKey){
+  if(!state.deptBuckets)state.deptBuckets={acquisition:['To Do','In Progress','Under Review','Complete'],entitlement:['To Do','In Progress','Under Review','Complete'],development:['To Do','In Progress','Under Review','Complete'],legal:['To Do','In Progress','Under Review','Complete']};
+  var buckets=state.deptBuckets[deptKey]||['To Do','In Progress','Under Review','Complete'];
+  var deptLabel=deptKey.charAt(0).toUpperCase()+deptKey.slice(1);
+  var body='<p style="font-size:13px;color:var(--text2);margin-bottom:12px">Enter up to 6 bucket/column names for the '+deptLabel+' board, one per line:</p>'+
+    '<textarea id="bucketEditorTA" style="width:100%;height:140px;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);resize:vertical">'+buckets.join('\n')+'</textarea>'+
+    '<p style="font-size:11px;color:var(--muted);margin-top:6px">Changing a name will NOT affect existing tasks — tasks keep their bucket value. Rename carefully.</p>';
+  var ov=document.createElement('div');
+  ov.className='modal-overlay show';ov.id='bucketEditorOverlay';
+  ov.innerHTML='<div class="modal"><div class="modal-hdr"><h2>⚙ Edit '+deptLabel+' Buckets</h2><button class="modal-close" onclick="document.getElementById(\'bucketEditorOverlay\').remove()">×</button></div><div class="modal-body">'+body+'</div><div class="modal-footer"><button class="btn-cancel top-btn" onclick="document.getElementById(\'bucketEditorOverlay\').remove()">Cancel</button><button class="btn-save top-btn" style="background:var(--pri);color:#fff;border:none" onclick="saveBucketEditor(\''+deptKey+'\')">Save</button></div></div>';
+  document.body.appendChild(ov);
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+}
+
+function saveBucketEditor(deptKey){
+  var ta=document.getElementById('bucketEditorTA');if(!ta)return;
+  var lines=ta.value.split('\n').map(function(s){return s.trim();}).filter(function(s){return s.length>0;});
+  if(lines.length<1){showToast('Need at least 1 bucket name.');return;}
+  if(!state.deptBuckets)state.deptBuckets={};
+  state.deptBuckets[deptKey]=lines;
+  save();
+  var ov=document.getElementById('bucketEditorOverlay');if(ov)ov.remove();
+  showToast('Buckets updated!');
+  renderDashboard();
 }
 
 function timeSince(ts){

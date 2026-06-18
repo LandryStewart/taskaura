@@ -6569,14 +6569,26 @@ function dev_wxEnsureSettings() {
 
       window.__mttRefreshProjects();
     }
-    var mttEl=_qs('moveToTeamModal'); mttEl.style.zIndex='10050'; mttEl.style.display='flex'; console.log('[Move to Team] showing modal');
+    var mttEl=_qs('moveToTeamModal');
+    if(mttEl.parentNode!==document.body){ document.body.appendChild(mttEl); }
+    mttEl.style.position='fixed';
+    mttEl.style.top='0'; mttEl.style.left='0';
+    mttEl.style.width='100vw'; mttEl.style.height='100vh';
+    mttEl.style.display='flex';
+    mttEl.style.alignItems='center';
+    mttEl.style.justifyContent='center';
+    mttEl.style.background='rgba(0,0,0,.6)';
+    mttEl.style.zIndex='2147483000';
+    var _mttInner = mttEl.querySelector('.modal');
+    if(_mttInner){ _mttInner.style.position='relative'; _mttInner.style.zIndex='2147483001'; _mttInner.style.maxWidth='520px'; _mttInner.style.width='90%'; _mttInner.style.maxHeight='90vh'; _mttInner.style.overflow='auto'; }
     mttEl.classList.add('show');
+    console.log('[Move to Team] showing modal (forced overlay)');
   };
 
   window.closeMoveToTeamModal = function(){
     var mttEl=_qs('moveToTeamModal');
     mttEl.classList.remove('show');
-    mttEl.style.display='';
+    mttEl.style.display='none';
   };
 
   function getSelectedTeam(){

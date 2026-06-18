@@ -2748,7 +2748,36 @@ function calCellDragOver(e){e.preventDefault();}
 function calCellDragEnter(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
 function calCellDragLeave(e){e.currentTarget.classList.remove('drag-over');}
 function calDrop(e,ds){e.preventDefault();e.currentTarget.classList.remove('drag-over');if(calDragTaskId==null)return;var t=state.tasks.find(x=>x.id===calDragTaskId);if(t){var oldDue=t.due||'none';logTaskChange(t,'Due date changed','Calendar drag: '+(oldDue)+' → '+ds);logActivity('Due date changed',t.title+' → '+ds);t.due=ds;calDragTaskId=null;save();renderCalendar();}}
-function openCalDay(ds){var tasks=getFilteredTasks().filter(t=>t.due===ds);var d=new Date(ds+'T00:00:00');document.getElementById('calDayTitle').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});var body=document.getElementById('calDayBody'),html='';if(!tasks.length)html='<div class="cal-day-no-tasks">No tasks on this day</div>';else tasks.forEach(t=>{html+='<div class="cal-day-task '+priClass(t.priority)+'" onclick="closeCalDay();openEditTask('+t.id+')"><div class="cal-day-task-title">'+esc(t.title)+'</div>'+(t.assignee?'<span class="cal-day-task-assignee">'+esc(t.assignee)+'</span>':'')+'<span class="cal-day-task-pri '+priBadge(t.priority)+'" style="background:'+priColor(t.priority)+'">'+esc(t.priority||'Medium')+'</span></div>';});body.innerHTML=html;document.getElementById('calDayModal').classList.add('show');}
+function openCalDay(ds, optDept){
+  var __prevDept = deptFilter;
+  if(optDept) deptFilter = optDept;
+
+  var tasks;
+  try {
+    tasks = getFilteredTasks().filter(function(t){ return t.due === ds; });
+  } finally {
+    deptFilter = __prevDept;
+  }
+
+  var d = new Date(ds+'T00:00:00');
+  document.getElementById('calDayTitle').textContent = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+  var body = document.getElementById('calDayBody');
+  var html = '';
+
+  if(!tasks.length){
+    html = '<div class="cal-day-no-tasks">No tasks</div>';
+  } else {
+    tasks.forEach(function(t){
+      html += '<div class="cal-day-task" onclick="closeCalDay();openEditTask('+t.id+')">'
+            + t.title
+            + '</div>';
+    });
+  }
+
+  body.innerHTML = html;
+  document.getElementById('calDayModal').classList.add('show');
+}
 function closeCalDay(){document.getElementById('calDayModal').classList.remove('show');}
 function openMasterCalDay(ds,tasksJSON){
   var tasks=JSON.parse(decodeURIComponent(tasksJSON));
@@ -4770,39 +4799,68 @@ function renderListInto(headId,bodyId){
 }
 
 function renderCalendarInto(el){
-  var tasks=getFilteredTasks();
-  var now=new Date();
-  var year=now.getFullYear();var month=now.getMonth();
-  var daysInMonth=new Date(year,month+1,0).getDate();
-  var monthName=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
-  var todayS=todayStr();
-  // Mon-Fri only: find weekday offset for first weekday of month (Mon=0 ... Fri=4)
-  var firstDow=new Date(year,month,1).getDay(); // 0=Sun
-  var monOffset=firstDow===0?0:(firstDow-1); // blank cells before first Mon
-  // But we skip weekends entirely — collect only weekday cells
-  var html='<div class="cal-header"><h2>'+monthName+'</h2></div>'+
-    '<div class="cal-grid" style="grid-template-columns:repeat(5,1fr)">';
-  ['Mon','Tue','Wed','Thu','Fri'].forEach(function(d){html+='<div class="cal-day-hdr">'+d+'</div>';});
-  // Leading blank cells (Mon offset)
-  var monOff=(firstDow+6)%7; // Mon=0,Tue=1,...,Fri=4,Sat=5,Sun=6
-  for(var i=0;i<Math.min(monOff,5);i++)html+='<div class="cal-cell outside"></div>';
-  for(var d=1;d<=daysInMonth;d++){
-    var dow=new Date(year,month,d).getDay();
-    if(dow===0||dow===6)continue; // skip weekends
-    var ds=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    var dayTasks=tasks.filter(function(t){return t.due===ds;});
-    var isToday=ds===todayS;
-    html+='<div class="cal-cell'+(isToday?' today':'')+'">';
-    html+='<div class="cal-date">'+(isToday?'<span class="today-num">'+d+'</span>':d)+'</div>';
-    html+='<div class="cal-tasks">';
-    dayTasks.slice(0,4).forEach(function(t){
-      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" onclick="openEditTask('+t.id+')" title="'+esc(t.title||'')+'">'+esc((t.title||'').substring(0,24))+'</div>';
-    });
-    if(dayTasks.length>4)html+='<div class="cal-expand-btn" onclick="openCalDay(\''+ds+'\')" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-4)+' more</div>';
-    html+='</div></div>';
+  var __calDept = deptFilter || null;
+  var tasks = getFilteredTasks();
+
+  var now = new Date();
+  var year = now.getFullYear();
+  var month = now.getMonth();
+
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  var monthName = now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  var todayS = todayStr();
+
+  var firstDow = new Date(year, month, 1).getDay();
+
+  var html = '<div class="cal-header"><h2>'+monthName+'</h2></div>' +
+             '<div class="cal-grid" style="grid-template-columns:repeat(5,1fr)">';
+
+  ['Mon','Tue','Wed','Thu','Fri'].forEach(function(d){
+    html += '<div class="cal-day-hdr">'+d+'</div>';
+  });
+
+  var monOff = (firstDow + 6) % 7;
+  for (var i=0; i<Math.min(monOff,5); i++) {
+    html += '<div class="cal-cell outside"></div>';
   }
-  html+='</div>';
-  el.innerHTML=html;
+
+  var MAX_VISIBLE = 10;
+
+  for (var d=1; d<=daysInMonth; d++) {
+    var dow = new Date(year, month, d).getDay();
+    if (dow === 0 || dow === 6) continue;
+
+    var ds = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    var dayTasks = tasks.filter(function(t){ return t.due === ds; });
+    var isToday = ds === todayS;
+    var deptArg = __calDept ? ",'"+__calDept+"'" : "";
+
+    html += '<div class="cal-cell'+(isToday?' today':'')+'" '
+          + 'style="cursor:pointer" '
+          + 'onclick="openCalDay(\''+ds+'\''+deptArg+')" '
+          + 'title="'+dayTasks.length+' tasks">';
+
+    html += '<div class="cal-date">'+(isToday?'<span class="today-num">'+d+'</span>':d)+'</div>';
+    html += '<div class="cal-tasks">';
+
+    dayTasks.slice(0,MAX_VISIBLE).forEach(function(t){
+      html += '<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" '
+            + 'onclick="event.stopPropagation();openEditTask('+t.id+')">'
+            + t.title.substring(0,24)
+            + '</div>';
+    });
+
+    if (dayTasks.length > MAX_VISIBLE) {
+      html += '<div class="cal-expand-btn" '
+            + 'onclick="event.stopPropagation();openCalDay(\''+ds+'\''+deptArg+')">'
+            + '+'+(dayTasks.length-MAX_VISIBLE)+' more</div>';
+    }
+
+    html += '</div></div>';
+  }
+
+  html += '</div>';
+  el.innerHTML = html;
 }
 
 function renderAcquisitionTab(el){

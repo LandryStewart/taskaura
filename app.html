@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- PATCH: all-projects calendar shows full day task lists v12 -->
 <!-- PATCH: All Projects roll-up + master calendar team-label fix v11 -->
 <html lang="en">
 <head>
@@ -186,8 +187,9 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .cal-view-toggle button.active{background:var(--pri);color:#fff;}
 .cal-grid,.cal-week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:var(--radius);overflow:hidden;flex:1;min-height:0;}
 .cal-day-hdr{background:var(--pri-d);color:#fff;padding:8px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;}
-.cal-cell,.cal-week-cell{background:var(--card);padding:6px;min-height:110px;display:flex;flex-direction:column;cursor:pointer;transition:background .15s;}
+.cal-cell,.cal-week-cell{background:var(--card);padding:6px;min-height:160px;display:flex;flex-direction:column;cursor:pointer;transition:background .15s;}
 .cal-week-cell{min-height:200px;}
+.cal-cell{position:relative;}
 .cal-cell:hover,.cal-week-cell:hover{background:var(--pri-l);}
 .cal-cell.outside{background:var(--bg);opacity:.5;}
 .cal-cell.today,.cal-week-cell.today{box-shadow:inset 0 0 0 2px var(--pri);z-index:1;}
@@ -196,7 +198,8 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .cal-cell.drag-over,.cal-week-cell.drag-over{background:var(--pri-l)!important;box-shadow:inset 0 0 0 2px var(--pri);}
 .cal-date{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:4px;}
 .cal-date .today-num{background:var(--pri);color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;}
-.cal-tasks{display:flex;flex-direction:column;gap:2px;flex:1;overflow:hidden;}
+.cal-tasks{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto;overflow-x:hidden;min-height:0;padding-right:2px;}
+.cal-cell .cal-tasks{scrollbar-width:thin;}
 .cal-week-cell .cal-tasks{overflow-y:auto;}
 .cal-task{display:flex;align-items:center;gap:4px;padding:2px 5px;border-radius:4px;font-size:10px;font-weight:600;cursor:grab;background:var(--bg);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex-shrink:0;border-left:3px solid var(--border);}
 .cal-task:hover{background:var(--border);}
@@ -4793,29 +4796,37 @@ function renderCalendarInto(el){
   var daysInMonth=new Date(year,month+1,0).getDate();
   var monthName=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
   var todayS=todayStr();
-  // Mon-Fri only: find weekday offset for first weekday of month (Mon=0 ... Fri=4)
-  var firstDow=new Date(year,month,1).getDay(); // 0=Sun
-  var monOffset=firstDow===0?0:(firstDow-1); // blank cells before first Mon
-  // But we skip weekends entirely — collect only weekday cells
-  var html='<div class="cal-header"><h2>'+monthName+'</h2></div>'+
+  var activeProj=getActiveTeamProject();
+  var maxVisible=activeProj?8:999;
+  var firstDow=new Date(year,month,1).getDay();
+  var html='<div class="cal-header"><h2>'+monthName+(activeProj?'':' <span style="font-size:12px;font-weight:600;color:var(--text2)">(All Projects)</span>')+'</h2></div>'+
     '<div class="cal-grid" style="grid-template-columns:repeat(5,1fr)">';
   ['Mon','Tue','Wed','Thu','Fri'].forEach(function(d){html+='<div class="cal-day-hdr">'+d+'</div>';});
-  // Leading blank cells (Mon offset)
-  var monOff=(firstDow+6)%7; // Mon=0,Tue=1,...,Fri=4,Sat=5,Sun=6
+  var monOff=(firstDow+6)%7;
   for(var i=0;i<Math.min(monOff,5);i++)html+='<div class="cal-cell outside"></div>';
   for(var d=1;d<=daysInMonth;d++){
     var dow=new Date(year,month,d).getDay();
-    if(dow===0||dow===6)continue; // skip weekends
+    if(dow===0||dow===6)continue;
     var ds=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    var dayTasks=tasks.filter(function(t){return t.due===ds;});
+    var dayTasks=tasks.filter(function(t){return t.due===ds;}).sort(function(a,b){
+      var projA=getTaskProjectName(a), projB=getTaskProjectName(b);
+      var priOrder={Critical:0,High:1,Medium:2,Low:3};
+      var pa=(a&&a.priority)||'Medium', pb=(b&&b.priority)||'Medium';
+      var po=(priOrder[pa]??9)-(priOrder[pb]??9);
+      if(po!==0)return po;
+      if(projA<projB)return -1; if(projA>projB)return 1;
+      var ta=((a&&a.title)||(a&&a.text)||'').toLowerCase();
+      var tb=((b&&b.title)||(b&&b.text)||'').toLowerCase();
+      return ta<tb?-1:ta>tb?1:0;
+    });
     var isToday=ds===todayS;
     html+='<div class="cal-cell'+(isToday?' today':'')+'">';
-    html+='<div class="cal-date">'+(isToday?'<span class="today-num">'+d+'</span>':d)+'</div>';
+    html+='<div class="cal-date">'+(isToday?'<span class="today-num">'+d+'</span>':d)+(dayTasks.length?'<span style="margin-left:6px;font-size:10px;color:var(--text2);font-weight:600">'+dayTasks.length+' task'+(dayTasks.length===1?'':'s')+'</span>':'')+'</div>';
     html+='<div class="cal-tasks">';
-    dayTasks.slice(0,4).forEach(function(t){
-      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" onclick="openEditTask('+t.id+')" title="'+esc((getActiveTeamProject()? ((t.title||t.text)||'') : ((getTaskProjectName(t)?(getTaskProjectName(t)+' - '):'')+((t.title||t.text)||''))))+'">'+esc(getCalendarTaskDisplayTitle(t,24))+'</div>';
+    dayTasks.slice(0,maxVisible).forEach(function(t){
+      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" onclick="openEditTask('+t.id+')" title="'+esc((getActiveTeamProject()? ((t.title||t.text)||'') : ((getTaskProjectName(t)?(getTaskProjectName(t)+' - '):'')+((t.title||t.text)||''))))+'">'+esc(getCalendarTaskDisplayTitle(t,40))+'</div>';
     });
-    if(dayTasks.length>4)html+='<div class="cal-expand-btn" onclick="openCalDay(\''+ds+'\')" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-4)+' more</div>';
+    if(dayTasks.length>maxVisible)html+='<div class="cal-expand-btn" onclick="openCalDay(\''+ds+'\')" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-maxVisible)+' more</div>';
     html+='</div></div>';
   }
   html+='</div>';
@@ -5281,14 +5292,15 @@ function renderMasterCalendar(){
     html+='<div class="cal-cell'+(isToday?' today':'')+'">'+
       '<div class="cal-date">'+(isToday?'<span class="today-num">'+d+'</span>':d)+'</div>'+
       '<div class="cal-tasks">';
-    dayTasks.slice(0,3).forEach(function(t){
+    var maxVisible=8;
+    dayTasks.slice(0,maxVisible).forEach(function(t){
       var wsLabel=inferTaskWorkspaceLabel(t,t._wsLabel||'Personal');
       html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" title="'+esc((t.title||t.text||''))+'" onclick="openEditTask('+t.id+')">'+
         '<span style="font-size:9px;background:var(--pri);color:#fff;padding:1px 4px;border-radius:3px;margin-right:3px;flex-shrink:0">'+esc(wsLabel)+'</span>'+
         esc(((t.title||t.text||'')).substring(0,20))+
       '</div>';
     });
-    if(dayTasks.length>3)html+='<div class="cal-expand-btn" onclick="openMasterCalDay(\''+dateStr+'\',\''+encodeURIComponent(JSON.stringify(dayTasks))+'\')" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-3)+' more</div>';
+    if(dayTasks.length>maxVisible)html+='<div class="cal-expand-btn" onclick="openMasterCalDay(\''+dateStr+'\',\''+encodeURIComponent(JSON.stringify(dayTasks))+'\')" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-maxVisible)+' more</div>';
     html+='</div></div>';
   }
   html+='</div>';

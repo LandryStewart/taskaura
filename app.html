@@ -1481,6 +1481,9 @@ input,select,textarea{font-family:inherit;color:var(--text);}
   <div class="team-panel-section">
    <h4>Create a Team Workspace</h4>
    <input type="text" id="newTeamName" placeholder="Team name (e.g. Saddleside Dev Team)">
+   <div style="margin:8px 0;display:flex;align-items:center;gap:8px">
+    <label style="font-size:12px;color:var(--text2);font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="newTeamLegal" style="accent-color:#16a34a;width:16px;height:16px"> ⚖ Legal Tracker workspace</label>
+   </div>
    <button class="team-panel-btn" id="createTeamBtn" onclick="createTeamWorkspace()">Create Workspace</button>
   </div>
   <div class="team-panel-section">
@@ -1710,7 +1713,7 @@ let state=getDefaultState();
 let _cloudLoaded=false;
 function save(){if(!_cloudLoaded)return;state.projectName=document.getElementById('projName').value;state._lastSaved=new Date().toISOString();let allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');allWs[currentWorkspace]=state;localStorage.setItem('wm_workspaces',JSON.stringify(allWs));localStorage.setItem('wm_state',JSON.stringify(state));if(currentTeamWorkspaceId){const tw=teamWorkspaces.find(w=>w.id===currentTeamWorkspaceId);if(tw)tw.data=JSON.parse(JSON.stringify(state));}debouncedCloudSave();}
 function load(){var allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');if(allWs[currentWorkspace]){state=JSON.parse(JSON.stringify(allWs[currentWorkspace]));}else{state=getDefaultState();}if(!state.notes)state.notes=[];if(!state.nextNoteId)state.nextNoteId=1;if(!state.folders)state.folders=[];if(!state.nextFolderId)state.nextFolderId=1;if(!state.filterPresets)state.filterPresets=[];if(state.sidebarCollapsed===undefined)state.sidebarCollapsed=false;if(!state.scheduleProjects)state.scheduleProjects=[];if(!state.nextProjectId)state.nextProjectId=1;if(!state.nextScheduleTaskId)state.nextScheduleTaskId=1;if(!state.teamMembers)state.teamMembers=[];if(!state.collapsedBuckets)state.collapsedBuckets=[];if(!state.chatMessages)state.chatMessages=[];if(!state.activityLog)state.activityLog=[];state.tasks.forEach(function(t){if(!t.history)t.history=[];});(state.tasks||[]).forEach(function(t){if(!t.priority)t.priority='Medium';if(!t.department)t.department='General';});
-if(!state.deptBuckets)state.deptBuckets={acquisition:['To Do','In Progress','Under Review','Complete'],entitlement:['To Do','In Progress','Under Review','Complete'],development:['To Do','In Progress','Under Review','Complete'],legal:['Internal Counsel','External Counsel','Completed']};if(state.scheduleItems&&state.scheduleItems.length){var migProj={id:state.nextProjectId++,name:"Imported Schedule",color:"#2563eb",collapsed:false,tasks:state.scheduleItems.map(function(si){return{id:si.id,name:si.name,startDate:si.startDate,endDate:si.endDate,color:si.color,progress:si.progress||0};})};state.scheduleProjects.push(migProj);delete state.scheduleItems;}state.notes.forEach(n=>{if(n.folderId===undefined)n.folderId=null;if(n.linkedTaskId===undefined)n.linkedTaskId=null;});document.getElementById('projName').value=state.projectName||'My Project';if(state.darkMode)document.documentElement.setAttribute('data-theme','dark');else document.documentElement.removeAttribute('data-theme');document.getElementById('togDark').checked=!!state.darkMode;document.getElementById('togCompact').checked=!!state.compact;if(typeof currentUser!=='undefined'&&currentUser){const _an=(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];if(_an)state.myName=_an;}const sb=document.getElementById('sidebar');if(state.sidebarCollapsed)sb.classList.add('collapsed');else sb.classList.remove('collapsed');}
+if(!state.deptBuckets)state.deptBuckets={acquisition:['To Do','In Progress','Under Review','Complete'],entitlement:['To Do','In Progress','Under Review','Complete'],development:['To Do','In Progress','Under Review','Complete'],legal:['To Do','In Progress','Under Review','Complete']};if(state.scheduleItems&&state.scheduleItems.length){var migProj={id:state.nextProjectId++,name:"Imported Schedule",color:"#2563eb",collapsed:false,tasks:state.scheduleItems.map(function(si){return{id:si.id,name:si.name,startDate:si.startDate,endDate:si.endDate,color:si.color,progress:si.progress||0};})};state.scheduleProjects.push(migProj);delete state.scheduleItems;}state.notes.forEach(n=>{if(n.folderId===undefined)n.folderId=null;if(n.linkedTaskId===undefined)n.linkedTaskId=null;});document.getElementById('projName').value=state.projectName||'My Project';if(state.darkMode)document.documentElement.setAttribute('data-theme','dark');else document.documentElement.removeAttribute('data-theme');document.getElementById('togDark').checked=!!state.darkMode;document.getElementById('togCompact').checked=!!state.compact;if(typeof currentUser!=='undefined'&&currentUser){const _an=(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];if(_an)state.myName=_an;}const sb=document.getElementById('sidebar');if(state.sidebarCollapsed)sb.classList.add('collapsed');else sb.classList.remove('collapsed');}
 // ── Supabase Data Sync (Phase 2) ─────────────────────────────────────────────
 let syncTimer=null,teamWorkspaces=[],currentTeamWorkspaceId=null,realtimeChannel=null;
 
@@ -1841,7 +1844,8 @@ async function switchToTeamWorkspace(id){
   renderWorkspaceTabs();
   var pdfBtn=document.getElementById('pdfExportBtn');if(pdfBtn)pdfBtn.style.display='';
   // Auto-switch to board, or legal view for legal workspaces
-  setView('dashboard');
+  if(state.workspaceType==='legal'){lt_loadFromState();setView('legal');}
+  else{setView('dashboard');}
   // Real-time sync: listen for changes from teammates
   realtimeChannel=_supabase.channel('team_'+id)
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'team_workspaces',filter:'id=eq.'+id},function(payload){
@@ -1910,6 +1914,11 @@ async function createTeamWorkspace(){
   if(btn){btn.disabled=true;btn.textContent='Creating...';}
   try{
     var initState=getDefaultState();initState.projectName=name;
+    var isLegal=document.getElementById('newTeamLegal')&&document.getElementById('newTeamLegal').checked;
+    if(isLegal){
+      initState.workspaceType='legal';
+      initState.legalData={tasks:[],projects:['General'],statuses:['Upcoming','In Progress','Holding Pattern','Complete'],counselTypes:['Internal Counsel','External Counsel','DFW West'],actionTypes:['Drafting','Reviewing'],emailTo:'',emailCc:''};
+    }
     var myDisplayName=state.myName||(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];
     if(myDisplayName&&!initState.teamMembers.includes(myDisplayName))initState.teamMembers.push(myDisplayName);
     if(!initState.memberIds)initState.memberIds={};
@@ -2626,7 +2635,6 @@ let teamDeptTab='acquisition';
 let selectedTeamProject=null;
 let acqSubView='board';
 let entSubView='board';
-let legSubView='board';
 let deptFilter=null;
 function setView(v){if(v==='schedules'&&!hasTeamPlan()){showToast('🔒 Schedules is a Team plan feature.');return;}
 // If leaving dashboard view, restore sidebar
@@ -2656,7 +2664,7 @@ function enterPersonalWorkspace(){
 function render(){document.querySelectorAll('.workspace-tab').forEach(t=>{t.classList.toggle('active',t.dataset.ws===currentWorkspace);});updateFilters();renderSidebarFilters();updateStats();updateFilterChips();updateTodayBadge();renderPresets();updateDashboardNav();// Show/hide chat nav item
 const chatNav=document.getElementById('navChat');if(chatNav){if(currentTeamWorkspaceId)chatNav.classList.remove('hidden');else{chatNav.classList.add('hidden');if(currentView==='chat'){currentView='dashboard';}}}
 updateChatUnread();
-if(currentView==='dashboard')renderDashboard();else if(currentView==='board')renderBoard();else if(currentView==='list')renderList();else if(currentView==='calendar')renderCalendar();else if(currentView==='notes')renderNotesView();else if(currentView==='schedules')renderSchedules();else if(currentView==='chat')renderChat();else if(currentView==='mastercal')renderMasterCalendar();save();}
+if(currentView==='dashboard')renderDashboard();else if(currentView==='board')renderBoard();else if(currentView==='list')renderList();else if(currentView==='calendar')renderCalendar();else if(currentView==='notes')renderNotesView();else if(currentView==='schedules')renderSchedules();else if(currentView==='chat')renderChat();else if(currentView==='legal')lt_render();else if(currentView==='mastercal')renderMasterCalendar();save();}
 function updateDashboardNav(){const navEl=document.getElementById('navDashboard');if(navEl)navEl.classList.remove('hidden');}
 function switchWorkspace(ws){
   if(ws===currentWorkspace&&!currentTeamWorkspaceId){
@@ -2748,7 +2756,32 @@ function calCellDragOver(e){e.preventDefault();}
 function calCellDragEnter(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
 function calCellDragLeave(e){e.currentTarget.classList.remove('drag-over');}
 function calDrop(e,ds){e.preventDefault();e.currentTarget.classList.remove('drag-over');if(calDragTaskId==null)return;var t=state.tasks.find(x=>x.id===calDragTaskId);if(t){var oldDue=t.due||'none';logTaskChange(t,'Due date changed','Calendar drag: '+(oldDue)+' → '+ds);logActivity('Due date changed',t.title+' → '+ds);t.due=ds;calDragTaskId=null;save();renderCalendar();}}
-function openCalDay(ds){var tasks=getFilteredTasks().filter(t=>t.due===ds);var d=new Date(ds+'T00:00:00');document.getElementById('calDayTitle').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});var body=document.getElementById('calDayBody'),html='';if(!tasks.length)html='<div class="cal-day-no-tasks">No tasks on this day</div>';else tasks.forEach(t=>{html+='<div class="cal-day-task '+priClass(t.priority)+'" onclick="closeCalDay();openEditTask('+t.id+')"><div class="cal-day-task-title">'+esc(t.title)+'</div>'+(t.assignee?'<span class="cal-day-task-assignee">'+esc(t.assignee)+'</span>':'')+'<span class="cal-day-task-pri '+priBadge(t.priority)+'" style="background:'+priColor(t.priority)+'">'+esc(t.priority||'Medium')+'</span></div>';});body.innerHTML=html;document.getElementById('calDayModal').classList.add('show');}
+function openCalDay(ds, optDept){
+  // Re-apply dept filter while computing tasks for the popup, since tab
+  // renderers clear deptFilter after rendering.
+  var __prevDept = deptFilter;
+  if(optDept) deptFilter = optDept;
+  var tasks;
+  try { tasks = getFilteredTasks().filter(function(t){return t.due===ds;}); }
+  finally { deptFilter = __prevDept; }
+  var d=new Date(ds+'T00:00:00');
+  document.getElementById('calDayTitle').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  var body=document.getElementById('calDayBody'),html='';
+  if(!tasks.length){
+    html='<div class="cal-day-no-tasks">No tasks on this day</div>';
+  } else {
+    tasks.forEach(function(t){
+      html+='<div class="cal-day-task '+priClass(t.priority)+'" onclick="closeCalDay();openEditTask('+t.id+')">'
+          + '<div class="cal-day-task-title">'+esc(t.title)+'</div>'
+          + (t.assignee?'<span class="cal-day-task-assignee">'+esc(t.assignee)+'</span>':'')
+          + (t.project?'<span class="cal-day-task-assignee" style="background:var(--pri-l);color:var(--pri);padding:1px 6px;border-radius:4px;margin-left:4px">'+esc(t.project)+'</span>':'')
+          + '<span class="cal-day-task-pri '+priBadge(t.priority)+'" style="background:'+priColor(t.priority)+'">'+esc(t.priority||'Medium')+'</span>'
+          + '</div>';
+    });
+  }
+  body.innerHTML=html;
+  document.getElementById('calDayModal').classList.add('show');
+}
 function closeCalDay(){document.getElementById('calDayModal').classList.remove('show');}
 function openMasterCalDay(ds,tasksJSON){
   var tasks=JSON.parse(decodeURIComponent(tasksJSON));
@@ -4770,35 +4803,48 @@ function renderListInto(headId,bodyId){
 }
 
 function renderCalendarInto(el){
-  var tasks=getFilteredTasks();
+  // Capture current dept context so the day-expand modal can re-apply it.
+  // (deptFilter is cleared at the END of the tab renderer, but the expansion
+  //  opens later via onclick, so we must hand the dept down via the click args.)
+  var __calDept = deptFilter || null;
+  var tasks = getFilteredTasks();
   var now=new Date();
   var year=now.getFullYear();var month=now.getMonth();
   var daysInMonth=new Date(year,month+1,0).getDate();
   var monthName=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
   var todayS=todayStr();
-  // Mon-Fri only: find weekday offset for first weekday of month (Mon=0 ... Fri=4)
   var firstDow=new Date(year,month,1).getDay(); // 0=Sun
-  var monOffset=firstDow===0?0:(firstDow-1); // blank cells before first Mon
-  // But we skip weekends entirely — collect only weekday cells
   var html='<div class="cal-header"><h2>'+monthName+'</h2></div>'+
     '<div class="cal-grid" style="grid-template-columns:repeat(5,1fr)">';
   ['Mon','Tue','Wed','Thu','Fri'].forEach(function(d){html+='<div class="cal-day-hdr">'+d+'</div>';});
-  // Leading blank cells (Mon offset)
-  var monOff=(firstDow+6)%7; // Mon=0,Tue=1,...,Fri=4,Sat=5,Sun=6
+  // Leading blank cells (Mon offset: Mon=0,...,Fri=4,Sat=5,Sun=6)
+  var monOff=(firstDow+6)%7;
   for(var i=0;i<Math.min(monOff,5);i++)html+='<div class="cal-cell outside"></div>';
+  var MAX_VISIBLE = 10;
   for(var d=1;d<=daysInMonth;d++){
     var dow=new Date(year,month,d).getDay();
     if(dow===0||dow===6)continue; // skip weekends
     var ds=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     var dayTasks=tasks.filter(function(t){return t.due===ds;});
     var isToday=ds===todayS;
-    html+='<div class="cal-cell'+(isToday?' today':'')+'">';
+    var deptArg = __calDept ? ",'"+__calDept+"'" : "";
+    html+='<div class="cal-cell'+(isToday?' today':'')+'" style="cursor:pointer" '
+        + 'onclick="openCalDay(\''+ds+'\''+deptArg+')" title="Click to see all '+dayTasks.length+' task(s)">';
     html+='<div class="cal-date">'+(isToday?'<span class="today-num">'+d+'</span>':d)+'</div>';
     html+='<div class="cal-tasks">';
-    dayTasks.slice(0,4).forEach(function(t){
-      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" onclick="openEditTask('+t.id+')" title="'+esc(t.title||'')+'">'+esc((t.title||'').substring(0,24))+'</div>';
+    dayTasks.slice(0,MAX_VISIBLE).forEach(function(t){
+      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" '
+          + 'style="cursor:pointer" '
+          + 'onclick="event.stopPropagation();openEditTask('+t.id+')" '
+          + 'title="'+esc(t.title||'')+'">'
+          + esc((t.title||'').substring(0,24))+'</div>';
     });
-    if(dayTasks.length>4)html+='<div class="cal-expand-btn" onclick="openCalDay(\''+ds+'\')" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-4)+' more</div>';
+    if(dayTasks.length>MAX_VISIBLE){
+      html+='<div class="cal-expand-btn" '
+          + 'onclick="event.stopPropagation();openCalDay(\''+ds+'\''+deptArg+')" '
+          + 'style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'
+          + (dayTasks.length-MAX_VISIBLE)+' more</div>';
+    }
     html+='</div></div>';
   }
   html+='</div>';
@@ -4917,7 +4963,7 @@ function migrateTasksToEntitlements(){
 }
 
 function openBucketEditor(deptKey){
-  if(!state.deptBuckets)state.deptBuckets={acquisition:['To Do','In Progress','Under Review','Complete'],entitlement:['To Do','In Progress','Under Review','Complete'],development:['To Do','In Progress','Under Review','Complete'],legal:['Internal Counsel','External Counsel','Completed']};
+  if(!state.deptBuckets)state.deptBuckets={acquisition:['To Do','In Progress','Under Review','Complete'],entitlement:['To Do','In Progress','Under Review','Complete'],development:['To Do','In Progress','Under Review','Complete'],legal:['To Do','In Progress','Under Review','Complete']};
   var buckets=state.deptBuckets[deptKey]||['To Do','In Progress','Under Review','Complete'];
   var deptLabel=deptKey.charAt(0).toUpperCase()+deptKey.slice(1);
   var body='<p style="font-size:13px;color:var(--text2);margin-bottom:12px">Enter up to 6 bucket/column names for the '+deptLabel+' board, one per line:</p>'+
@@ -4967,93 +5013,26 @@ function renderDevelopmentTab(el){
 }
 
 function renderLegalTab(el){
-  deptFilter='Legal';
-  // Ensure Legal department buckets are seeded
-  if(!state.deptBuckets) state.deptBuckets = {};
-  if(!Array.isArray(state.deptBuckets.legal) || state.deptBuckets.legal.length === 0){
-    state.deptBuckets.legal = ['Internal Counsel','External Counsel','Completed'];
+  // Project filter header
+  // The legal view renders into a dedicated div that lt_renderView expects
+  var legalDiv=document.getElementById('legalView');
+  if(!legalDiv){
+    legalDiv=document.createElement('div');
+    legalDiv.id='legalView';
+    legalDiv.style.flex='1';
+    legalDiv.style.display='flex';
+    legalDiv.style.flexDirection='column';
+    legalDiv.style.minHeight='0';
+    legalDiv.style.overflow='hidden';
   }
-  // One-time migration: pull any Legal Tracker tasks into state.tasks as department='Legal'
-  if(state.legalData && Array.isArray(state.legalData.tasks) && state.legalData.tasks.length && !state.__legalMigrated){
-    try{
-      var legalBuckets = state.deptBuckets.legal;
-      var maxId = (state.tasks||[]).reduce(function(m,t){ return (typeof t.id==='number' && t.id>m) ? t.id : m; }, state.nextId||0);
-      var migrated = 0;
-      state.legalData.tasks.forEach(function(lt){
-        if(!lt) return;
-        var statusLower  = (lt.status||'').toString().toLowerCase();
-        var counselLower = (lt.counsel||'').toString().toLowerCase();
-        var bucket;
-        if(statusLower.indexOf('complete')>=0 || statusLower.indexOf('done')>=0 || statusLower.indexOf('filed')>=0){
-          bucket = 'Completed';
-        } else if(counselLower.indexOf('external')>=0 || counselLower.indexOf('outside')>=0){
-          bucket = 'External Counsel';
-        } else {
-          bucket = 'Internal Counsel';
-        }
-        if(legalBuckets.indexOf(bucket) === -1) bucket = legalBuckets[0];
-        var labels = [];
-        if(lt.counsel) labels.push(String(lt.counsel));
-        if(lt.action)  labels.push(String(lt.action));
-        if(lt.status)  labels.push(String(lt.status));
-        maxId += 1;
-        state.tasks.push({
-          id: maxId,
-          title: lt.name || lt.title || 'Untitled Legal Task',
-          assignee: lt.assignee || '',
-          bucket: bucket,
-          due: lt.due || '',
-          priority: lt.priority || 'Medium',
-          pct: (statusLower.indexOf('complete')>=0 || statusLower.indexOf('done')>=0 || statusLower.indexOf('filed')>=0) ? 100 : 0,
-          notes: lt.notes || '',
-          labels: labels,
-          checklist: [],
-          filePath: '',
-          department: 'Legal',
-          project: lt.project || '',
-          created: lt.created || new Date().toISOString().split('T')[0],
-          history: [{ ts: new Date().toISOString(), action: 'Migrated', detail: 'Imported from Legal Tracker' }]
-        });
-        migrated += 1;
-      });
-      if(migrated > 0){
-        state.nextId = maxId + 1;
-        state.__legalMigrated = true;
-        if(typeof save==='function') save();
-        if(typeof showToast==='function') showToast('Imported ' + migrated + ' legal tracker task(s) into the Legal board.');
-      } else {
-        state.__legalMigrated = true;
-      }
-    } catch(e){ console.warn('[Legal migration] failed', e); }
-  }
-
-  var subNav='<div class="dept-sub-nav">'+
-    '<button class="dept-sub-btn'+(legSubView==='board'?' active':'')+'" onclick="legSubView=\'board\';renderDashboard()">⊞ Board</button>'+
-    '<button class="dept-sub-btn'+(legSubView==='list'?' active':'')+'" onclick="legSubView=\'list\';renderDashboard()">≡ List</button>'+
-    '<button class="dept-sub-btn'+(legSubView==='calendar'?' active':'')+'" onclick="legSubView=\'calendar\';renderDashboard()">◻ Calendar</button>'+
-    '<button class="dept-sub-btn" style="margin-left:auto" onclick="openBucketEditor(\'legal\')" title="Edit bucket columns">⚙ Buckets</button>'+
-  '</div>';
-  el.innerHTML=subNav+'<div id="legViewContainer" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;min-height:400px;"></div>';
-  el.style.display='flex';el.style.flexDirection='column';el.style.flex='1';el.style.minHeight='0';el.style.overflow='hidden';
-  var container=document.getElementById('legViewContainer');
-  if(legSubView==='board'){
-    container.style.overflow='hidden';
-    var boardEl=document.createElement('div');boardEl.className='board';boardEl.id='legBoardView';
-    container.appendChild(boardEl);
-    renderBoardInto(boardEl);
-  } else if(legSubView==='list'){
-    container.style.overflow='auto';
-    var listEl=document.createElement('div');listEl.className='list-view';listEl.style.display='block';
-    listEl.innerHTML='<table><thead><tr id="legListHead"></tr></thead><tbody id="legListBody"></tbody></table>';
-    container.appendChild(listEl);
-    renderListInto('legListHead','legListBody');
-  } else if(legSubView==='calendar'){
-    container.style.overflow='auto';
-    var calEl=document.createElement('div');calEl.className='calendar-view';calEl.style.display='flex';calEl.style.flexDirection='column';
-    container.appendChild(calEl);
-    renderCalendarInto(calEl);
-  }
-  deptFilter=null;
+  el.style.display='flex';
+  el.style.flexDirection='column';
+  el.style.flex='1';
+  el.style.overflow='hidden';
+  el.innerHTML='';
+  el.appendChild(legalDiv);
+  if(typeof lt_loadFromState==='function')lt_loadFromState();
+  if(typeof lt_renderView==='function')lt_renderView();
 }
 
 function renderSummaryTab(el){

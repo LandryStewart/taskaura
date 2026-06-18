@@ -4757,25 +4757,32 @@ function renderCalendarInto(el){
   var tasks=getFilteredTasks();
   var now=new Date();
   var year=now.getFullYear();var month=now.getMonth();
-  var firstDay=new Date(year,month,1).getDay();
   var daysInMonth=new Date(year,month+1,0).getDate();
   var monthName=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
   var todayS=todayStr();
+  // Mon-Fri only: find weekday offset for first weekday of month (Mon=0 ... Fri=4)
+  var firstDow=new Date(year,month,1).getDay(); // 0=Sun
+  var monOffset=firstDow===0?0:(firstDow-1); // blank cells before first Mon
+  // But we skip weekends entirely — collect only weekday cells
   var html='<div class="cal-header"><h2>'+monthName+'</h2></div>'+
-    '<div class="cal-grid">';
-  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(function(d){html+='<div class="cal-day-hdr">'+d+'</div>';});
-  for(var i=0;i<firstDay;i++)html+='<div class="cal-cell outside"></div>';
+    '<div class="cal-grid" style="grid-template-columns:repeat(5,1fr)">';
+  ['Mon','Tue','Wed','Thu','Fri'].forEach(function(d){html+='<div class="cal-day-hdr">'+d+'</div>';});
+  // Leading blank cells (Mon offset)
+  var monOff=(firstDow+6)%7; // Mon=0,Tue=1,...,Fri=4,Sat=5,Sun=6
+  for(var i=0;i<Math.min(monOff,5);i++)html+='<div class="cal-cell outside"></div>';
   for(var d=1;d<=daysInMonth;d++){
+    var dow=new Date(year,month,d).getDay();
+    if(dow===0||dow===6)continue; // skip weekends
     var ds=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     var dayTasks=tasks.filter(function(t){return t.due===ds;});
     var isToday=ds===todayS;
     html+='<div class="cal-cell'+(isToday?' today':'')+'">';
     html+='<div class="cal-date">'+(isToday?'<span class="today-num">'+d+'</span>':d)+'</div>';
     html+='<div class="cal-tasks">';
-    dayTasks.slice(0,3).forEach(function(t){
-      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" onclick="openTask('+t.id+')" title="'+esc(t.title||'')+'">'+esc((t.title||'').substring(0,22))+'</div>';
+    dayTasks.slice(0,4).forEach(function(t){
+      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" onclick="openEditTask('+t.id+')" title="'+esc(t.title||'')+'">'+esc((t.title||'').substring(0,24))+'</div>';
     });
-    if(dayTasks.length>3)html+='<div class="cal-expand-btn" onclick="(function(ds){var all=getFilteredTasks().filter(function(t){return t.due===ds;});if(all.length)openTask(all[3].id);})(\''+ds+'\')" style="cursor:pointer">+'+(dayTasks.length-3)+' more</div>';
+    if(dayTasks.length>4)html+='<div class="cal-expand-btn" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-4)+' more</div>';
     html+='</div></div>';
   }
   html+='</div>';
@@ -5041,11 +5048,12 @@ function generatePDFSummary(){
   doc.setFontSize(10);doc.setFont(undefined,'normal');
   doc.text('Generated: '+todayStr2,14,25);
 
-  // Collect dev tab items with priority from devData
+  // Collect dev tab items with priority from devData (load from state if not in Dev tab)
   var devPriorityRows=[];
-  if(typeof devData!=='undefined'&&devData){
+  var _pdfDevData=(typeof devData!=='undefined'&&devData)?devData:(state.developmentData||null);
+  if(_pdfDevData){
     // Project schedule items with priority
-    (devData.projects||[]).forEach(function(p){
+    (_pdfDevData.projects||[]).forEach(function(p){
       if(selectedTeamProject&&p.name!==selectedTeamProject)return;
       (p.schedule||[]).forEach(function(s){
         if(!s.priority&&s.status==='not-started')return; // skip unprioritized not-started
@@ -5064,8 +5072,8 @@ function generatePDFSummary(){
       });
     });
     // NonProject sections with priority
-    Object.keys(devData.nonProject||{}).forEach(function(key){
-      (devData.nonProject[key]||[]).forEach(function(item){
+    Object.keys(_pdfDevData.nonProject||{}).forEach(function(key){
+      (_pdfDevData.nonProject[key]||[]).forEach(function(item){
         if(!item.priority||item.priority==='low')return;
         devPriorityRows.push({
           project:key.replace(/([A-Z])/g,' $1').replace(/^./,function(s){return s.toUpperCase();}),
@@ -5152,11 +5160,14 @@ function renderMasterCalendar(){
   var monthName=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
   var todayStr3=now.toISOString().split('T')[0];
 
+  var monOff=(firstDay+6)%7; // Mon=0,...,Fri=4,Sat=5,Sun=6
   var html='<div class="cal-header"><h2>🗓 Master Calendar — '+monthName+'</h2></div>';
-  html+='<div class="cal-grid">';
-  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(function(d){html+='<div class="cal-day-hdr">'+d+'</div>';});
-  for(var i=0;i<firstDay;i++)html+='<div class="cal-cell outside"></div>';
+  html+='<div class="cal-grid" style="grid-template-columns:repeat(5,1fr)">';
+  ['Mon','Tue','Wed','Thu','Fri'].forEach(function(d){html+='<div class="cal-day-hdr">'+d+'</div>';});
+  for(var i=0;i<Math.min(monOff,5);i++)html+='<div class="cal-cell outside"></div>';
   for(var d=1;d<=daysInMonth;d++){
+    var dow=new Date(year,month,d).getDay();
+    if(dow===0||dow===6)continue; // skip weekends
     var dateStr=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     var dayTasks=allTasks.filter(function(t){return t.due===dateStr;});
     var isToday=dateStr===todayStr3;
@@ -5164,12 +5175,12 @@ function renderMasterCalendar(){
       '<div class="cal-date">'+(isToday?'<span class="today-num">'+d+'</span>':d)+'</div>'+
       '<div class="cal-tasks">';
     dayTasks.slice(0,3).forEach(function(t){
-      html+='<div class="cal-task" style="cursor:pointer" title="'+esc(t.title||t.text||'')+'" onclick="openTask('+t.id+')">'+
+      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" title="'+esc(t.title||t.text||'')+'" onclick="openEditTask('+t.id+')">'+
         '<span style="font-size:9px;background:var(--pri);color:#fff;padding:1px 4px;border-radius:3px;margin-right:3px;flex-shrink:0">'+esc(t._wsLabel)+'</span>'+
         esc((t.title||t.text||'').substring(0,20))+
       '</div>';
     });
-    if(dayTasks.length>3)html+='<div class="cal-expand-btn" style="cursor:pointer">+'+(dayTasks.length-3)+' more</div>';
+    if(dayTasks.length>3)html+='<div class="cal-expand-btn" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-3)+' more</div>';
     html+='</div></div>';
   }
   html+='</div>';

@@ -6415,6 +6415,8 @@ function dev_wxEnsureSettings() {
   }
   #btnMoveToTeamOpen:hover{opacity:.92;transform:translateY(-1px);}
   #btnMoveToTeamOpen.hidden{display:none;}
+  #moveToTeamModal{z-index:10050 !important;}
+  #moveToTeamModal.show{display:flex !important;}
 </style>
 
 <div class="modal-overlay" id="moveToTeamModal">
@@ -6524,6 +6526,7 @@ function dev_wxEnsureSettings() {
   }
 
   window.openMoveToTeam = function(){
+    console.log('[Move to Team] openMoveToTeam called. editingId=', (typeof editingId!=='undefined'?editingId:'(undef)'), 'currentTeamWorkspaceId=', (typeof currentTeamWorkspaceId!=='undefined'?currentTeamWorkspaceId:'(undef)'));
     if(typeof editingId==='undefined' || editingId===null){
       _toast('Save the task first, then use Move to Team.');
       return;
@@ -6566,11 +6569,14 @@ function dev_wxEnsureSettings() {
 
       window.__mttRefreshProjects();
     }
-    _qs('moveToTeamModal').classList.add('show');
+    var mttEl=_qs('moveToTeamModal'); mttEl.style.zIndex='10050'; mttEl.style.display='flex'; console.log('[Move to Team] showing modal');
+    mttEl.classList.add('show');
   };
 
   window.closeMoveToTeamModal = function(){
-    _qs('moveToTeamModal').classList.remove('show');
+    var mttEl=_qs('moveToTeamModal');
+    mttEl.classList.remove('show');
+    mttEl.style.display='';
   };
 
   function getSelectedTeam(){
@@ -6735,6 +6741,7 @@ function dev_wxEnsureSettings() {
     btn.innerHTML = '&#128101; Move to Team &rarr;';
     btn.title = 'Move this task into a team workspace';
     btn.onclick = function(ev){ ev.preventDefault(); window.openMoveToTeam(); };
+    btn.addEventListener('click', function(ev){ ev.preventDefault(); ev.stopPropagation(); console.log('[Move to Team] button clicked'); window.openMoveToTeam(); });
     footer.insertBefore(btn, footer.firstChild);
   }
 

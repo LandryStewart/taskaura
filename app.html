@@ -4721,8 +4721,15 @@ function renderBoardInto(el){
   var tasks=getFilteredTasks();
   var deptKey=teamDeptTab==='acquisition'?'acquisition':teamDeptTab==='entitlement'?'entitlement':teamDeptTab==='development'?'development':'legal';
   var buckets=(state.deptBuckets&&state.deptBuckets[deptKey])||['To Do','In Progress','Under Review','Complete'];
-  var html=buckets.map(function(b){
-    var bTasks=tasks.filter(function(t){return(t.bucket||'To Do')===b;});
+  var html=buckets.map(function(b,bi){
+    var bTasks=tasks.filter(function(t){
+      var tb=t.bucket||'';
+      // If task's bucket matches this column, show it here
+      if(tb===b)return true;
+      // If task's bucket doesn't exist in dept bucket list at all, put it in first column
+      if(bi===0&&!buckets.includes(tb))return true;
+      return false;
+    });
     return'<div class="bucket">'+
       '<div class="bucket-hdr"><span class="bucket-title">'+esc(b)+'</span><span class="bucket-count">'+bTasks.length+'</span></div>'+
       '<div class="bucket-cards" ondragover="dragOver(event)" ondrop="drop(event,\''+esc(b)+'\')">'+bTasks.map(function(t){return cardHTML(t);}).join('')+'</div>'+

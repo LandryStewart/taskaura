@@ -997,6 +997,50 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .lt-gh-settings{background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.18);padding:16px;width:380px;max-width:92vw;position:absolute;top:56px;right:16px;z-index:200;display:none;}
 .lt-ws-tab{background:linear-gradient(135deg,#1a3c2a,#16a34a);color:#fff;border:none;font-weight:800;font-size:11px;letter-spacing:.3px;padding:6px 14px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s;white-space:nowrap;}
 .lt-ws-tab:hover{box-shadow:0 2px 8px rgba(22,163,74,.4);transform:translateY(-1px);}
+/* Department tabs */
+.dept-tabs{display:flex;align-items:center;gap:4px;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--border);flex-wrap:wrap;flex-shrink:0;}
+.dept-tabs button{padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;transition:all .15s;}
+.dept-tabs button:hover{background:var(--pri-l);border-color:var(--pri);color:var(--pri);}
+.dept-tabs button.active{background:var(--pri);color:#fff;border-color:var(--pri);}
+.dept-tabs button.summary-tab{margin-left:auto;}
+/* Team sidebar project list */
+.team-proj-list{display:flex;flex-direction:column;gap:4px;padding:8px 12px;}
+.team-proj-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;font-size:13px;cursor:pointer;color:var(--text2);transition:all .15s;}
+.team-proj-item:hover{background:var(--pri-l);color:var(--text);}
+.team-proj-item.active{background:var(--pri);color:#fff;}
+/* Sidebar team-dashboard-mode hides non-project elements */
+.sidebar.team-dashboard-mode .sidebar-filter,
+.sidebar.team-dashboard-mode .sidebar-presets,
+.sidebar.team-dashboard-mode #sidebarFilterContainer,
+.sidebar.team-dashboard-mode #sidebarPresets{display:none!important;}
+/* Department kanban */
+.dept-proj-section{padding:14px;border-bottom:1px solid var(--border);}
+.dept-proj-header{font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;padding:6px 10px;background:var(--pri-l);border-left:4px solid var(--pri);border-radius:4px;}
+.dept-kanban{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;}
+.dept-bucket{min-width:240px;background:var(--bg);border-radius:8px;border:1px solid var(--border);}
+.dept-bucket-hdr{padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.dept-bucket-cards{padding:8px;display:flex;flex-direction:column;gap:6px;min-height:60px;}
+.dept-card{background:var(--card);border-radius:6px;padding:8px 10px;border-left:4px solid var(--border);box-shadow:var(--shadow);cursor:pointer;font-size:12px;}
+.dept-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.1);}
+.dept-card-title{font-weight:600;margin-bottom:4px;font-size:13px;}
+.dept-card-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:11px;color:var(--text2);}
+/* Development tab table */
+.dev-table-wrap{padding:14px;overflow-x:auto;}
+.dev-table{width:100%;border-collapse:collapse;font-size:13px;background:var(--card);border-radius:8px;overflow:hidden;box-shadow:var(--shadow);}
+.dev-table th{background:var(--pri-d);color:#fff;padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+.dev-table td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
+.dev-table tr:hover td{background:var(--pri-l);}
+.dev-overdue-cell{color:var(--crit);font-weight:700;}
+.sync-indicator{font-size:11px;color:var(--text2);padding:6px 14px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;}
+.auto-sync-badge{font-size:11px;color:var(--low);font-weight:600;}
+/* Summary tab */
+.summary-panels{display:flex;gap:14px;padding:14px;flex-wrap:wrap;}
+.summary-panel{flex:1;min-width:220px;background:var(--card);border-radius:8px;padding:16px;border:1px solid var(--border);box-shadow:var(--shadow);}
+.summary-panel h3{font-size:14px;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.summary-stat-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;}
+.summary-due-section{padding:0 14px 14px;}
+.summary-due-section h3{font-size:14px;font-weight:700;margin-bottom:10px;}
+.summary-due-item{padding:8px 10px;border-left:4px solid var(--high);background:var(--card);border-radius:4px;margin-bottom:6px;font-size:12px;}
 </style>
 <script src="/vendor/supabase.js"></script>
 <script src="/vendor/jspdf.umd.min.js"></script>
@@ -1042,6 +1086,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
  <div class="topbar-search"><span>🔍</span><input type="search" id="searchBox" placeholder="Search tasks..." oninput="applyFilters()"></div>
  <div class="spacer"></div>
  <span id="todayBadge" class="today-badge" style="display:none;" title="Tasks due today">0 today</span>
+ <button class="top-btn" id="pdfExportBtn" onclick="generatePDFSummary()" style="display:none">📄 Export PDF</button>
  <button class="top-btn accent" onclick="openNewTask()">＋ New Task</button>
  <button class="top-btn" onclick="openSettings()">⚙</button>
  <button class="top-btn" onclick="openShortcuts()" title="Keyboard shortcuts">?</button>
@@ -1062,6 +1107,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
    <div class="nav-item" id="navNotes" onclick="setView('notes')"><span class="nav-icon">◱</span><span>Notes</span></div>
    <div class="nav-item" id="navSchedules" onclick="setView('schedules')"><span class="nav-icon">◫</span><span>Schedules</span></div>
    <div class="nav-item hidden" id="navChat" onclick="setView('chat')"><span class="nav-icon">💬</span><span>Team Chat</span><span class="nav-unread hidden" id="chatUnreadDot"></span></div>
+   <div class="nav-item" id="navMastercal" onclick="setView('mastercal')"><span class="nav-icon">🗓</span><span>Master Calendar</span></div>
 </div>
   <div class="sidebar-section">
    <div class="sidebar-section-title">Filters</div>
@@ -1091,7 +1137,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
    <button class="filter-clear-all" onclick="clearFilters()">Clear All</button>
   </div>
   <div class="stats-bar-container" id="statsBar"></div>
-  <div class="dashboard-view" id="dashboardView"></div>
+  <div class="dashboard-view" id="dashboardView" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;"></div>
   <div class="board" id="boardView"></div>
   <div class="list-view" id="listView"><table><thead><tr id="listHead"></tr></thead><tbody id="listBody"></tbody></table></div>
   <div class="calendar-view" id="calendarView">
@@ -1128,6 +1174,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
   <div class="schedules-view" id="schedulesView"></div>
   <div class="chat-view" id="chatView"></div>
   <div class="legal-view" id="legalView"></div>
+  <div class="calendar-view" id="masterCalView" style="flex-direction:column;display:none;"></div>
  </div>
 </div>
 </div>
@@ -1148,7 +1195,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 <div class="modal-overlay" id="scheduleModal"><div class="modal" style="width:420px"><div class="modal-hdr"><h2 id="scheduleModalTitle">Add Task</h2><button class="modal-close" onclick="closeScheduleModal()">×</button></div><div class="modal-body"><input type="hidden" id="sProjectId" value=""><div><label>Task Name *</label><input type="text" id="sName" placeholder="e.g. Site Grading..."></div><div class="modal-row"><div><label>Start Date</label><input type="date" id="sStart"></div><div><label>End Date</label><input type="date" id="sEnd"></div></div><div class="modal-row"><div><label>Color</label><input type="color" id="sColor" value="#2563eb"></div><div><label>Progress %</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="sProg" min="0" max="100" value="0" oninput="document.getElementById('sProgVal').textContent=this.value+'%'" style="flex:1"><span id="sProgVal" style="font-size:13px;font-weight:600;min-width:32px">0%</span></div></div></div></div><div class="modal-footer"><button class="btn-delete hidden" id="btnDeleteSchedule" onclick="deleteScheduleTask()">Delete</button><button class="btn-cancel" onclick="closeScheduleModal()">Cancel</button><button class="btn-save" onclick="saveScheduleTask()">Save</button></div></div></div>
 <div class="cal-day-modal" id="calDayModal"><div class="cal-day-panel"><div class="cal-day-panel-hdr"><h3 id="calDayTitle"></h3><button class="cal-day-panel-close" onclick="closeCalDay()">×</button></div><div class="cal-day-panel-body" id="calDayBody"></div></div></div>
 <div class="modal-overlay" id="taskModal"><div class="modal"><div class="modal-hdr"><div><h2 id="modalTitle">New Task</h2><div class="modal-breadcrumb" id="modalBreadcrumb"></div></div><button class="modal-close" onclick="closeTaskModal()">×</button></div><div class="modal-body"><div><label>Task Title *</label><input type="text" id="mTitle" placeholder="Enter task title..."></div><datalist id="assigneeList"></datalist>
-<div class="modal-row"><div><label>Assignee</label><input type="text" id="mAssignee" placeholder="Name" list="assigneeList" autocomplete="off"></div><div><label>Bucket</label><select id="mBucket"></select></div></div><div class="modal-row"><div><label>Due Date</label><input type="date" id="mDue"></div><div><label>Priority</label><select id="mPriority"><option value="Medium">Medium</option><option value="Critical">Critical</option><option value="High">High</option><option value="Low">Low</option></select></div></div><div class="modal-row"><div><label>% Complete</label><div style="display:flex;align-items:center;gap:10px"><input type="range" id="mPct" min="0" max="100" value="0" oninput="document.getElementById('mPctVal').textContent=this.value+'%'" style="flex:1"><span id="mPctVal" style="font-size:13px;font-weight:600;min-width:36px">0%</span></div></div></div><div><label>Labels</label><div class="label-chips" id="mLabels"></div></div><div><label>Description / Notes</label><textarea id="mNotes" placeholder="Add details..."></textarea></div><div><label>FILE PATH</label>
+<div class="modal-row"><div><label>Assignee</label><input type="text" id="mAssignee" placeholder="Name" list="assigneeList" autocomplete="off"></div><div><label>Bucket</label><select id="mBucket"></select></div></div><div class="modal-row"><div><label>Due Date</label><input type="date" id="mDue"></div><div><label>Priority</label><select id="mPriority"><option value="Medium">Medium</option><option value="Critical">Critical</option><option value="High">High</option><option value="Low">Low</option></select></div></div><div class="modal-row"><div><label>Department</label><select id="mDepartment"><option value="General">General</option><option value="Acquisition">Acquisition</option><option value="Entitlements">Entitlements</option><option value="Development">Development</option><option value="Legal">Legal</option></select></div><div><label>Actual Date</label><input type="date" id="mActualDate"></div></div><div class="modal-row"><div><label>% Complete</label><div style="display:flex;align-items:center;gap:10px"><input type="range" id="mPct" min="0" max="100" value="0" oninput="document.getElementById('mPctVal').textContent=this.value+'%'" style="flex:1"><span id="mPctVal" style="font-size:13px;font-weight:600;min-width:36px">0%</span></div></div></div><div><label>Labels</label><div class="label-chips" id="mLabels"></div></div><div><label>Description / Notes</label><textarea id="mNotes" placeholder="Add details..."></textarea></div><div><label>FILE PATH</label>
 <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">
 <input id="mFilePath" class="form-control" placeholder="e.g. R:\DFW\b. Active\Saddleside..." style="flex:1;">
 <button type="button" class="btn-fp" onclick="copyFilePath()" title="Copy to clipboard">Copy</button>
@@ -1438,7 +1485,7 @@ function migrateWorkspaces(){let allWs=JSON.parse(localStorage.getItem('wm_works
 let state=getDefaultState();
 let _cloudLoaded=false;
 function save(){if(!_cloudLoaded)return;state.projectName=document.getElementById('projName').value;state._lastSaved=new Date().toISOString();let allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');allWs[currentWorkspace]=state;localStorage.setItem('wm_workspaces',JSON.stringify(allWs));localStorage.setItem('wm_state',JSON.stringify(state));if(currentTeamWorkspaceId){const tw=teamWorkspaces.find(w=>w.id===currentTeamWorkspaceId);if(tw)tw.data=JSON.parse(JSON.stringify(state));}debouncedCloudSave();}
-function load(){var allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');if(allWs[currentWorkspace]){state=JSON.parse(JSON.stringify(allWs[currentWorkspace]));}else{state=getDefaultState();}if(!state.notes)state.notes=[];if(!state.nextNoteId)state.nextNoteId=1;if(!state.folders)state.folders=[];if(!state.nextFolderId)state.nextFolderId=1;if(!state.filterPresets)state.filterPresets=[];if(state.sidebarCollapsed===undefined)state.sidebarCollapsed=false;if(!state.scheduleProjects)state.scheduleProjects=[];if(!state.nextProjectId)state.nextProjectId=1;if(!state.nextScheduleTaskId)state.nextScheduleTaskId=1;if(!state.teamMembers)state.teamMembers=[];if(!state.collapsedBuckets)state.collapsedBuckets=[];if(!state.chatMessages)state.chatMessages=[];if(!state.activityLog)state.activityLog=[];state.tasks.forEach(function(t){if(!t.history)t.history=[];});if(state.scheduleItems&&state.scheduleItems.length){var migProj={id:state.nextProjectId++,name:"Imported Schedule",color:"#2563eb",collapsed:false,tasks:state.scheduleItems.map(function(si){return{id:si.id,name:si.name,startDate:si.startDate,endDate:si.endDate,color:si.color,progress:si.progress||0};})};state.scheduleProjects.push(migProj);delete state.scheduleItems;}state.notes.forEach(n=>{if(n.folderId===undefined)n.folderId=null;if(n.linkedTaskId===undefined)n.linkedTaskId=null;});document.getElementById('projName').value=state.projectName||'My Project';if(state.darkMode)document.documentElement.setAttribute('data-theme','dark');else document.documentElement.removeAttribute('data-theme');document.getElementById('togDark').checked=!!state.darkMode;document.getElementById('togCompact').checked=!!state.compact;if(typeof currentUser!=='undefined'&&currentUser){const _an=(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];if(_an)state.myName=_an;}const sb=document.getElementById('sidebar');if(state.sidebarCollapsed)sb.classList.add('collapsed');else sb.classList.remove('collapsed');}
+function load(){var allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');if(allWs[currentWorkspace]){state=JSON.parse(JSON.stringify(allWs[currentWorkspace]));}else{state=getDefaultState();}if(!state.notes)state.notes=[];if(!state.nextNoteId)state.nextNoteId=1;if(!state.folders)state.folders=[];if(!state.nextFolderId)state.nextFolderId=1;if(!state.filterPresets)state.filterPresets=[];if(state.sidebarCollapsed===undefined)state.sidebarCollapsed=false;if(!state.scheduleProjects)state.scheduleProjects=[];if(!state.nextProjectId)state.nextProjectId=1;if(!state.nextScheduleTaskId)state.nextScheduleTaskId=1;if(!state.teamMembers)state.teamMembers=[];if(!state.collapsedBuckets)state.collapsedBuckets=[];if(!state.chatMessages)state.chatMessages=[];if(!state.activityLog)state.activityLog=[];state.tasks.forEach(function(t){if(!t.history)t.history=[];});(state.tasks||[]).forEach(function(t){if(!t.priority)t.priority='Medium';if(!t.department)t.department='General';});if(state.scheduleItems&&state.scheduleItems.length){var migProj={id:state.nextProjectId++,name:"Imported Schedule",color:"#2563eb",collapsed:false,tasks:state.scheduleItems.map(function(si){return{id:si.id,name:si.name,startDate:si.startDate,endDate:si.endDate,color:si.color,progress:si.progress||0};})};state.scheduleProjects.push(migProj);delete state.scheduleItems;}state.notes.forEach(n=>{if(n.folderId===undefined)n.folderId=null;if(n.linkedTaskId===undefined)n.linkedTaskId=null;});document.getElementById('projName').value=state.projectName||'My Project';if(state.darkMode)document.documentElement.setAttribute('data-theme','dark');else document.documentElement.removeAttribute('data-theme');document.getElementById('togDark').checked=!!state.darkMode;document.getElementById('togCompact').checked=!!state.compact;if(typeof currentUser!=='undefined'&&currentUser){const _an=(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0];if(_an)state.myName=_an;}const sb=document.getElementById('sidebar');if(state.sidebarCollapsed)sb.classList.add('collapsed');else sb.classList.remove('collapsed');}
 // ── Supabase Data Sync (Phase 2) ─────────────────────────────────────────────
 let syncTimer=null,teamWorkspaces=[],currentTeamWorkspaceId=null,realtimeChannel=null;
 
@@ -1567,9 +1614,10 @@ async function switchToTeamWorkspace(id){
   document.getElementById('togDark').checked=!!state.darkMode;
   document.getElementById('togCompact').checked=!!state.compact;
   renderWorkspaceTabs();
+  var pdfBtn=document.getElementById('pdfExportBtn');if(pdfBtn)pdfBtn.style.display='';
   // Auto-switch to board, or legal view for legal workspaces
   if(state.workspaceType==='legal'){lt_loadFromState();setView('legal');}
-  else{setView('board');}
+  else{setView('dashboard');}
   // Real-time sync: listen for changes from teammates
   realtimeChannel=_supabase.channel('team_'+id)
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'team_workspaces',filter:'id=eq.'+id},function(payload){
@@ -1889,68 +1937,32 @@ function renderDashboard(){
   const el=document.getElementById('dashboardView');if(!el)return;
   if(!currentTeamWorkspaceId){renderPersonalDashboard(el);return;}
 
-  const tw=teamWorkspaces.find(w=>w.id===currentTeamWorkspaceId);
-  const wsName=tw?tw.name:'Team Workspace';
-  const tasks=state.tasks||[];
-  const total=tasks.length;
-  const completed=tasks.filter(t=>t.pct>=100).length;
-  const overdueCount=tasks.filter(t=>isOverdue(t)).length;
-  const completedPct=total?Math.round(completed/total*100):0;
-  const today=todayStr();
-  const weekEnd=new Date();weekEnd.setDate(weekEnd.getDate()+7);
-  const weekEndStr=weekEnd.toISOString().split('T')[0];
-  const dueWeek=tasks.filter(t=>t.due&&t.due>=today&&t.due<=weekEndStr&&(t.pct||0)<100).length;
-  const assignees=[...new Set([...(state.teamMembers||[]),...tasks.map(t=>t.assignee).filter(Boolean)])].sort();
-  const org=isOrganizer();
-  const roleBadge=org?'<span class="dash-role-badge">ORGANIZER</span>':'<span class="dash-role-badge" style="background:#16a34a">MEMBER</span>';
+  // Update sidebar to project-only mode
+  var sidebarEl=document.getElementById('sidebar');
+  if(sidebarEl)sidebarEl.classList.add('team-dashboard-mode');
 
-  const buckets=state.buckets||[];
-  const maxBucket=Math.max(1,...buckets.map(b=>tasks.filter(t=>t.bucket===b).length));
-  const bucketHTML=buckets.map(b=>{
-    const cnt=tasks.filter(t=>t.bucket===b).length;
-    return'<div class="db-row" style="cursor:pointer" onclick="dashGoFilter(\'total\')" title="View all tasks"><span class="db-name">'+esc(b)+'</span><div class="db-bar-bg"><div class="db-bar-fill" style="width:'+Math.round(cnt/maxBucket*100)+'%"></div></div><span class="db-count">'+cnt+'</span></div>';
-  }).join('');
+  // Render sidebar project list
+  renderTeamSidebarProjects();
 
-  const memberHTML=assignees.length?assignees.map(a=>{
-    const aTasks=tasks.filter(t=>t.assignee===a);
-    const aDone=aTasks.filter(t=>t.pct>=100).length;
-    const aOverdue=aTasks.filter(t=>isOverdue(t)).length;
-    const pct=aTasks.length?Math.round(aDone/aTasks.length*100):0;
-    return'<div class="dash-member-row" style="cursor:pointer" onclick="document.getElementById(\'filterAssignee\').value=\''+escAttr(a)+'\';setView(\'list\')" title="View '+esc(a)+'\'s tasks"><div class="dash-member-avatar" style="background:'+avatarColor(a)+'">'+initials(a)+'</div><div class="dash-member-info"><div class="dash-member-name">'+esc(a)+'</div><div class="dash-member-tasks">'+aTasks.length+' tasks'+(aOverdue?' · <span style="color:var(--crit)">'+aOverdue+' overdue</span>':'')+'</div></div><span class="dash-member-pct">'+pct+'%</span></div>';
-  }).join(''):'<div class="dash-empty">No assigned tasks yet</div>';
+  var tw=teamWorkspaces.find(function(w){return w.id===currentTeamWorkspaceId;});
+  var wsName=tw?tw.name:'Team Workspace';
 
-  // Team priorities — Critical and High priority open tasks
-  const teamPriorityTasks=tasks.filter(t=>(t.pct||0)<100&&(t.priority==='Critical'||t.priority==='High')).sort((a,b)=>{
-    const rank={Critical:0,High:1};
-    if(rank[a.priority]!==rank[b.priority])return rank[a.priority]-rank[b.priority];
-    if(a.due&&b.due)return a.due>b.due?1:-1;
-    return a.due?-1:1;
-  }).slice(0,8);
-  const teamPrioritiesHTML=teamPriorityTasks.length?teamPriorityTasks.map(t=>{
-    const priLabel=t.priority==='Critical'?'CRIT':'HIGH';
-    const priStyle=t.priority==='Critical'?'background:#fef2f2;color:var(--crit)':'background:#fefce8;color:var(--high)';
-    return'<div class="dash-overdue-item" onclick="openEditTask('+t.id+')"><div class="dash-overdue-title">'+esc(t.title)+'</div><span class="dash-overdue-who" style="'+priStyle+'">'+priLabel+'</span>'+(t.assignee?'<span class="dash-overdue-due">'+esc(t.assignee)+'</span>':'')+'</div>';
-  }).join(''):'<div class="dash-empty" style="color:var(--low)">No high-priority tasks right now</div>';
+  // Tab bar + content
+  el.innerHTML='<div class="dept-tabs">'+
+    '<button onclick="switchTeamDeptTab(\'acquisition\')" class="'+(teamDeptTab==='acquisition'?'active':'')+'">Acquisition</button>'+
+    '<button onclick="switchTeamDeptTab(\'entitlement\')" class="'+(teamDeptTab==='entitlement'?'active':'')+'">Entitlement</button>'+
+    '<button onclick="switchTeamDeptTab(\'development\')" class="'+(teamDeptTab==='development'?'active':'')+'">Development</button>'+
+    '<button onclick="switchTeamDeptTab(\'legal\')" class="'+(teamDeptTab==='legal'?'active':'')+'">Legal</button>'+
+    '<button onclick="switchTeamDeptTab(\'summary\')" class="summary-tab '+(teamDeptTab==='summary'?'active':'')+'">📊 Summary</button>'+
+  '</div>'+
+  '<div id="deptTabContent" style="flex:1;overflow-y:auto;"></div>';
 
-  el.innerHTML=
-    '<div class="dash-header"><div><h2>'+esc(wsName)+' Dashboard</h2><div class="dash-ws-name">Team workspace · '+(org?'Organizer':'Member')+' view</div></div>'+roleBadge+'</div>'+
-    '<div class="dash-kpi-row">'+
-      '<div class="dash-kpi dash-kpi-click" onclick="dashGoFilter(\'total\')" title="View all tasks"><div class="dash-kpi-label">Total Tasks</div><div class="dash-kpi-val">'+total+'</div><div class="dash-kpi-sub">click to view list ↗</div></div>'+
-      '<div class="dash-kpi dash-kpi-click danger" onclick="dashGoFilter(\'overdue\')" title="View overdue"><div class="dash-kpi-label">Overdue</div><div class="dash-kpi-val">'+overdueCount+'</div><div class="dash-kpi-sub">click to view list ↗</div></div>'+
-      '<div class="dash-kpi dash-kpi-click" onclick="dashGoFilter(\'thisweek\')" title="Due this week"><div class="dash-kpi-label">Due This Week</div><div class="dash-kpi-val">'+dueWeek+'</div><div class="dash-kpi-sub">click to view list ↗</div></div>'+
-    '</div>'+
-    '<div class="dash-grid">'+
-      '<div class="dash-panel"><h3>Tasks by Stage</h3><div class="dash-bucket-bar">'+(bucketHTML||'<div class="dash-empty">No tasks yet</div>')+'</div></div>'+
-      '<div class="dash-panel"><h3>Team Members <span style="font-size:10px;color:var(--muted);font-weight:400">— click to filter</span></h3><div class="dash-member-list">'+memberHTML+'</div></div>'+
-      '<div class="dash-panel"><h3>My Priorities</h3><div class="dash-overdue-list">'+teamPrioritiesHTML+'</div></div>'+
-      '<div class="dash-panel"><h3>Quick Actions</h3>'+
-        '<div style="display:flex;flex-direction:column;gap:8px">'+
-        '<button class="team-panel-btn" onclick="openNewTask()">＋ New Task</button>'+
-        (org?'<button class="team-panel-btn secondary" onclick="openTeamPanel()">👥 Manage Team</button>':'<button class="team-panel-btn secondary" onclick="openTeamPanel()">👥 Team Info</button>')+
-        '<button class="team-panel-btn secondary" onclick="generatePDFReport()">📄 Export PDF Report</button>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
+  var tabEl=document.getElementById('deptTabContent');
+  if(teamDeptTab==='acquisition')renderAcquisitionTab(tabEl);
+  else if(teamDeptTab==='entitlement')renderEntitlementTab(tabEl);
+  else if(teamDeptTab==='development')renderDevelopmentTab(tabEl);
+  else if(teamDeptTab==='legal')renderLegalTab(tabEl);
+  else if(teamDeptTab==='summary')renderSummaryTab(tabEl);
 }
 
 function renderPersonalDashboard(el){
@@ -2019,18 +2031,7 @@ function renderPersonalDashboard(el){
   }).join('');
 
 
-  // Upcoming this week
-  const upcoming=myTasks.filter(t=>t.due&&t.due>=today&&t.due<=weekEndStr&&(t.pct||0)<100).sort((a,b)=>a.due>b.due?1:-1).slice(0,6);
-  const upcomingHTML=upcoming.length?upcoming.map(t=>{
-    const isToday=t.due===today;
-    const borderColor=priColor(t.priority);
-    const wsIdArg=t._wsId?'\''+t._wsId+'\'':'null';
-    return'<div class="pd-task-row" onclick="jumpToTask('+wsIdArg+','+t.id+')" style="border-left-color:'+borderColor+'">'+
-      '<span class="pd-task-name">'+esc(t.title)+'</span>'+
-      '<span class="pd-task-ws">'+esc(t._wsName)+'</span>'+
-      '<span class="pd-task-date" style="'+(isToday?'color:var(--high);font-weight:700':'')+'">'+relDue(t.due)+'</span>'+
-    '</div>';
-  }).join(''):'<div class="pd-empty">🎉 Nothing due this week</div>';
+  // Upcoming this week removed — see dept tabs
 
   // My Priorities — Critical and High priority open tasks
   const priorityTasks=myTasks.filter(t=>(t.pct||0)<100&&(t.priority==='Critical'||t.priority==='High')).sort((a,b)=>{
@@ -2196,17 +2197,9 @@ function renderPersonalDashboard(el){
     })()+
     // Data panels (bento)
     '<div class="pd-panels">'+
-      '<div class="pd-panel pd-span4">'+
-        '<div class="pd-panel-title">Upcoming This Week</div>'+
-        upcomingHTML+
-      '</div>'+
-      '<div class="pd-panel pd-span2">'+
-        '<div class="pd-panel-title">Quick Actions</div>'+
-        '<div class="pd-actions">'+
-          '<button class="pd-action-btn primary" onclick="openNewTask()">+ New Task</button>'+
-          '<button class="pd-action-btn secondary" onclick="openTeamPanel()">Create / Join Team</button>'+
-          '<button class="pd-action-btn secondary" onclick="generatePDFReport()">Export PDF Report</button>'+
-        '</div>'+
+      '<div class="pd-panel pd-span6">'+
+        '<div class="pd-panel-title">My Priorities</div>'+
+        prioritiesHTML+
       '</div>'+
     '</div>'+
     // Activity log (today's session)
@@ -2408,7 +2401,12 @@ function escAttr(s){return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot
 function avatarColor(name){if(!name)return'var(--pri)';let h=0;for(let i=0;i<name.length;i++)h=name.charCodeAt(i)+((h<<5)-h);const c=['#8b5cf6','#0891b2','#ec4899','#f97316','#16a34a','#dc2626','#2563eb','#d97706','#7c3aed','#059669'];return c[Math.abs(h)%c.length];}
 function todayStr(){const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');}
 let currentView='dashboard';
-function setView(v){if(v==='schedules'&&!hasTeamPlan()){showToast('🔒 Schedules is a Team plan feature.');return;}currentView=v;if(isMobile())closeMobileSidebar();['dashboard','board','list','calendar','notes','schedules','chat'].forEach(t=>{const el=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',v===t);});document.getElementById('dashboardView').style.display=v==='dashboard'?'flex':'none';document.getElementById('boardView').style.display=v==='board'?'flex':'none';document.getElementById('listView').style.display=v==='list'?'block':'none';document.getElementById('calendarView').style.display=v==='calendar'?'flex':'none';document.getElementById('notesView').style.display=v==='notes'?'flex':'none';document.getElementById('schedulesView').style.display=v==='schedules'?'flex':'none';document.getElementById('chatView').style.display=v==='chat'?'flex':'none';var lv=document.getElementById('legalView');if(lv)lv.style.display=v==='legal'?'flex':'none';document.querySelectorAll('.mobile-bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+let teamDeptTab='acquisition';
+let selectedTeamProject=null;
+function setView(v){if(v==='schedules'&&!hasTeamPlan()){showToast('🔒 Schedules is a Team plan feature.');return;}
+// If leaving dashboard view, restore sidebar
+if(v!=='dashboard'){var sidebarEl2=document.getElementById('sidebar');if(sidebarEl2)sidebarEl2.classList.remove('team-dashboard-mode');var teamProjSection2=document.getElementById('teamProjSidebarSection');if(teamProjSection2)teamProjSection2.remove();}
+currentView=v;if(isMobile())closeMobileSidebar();['dashboard','board','list','calendar','notes','schedules','chat','mastercal'].forEach(t=>{const el=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',v===t);});document.getElementById('dashboardView').style.display=v==='dashboard'?'flex':'none';document.getElementById('boardView').style.display=v==='board'?'flex':'none';document.getElementById('listView').style.display=v==='list'?'block':'none';document.getElementById('calendarView').style.display=v==='calendar'?'flex':'none';document.getElementById('notesView').style.display=v==='notes'?'flex':'none';document.getElementById('schedulesView').style.display=v==='schedules'?'flex':'none';document.getElementById('chatView').style.display=v==='chat'?'flex':'none';var lv=document.getElementById('legalView');if(lv)lv.style.display=v==='legal'?'flex':'none';var mcv=document.getElementById('masterCalView');if(mcv)mcv.style.display=v==='mastercal'?'flex':'none';document.querySelectorAll('.mobile-bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
 // Hide sidebar on legal view and master dashboard, show when inside a workspace
 var sb=document.getElementById('sidebar');if(sb&&!isMobile()){if((v==='dashboard'&&!currentTeamWorkspaceId)||v==='legal'){sb.style.display='none';}else{sb.style.display='';sb.classList.remove('collapsed');}}
 // Hide filter chips and stats bar on legal view
@@ -2416,12 +2414,15 @@ var fcb=document.getElementById('filterChipsBar');if(fcb)fcb.style.display=v==='
 render();}
 function enterPersonalWorkspace(){
   if(currentTeamWorkspaceId){save();if(realtimeChannel)realtimeChannel.unsubscribe();currentTeamWorkspaceId=null;currentWorkspace='work';load();renderWorkspaceTabs();}
+  var pdfBtn=document.getElementById('pdfExportBtn');if(pdfBtn)pdfBtn.style.display='none';
+  var sidebarEl=document.getElementById('sidebar');if(sidebarEl)sidebarEl.classList.remove('team-dashboard-mode');
+  var teamProjSection=document.getElementById('teamProjSidebarSection');if(teamProjSection)teamProjSection.remove();
   setView('board');
 }
 function render(){document.querySelectorAll('.workspace-tab').forEach(t=>{t.classList.toggle('active',t.dataset.ws===currentWorkspace);});updateFilters();renderSidebarFilters();updateStats();updateFilterChips();updateTodayBadge();renderPresets();updateDashboardNav();// Show/hide chat nav item
 const chatNav=document.getElementById('navChat');if(chatNav){if(currentTeamWorkspaceId)chatNav.classList.remove('hidden');else{chatNav.classList.add('hidden');if(currentView==='chat'){currentView='dashboard';}}}
 updateChatUnread();
-if(currentView==='dashboard')renderDashboard();else if(currentView==='board')renderBoard();else if(currentView==='list')renderList();else if(currentView==='calendar')renderCalendar();else if(currentView==='notes')renderNotesView();else if(currentView==='schedules')renderSchedules();else if(currentView==='chat')renderChat();else if(currentView==='legal')lt_render();save();}
+if(currentView==='dashboard')renderDashboard();else if(currentView==='board')renderBoard();else if(currentView==='list')renderList();else if(currentView==='calendar')renderCalendar();else if(currentView==='notes')renderNotesView();else if(currentView==='schedules')renderSchedules();else if(currentView==='chat')renderChat();else if(currentView==='legal')lt_render();else if(currentView==='mastercal')renderMasterCalendar();save();}
 function updateDashboardNav(){const navEl=document.getElementById('navDashboard');if(navEl)navEl.classList.remove('hidden');}
 function switchWorkspace(ws){
   if(ws===currentWorkspace&&!currentTeamWorkspaceId){
@@ -2560,7 +2561,7 @@ function noteDropOnItem(e,targetNoteId){e.preventDefault();e.currentTarget.class
 function noteDropOnFolder(e,folderId){e.preventDefault();e.currentTarget.classList.remove('drag-over');if(dragNoteId===null)return;var note=state.notes.find(n=>n.id===dragNoteId);if(!note)return;note.folderId=folderId;note.updated=new Date().toISOString();dragNoteId=null;save();renderNotesView();}
 function folderDragEnterForNote(e){e.preventDefault();if(dragNoteId!==null)e.currentTarget.classList.add('drag-over');}
 let editingId=null;
-function openNewTask(){editingId=null;populateModal({});document.getElementById('taskModal').classList.add('show');document.getElementById('modalTitle').textContent='New Task';document.getElementById('modalBreadcrumb').innerHTML='';document.getElementById('btnDeleteTask').classList.add('hidden');const cBtn=document.getElementById('btnCompleteTask');if(cBtn)cBtn.classList.add('hidden');}
+function openNewTask(){editingId=null;populateModal({});document.getElementById('taskModal').classList.add('show');document.getElementById('modalTitle').textContent='New Task';document.getElementById('modalBreadcrumb').innerHTML='';document.getElementById('btnDeleteTask').classList.add('hidden');const cBtn=document.getElementById('btnCompleteTask');if(cBtn)cBtn.classList.add('hidden');if(document.getElementById('mDepartment'))document.getElementById('mDepartment').value=teamDeptTab==='acquisition'?'Acquisition':teamDeptTab==='entitlement'?'Entitlements':teamDeptTab==='development'?'Development':teamDeptTab==='legal'?'Legal':'General';}
 function openNewTaskInBucket(b){editingId=null;populateModal({bucket:b});document.getElementById('taskModal').classList.add('show');document.getElementById('modalTitle').textContent='New Task';document.getElementById('modalBreadcrumb').innerHTML='<span class="mb-bucket">'+esc(b)+'</span> › New Task';document.getElementById('btnDeleteTask').classList.add('hidden');}
 function openEditTask(id){const t=state.tasks.find(x=>x.id===id);if(!t)return;editingId=id;populateModal(t);document.getElementById('taskModal').classList.add('show');document.getElementById('modalTitle').textContent='Edit Task';document.getElementById('modalBreadcrumb').innerHTML='<span class="mb-bucket">'+esc(t.bucket)+'</span> › '+esc(t.title);document.getElementById('btnDeleteTask').classList.remove('hidden');const cBtn=document.getElementById('btnCompleteTask');if(cBtn){if((t.pct||0)>=100){cBtn.classList.add('hidden');}else{cBtn.classList.remove('hidden');}}}
 function closeTaskModal(){document.getElementById('taskModal').classList.remove('show');editingId=null;}
@@ -2574,6 +2575,8 @@ function populateModal(t){
     dl.innerHTML=combined.map(n=>'<option value="'+esc(n)+'">').join('');
   }
   document.getElementById('mTitle').value=t.title||'';document.getElementById('mAssignee').value=t.assignee||'';const bs=document.getElementById('mBucket');bs.innerHTML=state.buckets.map(b=>'<option '+(b===(t.bucket||state.buckets[0])?'selected':'')+'>'+b+'</option>').join('');document.getElementById('mDue').value=t.due||'';document.getElementById('mPriority').value=t.priority||'Medium';document.getElementById('mPct').value=t.pct||0;document.getElementById('mPctVal').textContent=(t.pct||0)+'%';document.getElementById('mNotes').value=t.notes||'';
+if(document.getElementById('mDepartment'))document.getElementById('mDepartment').value=t.department||'General';
+if(document.getElementById('mActualDate'))document.getElementById('mActualDate').value=t.actualDate||'';
 document.getElementById('mFilePath').value=t.filePath||'';document.getElementById('mLabels').innerHTML=state.labels.map(l=>'<span class="label-chip '+((t.labels||[]).includes(l.name)?'selected':'')+'" style="background:'+l.color+'" data-label="'+esc(l.name)+'" onclick="this.classList.toggle(\'selected\')">'+esc(l.name)+'</span>').join('');const cl=document.getElementById('mChecklist');cl.innerHTML='';(t.checklist||[]).forEach(c=>addChecklistItem(c.text,c.done));
 var lnSec=document.getElementById('mLinkedNotesSection');
 if(lnSec){
@@ -2605,7 +2608,7 @@ if(histSec){
 }
 }
 function addChecklistItem(text,done){const cl=document.getElementById('mChecklist'),div=document.createElement('div');div.className='cl-item';const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!done;const inp=document.createElement('input');inp.type='text';inp.value=text||'';inp.placeholder='Checklist item...';const rm=document.createElement('button');rm.className='cl-rm';rm.innerHTML='×';rm.onclick=()=>div.remove();div.appendChild(cb);div.appendChild(inp);div.appendChild(rm);cl.appendChild(div);}
-function saveTask(){const title=document.getElementById('mTitle').value.trim();if(!title){showToast('Task title is required.');return;}const _assigneeName=document.getElementById('mAssignee').value.trim();const data={title,assignee:_assigneeName,assigneeId:(_assigneeName&&(state.memberIds||{})[_assigneeName])||null,bucket:document.getElementById('mBucket').value,due:document.getElementById('mDue').value,priority:document.getElementById('mPriority').value,pct:parseInt(document.getElementById('mPct').value)||0,notes:document.getElementById('mNotes').value,filePath:document.getElementById('mFilePath').value.trim(),labels:[...document.querySelectorAll('#mLabels .label-chip.selected')].map(e=>e.dataset.label),checklist:[...document.querySelectorAll('#mChecklist .cl-item')].map(e=>({text:e.querySelector('input[type=text]').value,done:e.querySelector('input[type=checkbox]').checked}))};if(editingId!=null){const t=state.tasks.find(x=>x.id===editingId);if(t){const changes=[];if(t.title!==data.title)changes.push('Title: '+t.title+' → '+data.title);if(t.bucket!==data.bucket)changes.push('Moved: '+t.bucket+' → '+data.bucket);if(t.priority!==data.priority)changes.push('Priority: '+t.priority+' → '+data.priority);if(t.due!==data.due)changes.push('Due: '+(t.due||'none')+' → '+(data.due||'none'));if(t.assignee!==data.assignee)changes.push('Assignee: '+(t.assignee||'none')+' → '+(data.assignee||'none'));if(t.pct!==data.pct)changes.push('Progress: '+t.pct+'% → '+data.pct+'%');if(JSON.stringify(t.labels||[])!==JSON.stringify(data.labels))changes.push('Labels updated');if(changes.length){logTaskChange(t,'Edited',changes.join('; '));logActivity('Task edited',t.title+(changes.length>1?' ('+changes.length+' changes)':''));}Object.assign(t,data);}}else{data.id=state.nextId++;data.created=new Date().toISOString().split('T')[0];data.history=[];logTaskChange(data,'Created','Created via modal');logActivity('Task created',data.title);state.tasks.push(data);}closeTaskModal();render();}
+function saveTask(){const title=document.getElementById('mTitle').value.trim();if(!title){showToast('Task title is required.');return;}const _assigneeName=document.getElementById('mAssignee').value.trim();const data={title,assignee:_assigneeName,assigneeId:(_assigneeName&&(state.memberIds||{})[_assigneeName])||null,bucket:document.getElementById('mBucket').value,due:document.getElementById('mDue').value,priority:document.getElementById('mPriority').value,pct:parseInt(document.getElementById('mPct').value)||0,notes:document.getElementById('mNotes').value,filePath:document.getElementById('mFilePath').value.trim(),labels:[...document.querySelectorAll('#mLabels .label-chip.selected')].map(e=>e.dataset.label),checklist:[...document.querySelectorAll('#mChecklist .cl-item')].map(e=>({text:e.querySelector('input[type=text]').value,done:e.querySelector('input[type=checkbox]').checked})),department:document.getElementById('mDepartment')?document.getElementById('mDepartment').value:'General',actualDate:document.getElementById('mActualDate')?document.getElementById('mActualDate').value:''};if(editingId!=null){const t=state.tasks.find(x=>x.id===editingId);if(t){const changes=[];if(t.title!==data.title)changes.push('Title: '+t.title+' → '+data.title);if(t.bucket!==data.bucket)changes.push('Moved: '+t.bucket+' → '+data.bucket);if(t.priority!==data.priority)changes.push('Priority: '+t.priority+' → '+data.priority);if(t.due!==data.due)changes.push('Due: '+(t.due||'none')+' → '+(data.due||'none'));if(t.assignee!==data.assignee)changes.push('Assignee: '+(t.assignee||'none')+' → '+(data.assignee||'none'));if(t.pct!==data.pct)changes.push('Progress: '+t.pct+'% → '+data.pct+'%');if(JSON.stringify(t.labels||[])!==JSON.stringify(data.labels))changes.push('Labels updated');if(changes.length){logTaskChange(t,'Edited',changes.join('; '));logActivity('Task edited',t.title+(changes.length>1?' ('+changes.length+' changes)':''));}Object.assign(t,data);}}else{data.id=state.nextId++;data.created=new Date().toISOString().split('T')[0];data.history=[];logTaskChange(data,'Created','Created via modal');logActivity('Task created',data.title);state.tasks.push(data);}closeTaskModal();render();}
 function deleteTask(){const t=state.tasks.find(x=>x.id===editingId);if(!t)return;const removed=t,idx=state.tasks.indexOf(t);state.tasks=state.tasks.filter(x=>x.id!==editingId);closeTaskModal();render();showToast('Task "'+removed.title+'" deleted',function(){state.tasks.splice(idx,0,removed);render();});}
 function completeTaskConfirm(){const t=state.tasks.find(x=>x.id===editingId);if(!t)return;if(!confirm('Mark "'+t.title+'" as complete?\n\nThis will move it to the Complete bucket and clear its due date, assignee, and labels.'))return;const completeBucket=state.buckets.find(b=>b.toLowerCase().includes('complet'))||state.buckets[state.buckets.length-1];const oldData={bucket:t.bucket,due:t.due,assignee:t.assignee,assigneeId:t.assigneeId,labels:t.labels?[...t.labels]:[],pct:t.pct};logTaskChange(t,'Completed','Moved to '+completeBucket+', progress set to 100%');logActivity('Task completed',t.title);t.bucket=completeBucket;t.due='';t.assignee='';t.assigneeId=null;t.labels=[];t.pct=100;closeTaskModal();render();showToast('✅ "'+t.title+'" completed!',function(){t.bucket=oldData.bucket;t.due=oldData.due;t.assignee=oldData.assignee;t.assigneeId=oldData.assigneeId;t.labels=oldData.labels;t.pct=oldData.pct;render();});}
 function openSettings(){
@@ -4022,9 +4025,6 @@ function lt_renderView(){
     '<button class="lt-btn primary" onclick="lt_addTask()">Add Task</button>'+
     '<button class="lt-btn outline" onclick="lt_clearForm()">Clear</button>'+
     '<button class="lt-btn outline" onclick="lt_openManage()">Manage Lists</button>'+
-    '<button class="lt-btn outline" onclick="lt_exportJSON()">Export</button>'+
-    '<button class="lt-btn outline" onclick="document.getElementById(\'ltImportFile\').click()">Import</button>'+
-    '<input id="ltImportFile" type="file" accept="application/json" style="display:none" onchange="lt_importJSON(event)">'+
   '</div>';
   html+='<div class="lt-stats">'+
     '<div class="lt-stat">Total: <span id="ltStatTotal">0</span></div>'+
@@ -4382,6 +4382,335 @@ async function lt_copyText(){
 // ══════════════════════════════════════════════════════════════════════════════
 // ██  END LEGAL TRACKER MODULE
 // ══════════════════════════════════════════════════════════════════════════════
+
+// ── Team Department Tab Functions ────────────────────────────────────────────
+function switchTeamDeptTab(name){teamDeptTab=name;renderDashboard();}
+
+function renderTeamSidebarProjects(){
+  var sidebarEl=document.getElementById('sidebar');if(!sidebarEl)return;
+  var projDiv=document.getElementById('teamProjSidebarSection');
+  if(!projDiv){
+    projDiv=document.createElement('div');
+    projDiv.id='teamProjSidebarSection';
+    projDiv.className='sidebar-section';
+    var toggle=sidebarEl.querySelector('.sidebar-toggle');
+    if(toggle&&toggle.nextSibling)sidebarEl.insertBefore(projDiv,toggle.nextSibling);
+    else sidebarEl.insertBefore(projDiv,sidebarEl.firstChild);
+  }
+  var projects=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]).map(function(sp){return sp.name;}).filter(Boolean),...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])];
+  var items=projects.map(function(p){
+    return'<div class="team-proj-item '+(selectedTeamProject===p?'active':'')+'" onclick="selectedTeamProject='+JSON.stringify(p)+';renderDashboard()">'+esc(p)+'</div>';
+  }).join('');
+  projDiv.innerHTML=
+    '<div class="sidebar-section-title">Projects</div>'+
+    '<div class="team-proj-list">'+
+      '<div class="team-proj-item '+(selectedTeamProject===null?'active':'')+'" onclick="selectedTeamProject=null;renderDashboard()">All Projects</div>'+
+      items+
+    '</div>'+
+    '<div style="padding:6px 12px"><button class="top-btn" style="width:100%;justify-content:center;font-size:11px" onclick="(function(){var n=prompt(\'New project name:\');if(n&&n.trim()){state.projects=state.projects||[];if(!state.projects.includes(n.trim()))state.projects.push(n.trim());save();renderDashboard();}})()">+ New Project</button></div>';
+}
+
+function deptKanban(tasks){
+  var buckets=['To Do','In Progress','Under Review','Complete'];
+  var html='<div class="dept-kanban">';
+  buckets.forEach(function(b){
+    var bTasks=tasks.filter(function(t){return(t.bucket||'To Do')===b;});
+    html+='<div class="dept-bucket">'+
+      '<div class="dept-bucket-hdr"><span>'+b+'</span><span class="bucket-count">'+bTasks.length+'</span></div>'+
+      '<div class="dept-bucket-cards">'+
+      bTasks.map(function(t){
+        return'<div class="dept-card" onclick="openEditTask('+t.id+')" style="border-left-color:'+priColor(t.priority)+'">'+
+          '<div class="dept-card-title">'+esc(t.title||t.text||'')+'</div>'+
+          '<div class="dept-card-meta">'+
+          (t.assignee?'<span>'+esc(t.assignee)+'</span>':'')+
+          (t.due?'<span>📅 '+fmtDate(t.due)+'</span>':'')+
+          priBadge(t.priority)+
+          (t.pct>0?'<span>'+t.pct+'%</span>':'')+
+          '</div>'+
+        '</div>';
+      }).join('')+
+      '</div></div>';
+  });
+  html+='</div>';
+  return html;
+}
+
+function renderAcquisitionTab(el){
+  var tasks=(state.tasks||[]).filter(function(t){return t.department==='Acquisition'&&(!selectedTeamProject||t.project===selectedTeamProject);});
+  var projects=[...new Set(tasks.map(function(t){return t.project||'General';}).filter(Boolean))];
+  if(!projects.length)projects=['General'];
+  var html='';
+  projects.forEach(function(proj){
+    var pTasks=tasks.filter(function(t){return(t.project||'General')===proj;});
+    html+='<div class="dept-proj-section">'+
+      '<div class="dept-proj-header">'+esc(proj)+'</div>'+
+      deptKanban(pTasks)+
+    '</div>';
+  });
+  if(!tasks.length)html='<div style="padding:40px;text-align:center;color:var(--muted)">No Acquisition tasks yet. Create a task and assign it the Acquisition department.</div>';
+  el.innerHTML=html;
+}
+
+function renderEntitlementTab(el){
+  var tasks=(state.tasks||[]).filter(function(t){return t.department==='Entitlements'&&(!selectedTeamProject||t.project===selectedTeamProject);});
+  var projects=[...new Set(tasks.map(function(t){return t.project||'General';}).filter(Boolean))];
+  if(!projects.length)projects=['General'];
+  var html='';
+  projects.forEach(function(proj){
+    var pTasks=tasks.filter(function(t){return(t.project||'General')===proj;});
+    html+='<div class="dept-proj-section">'+
+      '<div class="dept-proj-header">'+esc(proj)+'</div>'+
+      deptKanban(pTasks)+
+    '</div>';
+  });
+  if(!tasks.length)html='<div style="padding:40px;text-align:center;color:var(--muted)">No Entitlement tasks yet.</div>';
+  el.innerHTML=html;
+}
+
+function timeSince(ts){
+  if(!ts)return'never';
+  var diff=Math.round((Date.now()-new Date(ts).getTime())/1000);
+  if(diff<60)return diff+'s ago';
+  if(diff<3600)return Math.round(diff/60)+'m ago';
+  if(diff<86400)return Math.round(diff/3600)+'h ago';
+  return Math.round(diff/86400)+'d ago';
+}
+
+function renderDevelopmentTab(el){
+  var tasks=(state.tasks||[]).filter(function(t){return t.department==='Development'&&(!selectedTeamProject||t.project===selectedTeamProject);});
+  var today=new Date();today.setHours(0,0,0,0);
+  var html='<div class="sync-indicator">🔄 Last synced: '+timeSince(state._lastSaved)+'</div>';
+  html+='<div class="dev-table-wrap"><table class="dev-table">'+
+    '<thead><tr><th>Phase</th><th>Task</th><th>Expected Date</th><th>Actual Date</th><th>Notes</th><th>Days Until Due</th><th>Priority</th></tr></thead>'+
+    '<tbody>';
+  if(tasks.length){
+    var priOrder={Critical:0,High:1,Medium:2,Low:3};
+    tasks.sort(function(a,b){return(priOrder[a.priority]||2)-(priOrder[b.priority]||2);});
+    tasks.forEach(function(t){
+      var daysUntil='';var overdueClass='';
+      if(t.due){
+        var dueD=new Date(t.due+'T00:00:00');
+        var diff=Math.round((dueD-today)/86400000);
+        daysUntil=diff;
+        if(diff<0)overdueClass='dev-overdue-cell';
+      }
+      html+='<tr onclick="openEditTask('+t.id+')" style="cursor:pointer">'+
+        '<td>'+esc(t.project||'—')+'</td>'+
+        '<td><strong>'+esc(t.title||t.text||'')+'</strong>'+(t.checklist&&t.checklist.length?'<div style="font-size:11px;color:var(--text2);margin-top:3px">'+t.checklist.filter(function(c){return c.done;}).length+'/'+t.checklist.length+' items</div>':'')+'</td>'+
+        '<td>'+(t.due?fmtDate(t.due):'—')+'</td>'+
+        '<td>'+(t.actualDate?fmtDate(t.actualDate):'—')+'</td>'+
+        '<td style="max-width:200px;white-space:normal">'+esc(t.notes||'')+'</td>'+
+        '<td class="'+overdueClass+'">'+(daysUntil===''?'—':daysUntil)+'</td>'+
+        '<td>'+priBadge(t.priority)+'</td>'+
+      '</tr>';
+    });
+  }else{
+    html+='<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">No Development tasks yet.</td></tr>';
+  }
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
+}
+
+function renderLegalTab(el){
+  var projects=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]).map(function(sp){return sp.name;}).filter(Boolean),...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])];
+  var filterHTML='<div style="padding:10px 14px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;">'+
+    '<label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2)">Project:</label>'+
+    '<select onchange="selectedTeamProject=this.value||null;renderDashboard()" style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg)">'+
+    '<option value="">All Projects</option>'+
+    projects.map(function(p){return'<option value="'+esc(p)+'" '+(selectedTeamProject===p?'selected':'')+'>'+esc(p)+'</option>';}).join('')+
+    '</select>'+
+    '<span class="auto-sync-badge">🔄 Auto-synced · '+timeSince(state._lastSaved)+'</span>'+
+  '</div>';
+  // Render legal tasks as a simple table from state.tasks
+  var legalTasks=(state.tasks||[]).filter(function(t){return t.department==='Legal'&&(!selectedTeamProject||t.project===selectedTeamProject);});
+  var tableHTML='<div class="dev-table-wrap"><table class="dev-table">'+
+    '<thead><tr><th>Project</th><th>Task</th><th>Due Date</th><th>Actual Date</th><th>Notes</th><th>Priority</th></tr></thead><tbody>';
+  if(legalTasks.length){
+    legalTasks.forEach(function(t){
+      tableHTML+='<tr onclick="openEditTask('+t.id+')" style="cursor:pointer">'+
+        '<td>'+esc(t.project||'—')+'</td>'+
+        '<td><strong>'+esc(t.title||t.text||'')+'</strong></td>'+
+        '<td>'+(t.due?fmtDate(t.due):'—')+'</td>'+
+        '<td>'+(t.actualDate?fmtDate(t.actualDate):'—')+'</td>'+
+        '<td style="max-width:200px;white-space:normal">'+esc(t.notes||'')+'</td>'+
+        '<td>'+priBadge(t.priority)+'</td>'+
+      '</tr>';
+    });
+  }else{
+    tableHTML+='<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">No Legal tasks yet. Create a task and set its department to Legal.</td></tr>';
+  }
+  tableHTML+='</tbody></table></div>';
+  el.innerHTML=filterHTML+tableHTML;
+}
+
+function renderSummaryTab(el){
+  var proj=selectedTeamProject;
+  var filter=function(t){return!proj||t.project===proj;};
+  var today=new Date();today.setHours(0,0,0,0);
+  var weekLater=new Date(today);weekLater.setDate(weekLater.getDate()+7);
+
+  var devTasks=(state.tasks||[]).filter(function(t){return t.department==='Development'&&filter(t);});
+  var acqTasks=(state.tasks||[]).filter(function(t){return t.department==='Acquisition'&&filter(t);});
+  var entTasks=(state.tasks||[]).filter(function(t){return t.department==='Entitlements'&&filter(t);});
+
+  var buckets=['To Do','In Progress','Under Review','Complete'];
+
+  function bucketCounts(tasks){
+    return buckets.map(function(b){
+      return'<div class="summary-stat-row"><span>'+b+'</span><strong>'+tasks.filter(function(t){return(t.bucket||'To Do')===b;}).length+'</strong></div>';
+    }).join('');
+  }
+
+  var devAvg=devTasks.length?Math.round(devTasks.reduce(function(s,t){return s+(t.pct||0);},0)/devTasks.length):0;
+  var devComplete=devTasks.filter(function(t){return(t.pct||0)>=100;}).length;
+
+  var weekTasks=function(tasks){
+    return tasks.filter(function(t){if(!t.due||(t.pct||0)>=100)return false;var d=new Date(t.due+'T00:00:00');return d>=today&&d<=weekLater;});
+  };
+
+  var acqWeek=weekTasks(acqTasks);
+  var entWeek=weekTasks(entTasks);
+  var entDue=entTasks.filter(function(t){if(!t.due||(t.pct||0)>=100)return false;var d=new Date(t.due+'T00:00:00');return d<=weekLater;});
+
+  var html='<div class="summary-panels">'+
+    '<div class="summary-panel">'+
+      '<h3>🏗 Development</h3>'+
+      '<div class="summary-stat-row"><span>Total Tasks</span><strong>'+devTasks.length+'</strong></div>'+
+      '<div class="summary-stat-row"><span>Complete</span><strong style="color:var(--low)">'+devComplete+'</strong></div>'+
+      '<div class="summary-stat-row"><span>Avg % Complete</span><strong>'+devAvg+'%</strong></div>'+
+    '</div>'+
+    '<div class="summary-panel">'+
+      '<h3>🏡 Acquisition</h3>'+
+      bucketCounts(acqTasks)+
+      (acqWeek.length?'<div style="margin-top:8px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2)">Due This Week</div>'+
+        acqWeek.map(function(t){return'<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)">'+esc(t.title||t.text||'')+'<span style="float:right;color:var(--muted)">'+fmtDate(t.due)+'</span></div>';}).join(''):'<div style="font-size:12px;color:var(--muted);margin-top:8px">Nothing due this week</div>')+
+    '</div>'+
+    '<div class="summary-panel">'+
+      '<h3>📋 Entitlement</h3>'+
+      bucketCounts(entTasks)+
+      (entWeek.length?'<div style="margin-top:8px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2)">Due This Week</div>'+
+        entWeek.map(function(t){return'<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)">'+esc(t.title||t.text||'')+'<span style="float:right;color:var(--muted)">'+fmtDate(t.due)+'</span></div>';}).join(''):'<div style="font-size:12px;color:var(--muted);margin-top:8px">Nothing due this week</div>')+
+    '</div>'+
+  '</div>'+
+  '<div class="summary-due-section">'+
+    '<h3>📋 Entitlement Tasks Due This Week</h3>'+
+    (entDue.length?entDue.map(function(t){return'<div class="summary-due-item">'+
+      '<strong>'+esc(t.title||t.text||'')+'</strong>'+
+      (t.project?'<span style="font-size:11px;color:var(--muted);margin-left:8px">'+esc(t.project)+'</span>':'')+
+      (t.due?'<span style="float:right;font-size:11px">'+fmtDate(t.due)+'</span>':'')+
+    '</div>';}).join(''):'<div style="color:var(--muted);font-size:13px">No entitlement tasks due this week.</div>')+
+  '</div>';
+
+  el.innerHTML=html;
+}
+
+function generatePDFSummary(){
+  var jsPDF2=window.jspdf?window.jspdf.jsPDF:(typeof jsPDF!=='undefined'?jsPDF:null);
+  if(!jsPDF2){alert('PDF not available — jsPDF not loaded');return;}
+  var doc=new jsPDF2({orientation:'landscape',unit:'mm',format:'letter'});
+  var proj=selectedTeamProject||'All Projects';
+  var today=new Date();
+  var todayStr2=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  var priOrder={Critical:0,High:1,Medium:2,Low:3};
+
+  doc.setFontSize(18);doc.setFont(undefined,'bold');
+  doc.text(proj,14,18);
+  doc.setFontSize(10);doc.setFont(undefined,'normal');
+  doc.text('Generated: '+todayStr2,14,25);
+
+  var depts=[
+    {name:'Acquisition',color:[249,115,22],dept:'Acquisition'},
+    {name:'Entitlements',color:[124,58,237],dept:'Entitlements'},
+    {name:'Development',color:[22,163,74],dept:'Development'},
+    {name:'Legal',color:[37,99,235],dept:'Legal'}
+  ];
+
+  var yStart=35;
+  depts.forEach(function(d){
+    var tasks=(state.tasks||[]).filter(function(t){return t.department===d.dept&&(!selectedTeamProject||t.project===selectedTeamProject);});
+    tasks.sort(function(a,b){return(priOrder[a.priority]||2)-(priOrder[b.priority]||2);});
+
+    var rows=tasks.map(function(t){
+      var dueDate=t.due?new Date(t.due+'T00:00:00'):null;
+      var daysUntil='';
+      if(dueDate){var diff=Math.round((dueDate-today)/86400000);daysUntil=String(diff);}
+      return[
+        t.project||'—',
+        t.title||t.text||'',
+        t.due?new Date(t.due+'T00:00:00').toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'—',
+        t.actualDate?new Date(t.actualDate+'T00:00:00').toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'—',
+        (t.notes||'').substring(0,80),
+        daysUntil,
+        t.priority||'Medium'
+      ];
+    });
+
+    doc.autoTable({
+      startY:yStart,
+      head:[[d.name,'Task','Expected Date','Actual Date','Notes','Days Until Due','Priority']],
+      body:rows,
+      headStyles:{fillColor:d.color,fontSize:10,fontStyle:'bold'},
+      columnStyles:{0:{cellWidth:30},1:{cellWidth:50},2:{cellWidth:28},3:{cellWidth:28},4:{cellWidth:60},5:{cellWidth:22},6:{cellWidth:20}},
+      bodyStyles:{fontSize:9},
+      didParseCell:function(data){
+        if(data.section==='body'&&data.column.index===5){
+          var v=parseInt(data.cell.raw,10);
+          if(!isNaN(v)&&v<0)data.cell.styles.textColor=[220,38,38];
+        }
+      },
+      didDrawPage:function(data){
+        doc.setFontSize(8);doc.setTextColor(150);
+        doc.text('Generated: '+todayStr2,14,doc.internal.pageSize.height-8);
+        doc.setTextColor(0);
+      },
+      margin:{top:10,bottom:14}
+    });
+    yStart=doc.lastAutoTable.finalY+10;
+    if(yStart>180){doc.addPage();yStart=14;}
+  });
+
+  doc.save((proj.replace(/[^a-z0-9]/gi,'_')||'report')+'_'+today.toISOString().split('T')[0]+'.pdf');
+}
+
+function generatePDFReport(){generatePDFSummary();}
+
+function renderMasterCalendar(){
+  var el=document.getElementById('masterCalView');if(!el)return;
+  var myName=(state.myName||'').trim();
+  var allTasks=[];
+  (state.tasks||[]).forEach(function(t){allTasks.push(Object.assign({},t,{_wsLabel:'Personal'}));});
+  teamWorkspaces.forEach(function(tw){((tw.data||{}).tasks||[]).forEach(function(t){allTasks.push(Object.assign({},t,{_wsLabel:tw.name||'Team'}));});});
+
+  var now=new Date();
+  var year=now.getFullYear();var month=now.getMonth();
+  var firstDay=new Date(year,month,1).getDay();
+  var daysInMonth=new Date(year,month+1,0).getDate();
+  var monthName=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  var todayStr3=now.toISOString().split('T')[0];
+
+  var html='<div class="cal-header"><h2>🗓 Master Calendar — '+monthName+'</h2></div>';
+  html+='<div class="cal-grid">';
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(function(d){html+='<div class="cal-day-hdr">'+d+'</div>';});
+  for(var i=0;i<firstDay;i++)html+='<div class="cal-cell outside"></div>';
+  for(var d=1;d<=daysInMonth;d++){
+    var dateStr=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var dayTasks=allTasks.filter(function(t){return t.due===dateStr;});
+    var isToday=dateStr===todayStr3;
+    html+='<div class="cal-cell'+(isToday?' today':'')+'">'+
+      '<div class="cal-date">'+(isToday?'<span class="today-num">'+d+'</span>':d)+'</div>'+
+      '<div class="cal-tasks">';
+    dayTasks.slice(0,3).forEach(function(t){
+      html+='<div class="cal-task" title="'+esc(t.title||t.text||'')+'">'+
+        '<span style="font-size:9px;background:var(--pri);color:#fff;padding:1px 4px;border-radius:3px;margin-right:3px;flex-shrink:0">'+esc(t._wsLabel)+'</span>'+
+        esc((t.title||t.text||'').substring(0,20))+
+      '</div>';
+    });
+    if(dayTasks.length>3)html+='<div class="cal-expand-btn">+'+(dayTasks.length-3)+' more</div>';
+    html+='</div></div>';
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
 
 </script>
 

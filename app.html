@@ -1049,7 +1049,80 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 #deptTabContent{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
 
 /* ==================== DEVELOPMENT APP (namespaced) ==================== */
-.dev-app { font-family:'Segoe UI',system-ui,-apple-system,sans-serif; font-size:14px; color:#1a202c; background:#f5f7f4; display:flex; flex-direction:column; }
+.dev-app {
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  font-size:14px;
+  color:var(--text);
+  background:var(--bg);
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  overflow:hidden;
+  /* Override Development.html CSS variables to match TaskAura theme */
+  --primary: #ea580c;
+  --primary-light: #f97316;
+  --primary-lighter: #fb923c;
+  --accent: #f97316;
+  --accent-light: var(--pri-l);
+  --bg: var(--bg);
+  --bg-white: var(--card);
+  --bg-hover: var(--pri-l);
+  --border: var(--border);
+  --border-dark: var(--border);
+  --text: var(--text);
+  --text-muted: var(--text2);
+  --success: #16a34a;
+  --success-light: #dcfce7;
+  --danger: #dc2626;
+  --danger-light: #fee2e2;
+  --warning: #f97316;
+  --warning-light: #fff7ed;
+  --info: #0ea5e9;
+  --info-light: #e0f2fe;
+  --sidebar-w: 260px;
+  --header-h: 48px;
+  --radius: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+/* Development tab layout fixes — override position:fixed from Development.html */
+.dev-app .app-header { position:relative !important; flex-shrink:0; background: linear-gradient(135deg, #ea580c, #f97316) !important; }
+.dev-app .app-header button { background: rgba(255,255,255,0.15) !important; border-color: rgba(255,255,255,0.25) !important; color: #fff !important; }
+.dev-app-body { display:flex; flex:1; min-height:0; overflow:hidden; }
+.dev-app .sidebar {
+  position:relative !important;
+  top:auto !important; left:auto !important; bottom:auto !important;
+  height:auto !important;
+  overflow-y:auto;
+  flex-shrink:0;
+  border-right:1px solid var(--dev-border, #dde5d9);
+  background: var(--card) !important;
+  color: var(--text) !important;
+}
+.dev-app .main {
+  margin-left:0 !important;
+  margin-top:0 !important;
+  flex:1;
+  overflow-y:auto;
+  min-height:0;
+  padding:24px;
+  background: var(--bg) !important;
+}
+.dev-app .sidebar-item { color: var(--text2) !important; }
+.dev-app .sidebar-item.active { background: var(--pri-l) !important; color: var(--pri) !important; border-left-color: var(--pri) !important; }
+.dev-app .card { background: var(--card) !important; border-color: var(--border) !important; }
+.dev-app .card-header { border-color: var(--border) !important; background: var(--card) !important; }
+.dev-app th { background: #ea580c !important; }
+.dev-app .btn-primary { background: #f97316 !important; border-color: #f97316 !important; }
+.dev-app .project-info-bar { background: linear-gradient(135deg,#ea580c,#f97316) !important; }
+.dev-app .sub-tab.active { color: #f97316 !important; border-bottom-color: #f97316 !important; }
+.dev-app .phase-tab.active { background: #f97316 !important; border-color: #f97316 !important; }
+.dev-app .sidebar-label { color: var(--text2) !important; }
+.dev-app input, .dev-app select, .dev-app textarea { background: var(--bg) !important; color: var(--text) !important; border-color: var(--border) !important; }
+.dev-app input:focus, .dev-app select:focus, .dev-app textarea:focus { border-color: #f97316 !important; box-shadow: 0 0 0 2px rgba(249,115,22,.15) !important; }
+[data-theme="dark"] .dev-app .sidebar { background: var(--card) !important; }
+[data-theme="dark"] .dev-app .card { background: var(--card) !important; }
+[data-theme="dark"] .dev-app .main { background: var(--bg) !important; }
+[data-theme="dark"] .dev-app .card-header { background: var(--card) !important; }
 .dev-app * { box-sizing:border-box; }
 .dev-app button { cursor:pointer; font-family:inherit; font-size:13px; }
 .dev-app input,.dev-app select,.dev-app textarea { font-family:inherit; font-size:13px; border:1px solid #dde5d9; border-radius:6px; padding:6px 10px; outline:none; }
@@ -1281,7 +1354,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
    <button class="filter-clear-all" onclick="clearFilters()">Clear All</button>
   </div>
   <div class="stats-bar-container" id="statsBar"></div>
-  <div class="dashboard-view" id="dashboardView" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;"></div>
+  <div class="dashboard-view" id="dashboardView" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto;"></div>
   <div class="board" id="boardView"></div>
   <div class="list-view" id="listView"><table><thead><tr id="listHead"></tr></thead><tbody id="listBody"></tbody></table></div>
   <div class="calendar-view" id="calendarView">
@@ -2553,8 +2626,9 @@ let entSubView='board';
 let deptFilter=null;
 function setView(v){if(v==='schedules'&&!hasTeamPlan()){showToast('🔒 Schedules is a Team plan feature.');return;}
 // If leaving dashboard view, restore sidebar
-if(v!=='dashboard'){var sidebarEl2=document.getElementById('sidebar');if(sidebarEl2)sidebarEl2.classList.remove('team-dashboard-mode');var teamProjSection2=document.getElementById('teamProjSidebarSection');if(teamProjSection2)teamProjSection2.remove();
-// Restore all sidebar-sections visibility
+if(v!=='dashboard'){var sidebarEl2=document.getElementById('sidebar');if(sidebarEl2)sidebarEl2.classList.remove('team-dashboard-mode');var teamProjSection2=document.getElementById('teamProjSidebarSection');if(teamProjSection2)teamProjSection2.remove();}
+// Restore all sidebar-sections visibility only when truly leaving team dashboard
+if(v !== 'dashboard' || !currentTeamWorkspaceId){
 document.querySelectorAll('.sidebar .sidebar-section').forEach(function(s){s.style.display='';});
 var fcb2=document.getElementById('filterChipsBar');if(fcb2)fcb2.style.display='';
 var sb2=document.getElementById('statsBar');if(sb2)sb2.style.display='';}
@@ -2636,7 +2710,7 @@ function expandBucket(bucketName){var overlay=document.getElementById('bucketOve
 function closeBucketExpand(){document.getElementById('bucketOverlay').classList.remove('show');document.body.style.overflow='';}
 function toggleBucketCollapse(bucket){if(!state.collapsedBuckets)state.collapsedBuckets=[];const idx=state.collapsedBuckets.indexOf(bucket);if(idx>=0)state.collapsedBuckets.splice(idx,1);else state.collapsedBuckets.push(bucket);save();renderBoard();}
 function cardHTML(t){const od=isOverdue(t),cl=(t.checklist||[]),cd=cl.filter(c=>c.done).length,ct=cl.length,sel=selectedTaskIds.has(t.id);let ringHTML='';if(ct>0){const pct=ct?Math.round(cd/ct*100):0,r=9,circ=2*Math.PI*r,offset=circ-(pct/100)*circ,col2=pct>=100?'var(--low)':'var(--pri)';ringHTML='<div class="card-cl-ring"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="'+r+'" fill="none" stroke="var(--border)" stroke-width="2.5"/><circle cx="12" cy="12" r="'+r+'" fill="none" stroke="'+col2+'" stroke-width="2.5" stroke-dasharray="'+circ.toFixed(1)+'" stroke-dashoffset="'+offset.toFixed(1)+'" transform="rotate(-90 12 12)" stroke-linecap="round"/></svg><span>'+cd+'/'+ct+'</span></div>';}return'<div class="card '+priClass(t.priority)+(od?' overdue':'')+(sel?' selected':'')+'" draggable="true" ondragstart="dragStart(event,'+t.id+')" ondragend="dragEnd(event)" onclick="openEditTask('+t.id+')"><input type="checkbox" class="card-select" '+(sel?'checked':'')+' onclick="event.stopPropagation();toggleCardSelect('+t.id+',this)"><div class="card-quick-edit"><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'assignee\',event)" title="Edit assignee">👤</button><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'due\',event)" title="Edit due">📅</button><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'priority\',event)" title="Edit priority">⚡</button></div><div class="card-title">'+esc(t.title)+'</div><div class="card-meta">'+(t.assignee?'<span class="card-avatar" style="background:'+avatarColor(t.assignee)+'" title="'+esc(t.assignee)+'">'+initials(t.assignee)+'</span>':'')+(t.due?'<span class="card-due '+(od?'overdue-text':'')+'">📅 '+fmtDate(t.due)+'</span>':'')+'<span class="card-pri '+priBadge(t.priority)+'">'+(t.priority||'Medium')+'</span></div>'+((t.labels||[]).length?'<div class="card-labels">'+(t.labels||[]).map(l=>{const lb=state.labels.find(x=>x.name===l);return'<span class="card-label" style="background:'+(lb?lb.color:'#888')+'">'+esc(l)+'</span>';}).join('')+'</div>':'')+(t.pct>0?'<div class="card-progress"><div class="card-prog-bg"><div class="card-prog-fill" style="width:'+t.pct+'%"></div></div><span class="card-prog-pct">'+t.pct+'%</span></div>':'')+(t.filePath?'<div class="card-filepath" title="'+esc(t.filePath)+'">📂 <span>'+esc(t.filePath.length>35?t.filePath.slice(-35):t.filePath)+'</span></div>':'')+ringHTML+(function(){var lnks=state.notes.filter(function(n){return n.linkedTaskId===t.id;});if(!lnks.length)return'';return lnks.map(function(n){return'<div class="card-linked-note" onclick="event.stopPropagation();jumpToLinkedNote('+n.id+')" title="Open: '+esc(n.title||'Untitled')+'">📝 '+(esc(n.title||'Linked Note'))+'</div>';}).join('');}())+'</div>';}
-function quickAdd(bucket,el){const title=el.value.trim();if(!title)return;const newTask={id:state.nextId++,title:title,bucket:bucket,priority:'Medium',pct:0,labels:[],checklist:[],filePath:'',created:new Date().toISOString().split('T')[0],history:[],department:deptFilter||'General'};logTaskChange(newTask,'Created','Quick-added to '+bucket);logActivity('Task created',title);state.tasks.push(newTask);el.value='';render();}
+function quickAdd(bucket,el){const title=el.value.trim();if(!title)return;const newTask={id:state.nextId++,title:title,bucket:bucket,priority:'Medium',pct:0,labels:[],checklist:[],filePath:'',created:new Date().toISOString().split('T')[0],history:[],department:teamDeptTab==='acquisition'?'Acquisition':teamDeptTab==='entitlement'?'Entitlements':teamDeptTab==='development'?'Development':teamDeptTab==='legal'?'Legal':'General'};logTaskChange(newTask,'Created','Quick-added to '+bucket);logActivity('Task created',title);state.tasks.push(newTask);el.value='';if(currentTeamWorkspaceId&&currentView==='dashboard'){renderDashboard();}else{render();}}
 function addBucketFromBoard(){const name=prompt('New bucket name:');if(name&&name.trim()){state.buckets.push(name.trim());save();render();}}
 function moveBucket(idx,dir){var ni=idx+dir;if(ni<0||ni>=state.buckets.length)return;var t=state.buckets[idx];state.buckets[idx]=state.buckets[ni];state.buckets[ni]=t;save();render();}
 function showQuickEdit(taskId,field,event){closeAllQuickEdits();const card=event.target.closest('.card');if(!card)return;const t=state.tasks.find(x=>x.id===taskId);if(!t)return;const popup=document.createElement('div');popup.className='qe-popup';popup.onclick=function(e){e.stopPropagation();};if(field==='due')popup.innerHTML='<label>Due Date</label><input type="date" id="qeVal" value="'+(t.due||'')+'"><button onclick="applyQuickEdit('+taskId+',\'due\')">Save</button>';else if(field==='assignee')popup.innerHTML='<label>Assignee</label><input type="text" id="qeVal" value="'+esc(t.assignee||'')+'"><button onclick="applyQuickEdit('+taskId+',\'assignee\')">Save</button>';else if(field==='priority')popup.innerHTML='<label>Priority</label><select id="qeVal"><option '+(t.priority==='Critical'?'selected':'')+'>Critical</option><option '+(t.priority==='High'?'selected':'')+'>High</option><option '+(t.priority==='Medium'?'selected':'')+'>Medium</option><option '+(t.priority==='Low'?'selected':'')+'>Low</option></select><button onclick="applyQuickEdit('+taskId+',\'priority\')">Save</button>';card.appendChild(popup);var inp=popup.querySelector('#qeVal');if(inp)inp.focus();}
@@ -2730,7 +2804,7 @@ function populateModal(t){
     const combined=[...new Set([...teamMembers,...existing])].sort();
     dl.innerHTML=combined.map(n=>'<option value="'+esc(n)+'">').join('');
   }
-  document.getElementById('mTitle').value=t.title||'';document.getElementById('mAssignee').value=t.assignee||'';const bs=document.getElementById('mBucket');bs.innerHTML=state.buckets.map(b=>'<option '+(b===(t.bucket||state.buckets[0])?'selected':'')+'>'+b+'</option>').join('');document.getElementById('mDue').value=t.due||'';document.getElementById('mPriority').value=t.priority||'Medium';document.getElementById('mPct').value=t.pct||0;document.getElementById('mPctVal').textContent=(t.pct||0)+'%';document.getElementById('mNotes').value=t.notes||'';
+  document.getElementById('mTitle').value=t.title||'';document.getElementById('mAssignee').value=t.assignee||'';const bs=document.getElementById('mBucket');if(bs){const stageBuckets=currentTeamWorkspaceId?['To Do','In Progress','Under Review','Complete']:(state.buckets||['To Do','In Progress','Under Review','Complete']);bs.innerHTML=stageBuckets.map(b=>'<option value="'+esc(b)+'" '+(b===(t.bucket||stageBuckets[0])?'selected':'')+'>'+esc(b)+'</option>').join('');}document.getElementById('mDue').value=t.due||'';document.getElementById('mPriority').value=t.priority||'Medium';document.getElementById('mPct').value=t.pct||0;document.getElementById('mPctVal').textContent=(t.pct||0)+'%';document.getElementById('mNotes').value=t.notes||'';
 if(document.getElementById('mDepartment'))document.getElementById('mDepartment').value=t.department||'General';
 if(document.getElementById('mActualDate'))document.getElementById('mActualDate').value=t.actualDate||'';
 document.getElementById('mFilePath').value=t.filePath||'';document.getElementById('mLabels').innerHTML=state.labels.map(l=>'<span class="label-chip '+((t.labels||[]).includes(l.name)?'selected':'')+'" style="background:'+l.color+'" data-label="'+esc(l.name)+'" onclick="this.classList.toggle(\'selected\')">'+esc(l.name)+'</span>').join('');const cl=document.getElementById('mChecklist');cl.innerHTML='';(t.checklist||[]).forEach(c=>addChecklistItem(c.text,c.done));
@@ -4551,6 +4625,7 @@ function switchTeamDeptTab(name){
 }
 
 function renderTeamSidebarProjects(){
+  if(!currentTeamWorkspaceId || currentView!=='dashboard') return;
   var sidebarEl=document.getElementById('sidebar');if(!sidebarEl)return;
 
   // Hide all existing sidebar-sections (Views, Filters, Saved Filters, mobile actions)
@@ -5067,7 +5142,11 @@ function dev_render() {
   dev_wxEnsureSettings();
   var container = document.getElementById('devAppContainer');
   if(!container) return;
-  container.innerHTML = dev_renderHeader() + `<nav class="sidebar">${dev_renderSidebar()}</nav><main class="main">${dev_renderBackupBanner()}${dev_renderContent()}</main>`;
+  container.innerHTML = dev_renderHeader() +
+    '<div class="dev-app-body">' +
+      '<nav class="sidebar">' + dev_renderSidebar() + '</nav>' +
+      '<main class="main">' + dev_renderBackupBanner() + dev_renderContent() + '</main>' +
+    '</div>';
   dev_bindSidebarEvents();
 }
 

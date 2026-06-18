@@ -2709,7 +2709,7 @@ var a=document.createElement('a');a.href=URL.createObjectURL(blob);
 a.download=(state.projectName||'workload').replace(/[^a-zA-Z0-9 _-]/g,'')+'_outlook_tasks.csv';
 a.click();showToast('Exported '+state.tasks.length+' tasks for Outlook!');}
 
-function getFilteredTasks(){const q=document.getElementById('searchBox').value.toLowerCase(),fa=document.getElementById('filterAssignee').value,fp=document.getElementById('filterPriority').value,fl=document.getElementById('filterLabel').value;var _tasks=state.tasks;if(deptFilter)_tasks=_tasks.filter(function(t){return t.department===deptFilter;});return _tasks.filter(t=>{if(q&&!t.title.toLowerCase().includes(q)&&!(t.assignee||'').toLowerCase().includes(q)&&!(t.labels||[]).some(l=>l.toLowerCase().includes(q)))return false;if(fa&&t.assignee!==fa)return false;if(fp&&t.priority!==fp)return false;if(fl&&!(t.labels||[]).includes(fl))return false;var fd=document.getElementById('filterDueDate').value;if(fd){var now=new Date(),ts2=todayStr();if(fd==='overdue'&&!isOverdue(t))return false;if(fd==='today'&&t.due!==ts2)return false;if(fd==='thisweek'){var dw=new Date(now);dw.setDate(dw.getDate()-dw.getDay());var ws=dw.getFullYear()+'-'+String(dw.getMonth()+1).padStart(2,'0')+'-'+String(dw.getDate()).padStart(2,'0');dw.setDate(dw.getDate()+6);var we=dw.getFullYear()+'-'+String(dw.getMonth()+1).padStart(2,'0')+'-'+String(dw.getDate()).padStart(2,'0');if(!t.due||t.due<ws||t.due>we)return false;}if(fd==='nextweek'){var d2=new Date(now);d2.setDate(d2.getDate()-d2.getDay()+7);var nws=d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');d2.setDate(d2.getDate()+6);var nwe=d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');if(!t.due||t.due<nws||t.due>nwe)return false;}if(fd==='thismonth'){var ms=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';var lday=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();var me=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(lday).padStart(2,'0');if(!t.due||t.due<ms||t.due>me)return false;}if(fd==='nodate'&&t.due)return false;if(fd==='hasdate'&&!t.due)return false;}return true;});}
+function getFilteredTasks(){const q=document.getElementById('searchBox').value.toLowerCase(),fa=document.getElementById('filterAssignee').value,fp=document.getElementById('filterPriority').value,fl=document.getElementById('filterLabel').value;var _tasks=state.tasks;if(deptFilter)_tasks=_tasks.filter(function(t){return t.department===deptFilter;});if(currentTeamWorkspaceId&&selectedTeamProject)_tasks=_tasks.filter(function(t){return t.project===selectedTeamProject;});return _tasks.filter(t=>{if(q&&!t.title.toLowerCase().includes(q)&&!(t.assignee||'').toLowerCase().includes(q)&&!(t.labels||[]).some(l=>l.toLowerCase().includes(q)))return false;if(fa&&t.assignee!==fa)return false;if(fp&&t.priority!==fp)return false;if(fl&&!(t.labels||[]).includes(fl))return false;var fd=document.getElementById('filterDueDate').value;if(fd){var now=new Date(),ts2=todayStr();if(fd==='overdue'&&!isOverdue(t))return false;if(fd==='today'&&t.due!==ts2)return false;if(fd==='thisweek'){var dw=new Date(now);dw.setDate(dw.getDate()-dw.getDay());var ws=dw.getFullYear()+'-'+String(dw.getMonth()+1).padStart(2,'0')+'-'+String(dw.getDate()).padStart(2,'0');dw.setDate(dw.getDate()+6);var we=dw.getFullYear()+'-'+String(dw.getMonth()+1).padStart(2,'0')+'-'+String(dw.getDate()).padStart(2,'0');if(!t.due||t.due<ws||t.due>we)return false;}if(fd==='nextweek'){var d2=new Date(now);d2.setDate(d2.getDate()-d2.getDay()+7);var nws=d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');d2.setDate(d2.getDate()+6);var nwe=d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');if(!t.due||t.due<nws||t.due>nwe)return false;}if(fd==='thismonth'){var ms=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';var lday=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();var me=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(lday).padStart(2,'0');if(!t.due||t.due<ms||t.due>me)return false;}if(fd==='nodate'&&t.due)return false;if(fd==='hasdate'&&!t.due)return false;}return true;});}
 function toggleSidebar(){if(isMobile()){toggleMobileSidebar();return;}const sb=document.getElementById('sidebar');sb.classList.toggle('collapsed');state.sidebarCollapsed=sb.classList.contains('collapsed');save();}
 function updateFilterChips(){const bar=document.getElementById('filterChipsBar'),chips=document.getElementById('filterChips');const q=document.getElementById('searchBox').value,fa=document.getElementById('filterAssignee').value,fp=document.getElementById('filterPriority').value,fl=document.getElementById('filterLabel').value;let h='';if(q)h+='<span class="filter-chip">Search: '+esc(q)+'<span class="chip-x" onclick="removeFilter(\'search\')">×</span></span>';if(fa)h+='<span class="filter-chip">Assignee: '+esc(fa)+'<span class="chip-x" onclick="removeFilter(\'assignee\')">×</span></span>';if(fp)h+='<span class="filter-chip">Priority: '+esc(fp)+'<span class="chip-x" onclick="removeFilter(\'priority\')">×</span></span>';var fdd=document.getElementById('filterDueDate').value;var fddL={overdue:'Past Due',today:'Due Today',thisweek:'Due This Week',nextweek:'Due Next Week',thismonth:'Due This Month',nodate:'No Due Date',hasdate:'Has Due Date'};if(fdd)h+='<span class="filter-chip">Due: '+(fddL[fdd]||fdd)+'<span class="chip-x" onclick="removeFilter(\'duedate\')">×</span></span>';if(fl)h+='<span class="filter-chip">Label: '+esc(fl)+'<span class="chip-x" onclick="removeFilter(\'label\')">×</span></span>';chips.innerHTML=h;bar.classList.toggle('empty',!h);}
 function removeFilter(type){if(type==='search')document.getElementById('searchBox').value='';if(type==='assignee')document.getElementById('filterAssignee').value='';if(type==='priority')document.getElementById('filterPriority').value='';if(type==='label')document.getElementById('filterLabel').value='';if(type==='duedate')document.getElementById('filterDueDate').value='';render();}
@@ -4056,6 +4056,10 @@ function lt_loadFromState(){
   var d=state.legalData;
   lt_tasks=Array.isArray(d.tasks)?d.tasks:[];
   lt_projects=Array.isArray(d.projects)&&d.projects.length?d.projects:LT_DEFAULT_PROJECTS.slice();
+  // Merge in shared projects from all tabs so legal tracker sees the same project list
+  var _sharedProjs=[...(state.projects||[]),...(state.scheduleProjects||[]),...((typeof devData!=='undefined'&&devData&&devData.projects)?devData.projects.map(function(p){return p.name;}):[])];
+  _sharedProjs.forEach(function(pn){if(pn&&!lt_projects.includes(pn))lt_projects.push(pn);});
+  lt_projects.sort(function(a,b){return a.localeCompare(b);});
   lt_statuses=Array.isArray(d.statuses)&&d.statuses.length?d.statuses:LT_DEFAULT_STATUSES.slice();
   lt_counselTypes=Array.isArray(d.counselTypes)&&d.counselTypes.length?d.counselTypes:LT_DEFAULT_COUNSEL_TYPES.slice();
   lt_actionTypes=Array.isArray(d.actionTypes)&&d.actionTypes.length?d.actionTypes:LT_DEFAULT_ACTION_TYPES.slice();
@@ -4920,17 +4924,6 @@ function renderDevelopmentTab(el){
 
 function renderLegalTab(el){
   // Project filter header
-  // Build unified project list from all sources including dev projects
-  var _devProjNames=(typeof devData!=='undefined'&&devData&&devData.projects)?devData.projects.map(function(p){return p.name;}):[];
-  var projects=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]),..._devProjNames,...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])].sort();
-  var filterHTML='<div style="padding:8px 14px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0;">'+
-    '<label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2)">Project:</label>'+
-    '<select onchange="selectedTeamProject=this.value||null;renderDashboard()" style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg);color:var(--text)">'+
-    '<option value="">All Projects</option>'+
-    projects.map(function(p){return'<option value="'+esc(p)+'" '+(selectedTeamProject===p?'selected':'')+'>'+esc(p)+'</option>';}).join('')+
-    '</select>'+
-    '<span class="auto-sync-badge">🔄 Auto-synced</span>'+
-  '</div>';
   // The legal view renders into a dedicated div that lt_renderView expects
   var legalDiv=document.getElementById('legalView');
   if(!legalDiv){
@@ -4946,7 +4939,7 @@ function renderLegalTab(el){
   el.style.flexDirection='column';
   el.style.flex='1';
   el.style.overflow='hidden';
-  el.innerHTML=filterHTML;
+  el.innerHTML='';
   el.appendChild(legalDiv);
   if(typeof lt_loadFromState==='function')lt_loadFromState();
   if(typeof lt_renderView==='function')lt_renderView();

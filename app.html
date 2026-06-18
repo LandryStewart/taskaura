@@ -6663,29 +6663,37 @@ function dev_wxEnsureSettings() {
     var task=(state.tasks||[]).find(function(x){return x.id===editingId;});
     if(!task){ _toast('Task not found.'); return; }
 
-    var t = getSelectedTeam();
+    // RE-DISCOVER teams now, in case Supabase finished loading after the dialog opened
+    var freshTeams = discoverTeams();
+    var selectedId = _qs('mttTeam').value;
+    var t = freshTeams.find(function(x){return String(x.id)===String(selectedId);})
+         || (window.__mttTeams||[]).find(function(x){return String(x.id)===String(selectedId);});
     if(!t){ _toast('Pick a team.'); return; }
 
-    var dept=_qs('mttDept').value;
-    var projSel=_qs('mttProject').value;
-    var newProj=(_qs('mttNewProject').value||'').trim();
-    var project = projSel==='__new__' ? newProj : (projSel||'');
-    if(projSel==='__new__' && !newProj){ _toast('Enter a name for the new project.'); return; }
-    var bucket=_qs('mttBucket').value || 'To Do';
+    // Also try to find a CLOUD match for this id
+    var cloudRef = null;
+    if(Array.isArray(window.teamWorkspaces)){
+      cloudRef = window.teamWorkspaces.find(function(w){return String(w.id)===String(t.id);});
+    }
+    if(cloudRef && !t.data) t.data = cloudRef.data;
 
-    // Ensure destination data is initialized
+    var dept   = _qs('mttDept').value;
+    var projSel= _qs('mttProject').value;
+    var newProj= (_qs('mttNewProject').value||'').trim();
+    var project= projSel==='__new__' ? newProj : (projSel||'');
+    if(projSel==='__new__' && !newProj){ _toast('Enter a name for the new project.'); return; }
+    var bucket = _qs('mttBucket').value || 'To Do';
+
     if(!t.data) t.data = { tasks:[], buckets:DEFAULT_BUCKETS.slice(), labels:[], notes:[], folders:[],
-                            projects:[], scheduleProjects:[], deptBuckets:{} };
+                            projects:[], scheduleProjects:[], deptBuckets:{}, nextId:1 };
     if(!Array.isArray(t.data.tasks)) t.data.tasks=[];
 
-    // Fresh id in destination
-    var maxId = 0;
+    var maxId=0;
     t.data.tasks.forEach(function(x){ if(typeof x.id==='number' && x.id>maxId) maxId=x.id; });
     if(typeof t.data.nextId==='number' && t.data.nextId>maxId) maxId = t.data.nextId - 1;
     var newId = maxId + 1;
     t.data.nextId = newId + 1;
 
-    // Deep clone
     var clone = JSON.parse(JSON.stringify(task));
     clone.id = newId;
     clone.bucket = bucket;
@@ -6705,42 +6713,66 @@ function dev_wxEnsureSettings() {
 
     t.data.tasks.push(clone);
 
-    // Remove from personal
-    var idx = state.tasks.indexOf(task);
-    if(idx>=0) state.tasks.splice(idx,1);
+    console.log('[Move to Team] DEST team:', t.name, 'id=', t.id, 'source=', t.source,
+                'cloudRef present=', !!cloudRef,
+                'dest task count BEFORE save:', t.data.tasks.length);
 
-    // Sync the cloud team's in-memory record so renderDashboard sees the new task
-    if(t.source==='cloud' && Array.isArray(window.teamWorkspaces)){
-      var twRef = window.teamWorkspaces.find(function(w){return String(w.id)===String(t.id);});
-      if(twRef) twRef.data = t.data;
+    // ---- WRITE #1: in-memory teamWorkspaces (cloud-loaded list) ----
+    if(cloudRef){
+      cloudRef.data = t.data;
+      console.log('[Move to Team] updated in-memory teamWorkspaces entry');
     }
 
-    // Persist destination data locally under wm_workspaces['team_'+id]
+    // ---- WRITE #2: localStorage ----
     try{
       var allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');
       allWs['team_'+t.id] = t.data;
       localStorage.setItem('wm_workspaces', JSON.stringify(allWs));
-    }catch(e){ console.warn('Local team snapshot save failed',e); }
+      console.log('[Move to Team] wrote localStorage key team_'+t.id+' with', (allWs['team_'+t.id].tasks||[]).length, 'tasks');
+    }catch(e){ console.warn('[Move to Team] local write failed',e); }
 
-    // Save personal workspace
+    var idx = state.tasks.indexOf(task);
+    if(idx>=0) state.tasks.splice(idx,1);
     if(typeof save==='function') save();
+    console.log('[Move to Team] removed from personal; new personal task count:', state.tasks.length);
 
-    // Cloud sync if applicable
+    // ---- WRITE #3: Supabase ----
+    var cloudOK = false, cloudMsg = '';
     try{
-      if(t.source==='cloud' && typeof _supabase!=='undefined' && _supabase && _supabase.from){
-        await _supabase.from('team_workspaces').update({
+      if(typeof _supabase!=='undefined' && _supabase && _supabase.from){
+        var res = await _supabase.from('team_workspaces').update({
           data: t.data,
           updated_at: new Date().toISOString()
         }).eq('id', t.id);
+        if(res && res.error){
+          cloudMsg = res.error.message || String(res.error);
+          console.warn('[Move to Team] Supabase update error:', res.error);
+        } else {
+          cloudOK = true;
+          console.log('[Move to Team] Supabase update OK');
+        }
+      } else {
+        cloudMsg = 'No Supabase client available - local-only save.';
+        console.log('[Move to Team] '+cloudMsg);
       }
-    }catch(e){ console.warn('Cloud sync to team workspace failed (will retry on next save):', e); }
+    }catch(e){
+      cloudMsg = e && e.message ? e.message : String(e);
+      console.warn('[Move to Team] Supabase update threw:', e);
+    }
 
     try{ if(typeof logActivity==='function') logActivity('Task moved to team', (task.title||'')+' -> '+(t.name||'team')); }catch(e){}
 
     closeMoveToTeamModal();
     if(typeof closeTaskModal==='function') closeTaskModal();
     if(typeof render==='function') render();
-    _toast('Task moved to '+(t.name||'team')+' OK');
+
+    if(cloudOK){
+      _toast('Task moved to '+(t.name||'team')+' (synced)');
+    } else if(cloudMsg){
+      _toast('Moved locally. Cloud sync: '+cloudMsg);
+    } else {
+      _toast('Task moved to '+(t.name||'team'));
+    }
   };
 
   function ensureMoveButton(){

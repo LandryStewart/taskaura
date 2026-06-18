@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<!-- PATCH: All Projects roll-up fix v10 -->
-
+<!-- PATCH: All Projects roll-up + master calendar team-label fix v11 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -2630,11 +2629,22 @@ let acqSubView='board';
 let entSubView='board';
 let legSubView='board';
 let deptFilter=null;
-function normalizeTeamProjectName(v){return(v==null?'':String(v)).trim();}
+function normalizeTeamProjectName(v){var s=(v==null?'':String(v)).trim();if(/^all\s+projects$/i.test(s))return'';return s;}
 function getActiveTeamProject(){var p=normalizeTeamProjectName(selectedTeamProject);return p||null;}
-function isTaskInSelectedTeamProject(t){var active=getActiveTeamProject();if(!(currentTeamWorkspaceId&&active))return true;return normalizeTeamProjectName(t&&t.project)===active;}
+function getTaskProjectName(t){if(!t)return'';var raw=t.project;
+  if((raw==null||String(raw).trim()==='')&&t.projectName!=null)raw=t.projectName;
+  if((raw==null||String(raw).trim()==='')&&t.project_name!=null)raw=t.project_name;
+  if((raw==null||String(raw).trim()==='')&&t._project!=null)raw=t._project;
+  return normalizeTeamProjectName(raw);
+}
+function isTaskInSelectedTeamProject(t){var active=getActiveTeamProject();if(!(currentTeamWorkspaceId&&active))return true;return getTaskProjectName(t)===active;}
 function setTeamProjectSelection(p){selectedTeamProject=normalizeTeamProjectName(p)||null;if(currentView==='dashboard')renderDashboard();else render();}
-function getCalendarTaskDisplayTitle(t,maxLen){var rawTitle=(t&&t.title)||'';var active=getActiveTeamProject();var proj=normalizeTeamProjectName(t&&t.project);var full=!active&&proj?(proj+' - '+rawTitle):rawTitle;maxLen=maxLen||24;return full.length>maxLen?full.substring(0,maxLen):full;}
+function getCalendarTaskDisplayTitle(t,maxLen){var rawTitle=(t&&((t.title||t.text)||''))||'';var active=getActiveTeamProject();var proj=getTaskProjectName(t);var full=!active&&proj?(proj+' - '+rawTitle):rawTitle;maxLen=maxLen||24;return full.length>maxLen?full.substring(0,maxLen):full;}
+function normalizeTaskText(v){return String(v==null?'':v).trim().replace(/\s+/g,' ').toLowerCase();}
+function getTaskDedupeKey(t){return [normalizeTaskText((t&&t.title)||(t&&t.text)||''),normalizeTaskText(t&&t.due),normalizeTaskText(t&&t.assignee),normalizeTaskText(getTaskProjectName(t)),normalizeTaskText(t&&t.department)].join('||');}
+function extractMovedTeamNameFromTask(t){if(!t||!Array.isArray(t.history))return'';for(var i=(t.history.length-1);i>=0;i--){var h=t.history[i]||{};var action=String(h.action||'');var detail=String(h.detail||'');if(/Moved to team/i.test(action)||/Personal\s*->/i.test(detail)){var m=detail.match(/Personal\s*->\s*([^/]+)/i);if(m&&m[1])return String(m[1]).trim();}}return'';}
+function inferTaskWorkspaceLabel(t,fallbackLabel){var label=(t&&t._teamWorkspaceName)||extractMovedTeamNameFromTask(t)||fallbackLabel||'Personal';if((!label||/^Personal$/i.test(label))&&t){var proj=getTaskProjectName(t);if(proj&&Array.isArray(teamWorkspaces)){for(var i=0;i<teamWorkspaces.length;i++){var tw=teamWorkspaces[i]||{};var td=tw.data||{};var names=[].concat(td.projects||[],td.scheduleProjects||[]).concat((td.tasks||[]).map(function(x){return getTaskProjectName(x);}).filter(Boolean));for(var j=0;j<names.length;j++){if(normalizeTeamProjectName(names[j])===proj){label=tw.name||label;break;}}if(label&&label!=='Personal')break;}}}return label||'Personal';}
+function dedupeMasterCalendarTasks(tasks){var map={};(tasks||[]).forEach(function(t){var key=getTaskDedupeKey(t);var existing=map[key];if(!existing){map[key]=t;return;}var curScore=((t._wsSource==='team')?20:0)+((t._wsLabel&&t._wsLabel!=='Personal')?10:0);var oldScore=((existing._wsSource==='team')?20:0)+((existing._wsLabel&&existing._wsLabel!=='Personal')?10:0);if(curScore>=oldScore)map[key]=t;});return Object.keys(map).map(function(k){return map[k];});}
 function setView(v){if(v==='schedules'&&!hasTeamPlan()){showToast('🔒 Schedules is a Team plan feature.');return;}
 // If leaving dashboard view, restore sidebar
 if(v!=='dashboard'){var sidebarEl2=document.getElementById('sidebar');if(sidebarEl2)sidebarEl2.classList.remove('team-dashboard-mode');var teamProjSection2=document.getElementById('teamProjSidebarSection');if(teamProjSection2)teamProjSection2.remove();}
@@ -2843,7 +2853,7 @@ if(document.getElementById('mActualDate'))document.getElementById('mActualDate')
   var allProjs=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]),...devProjNames,...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])].sort();
   var cur=t.project||(getActiveTeamProject()||'');
   ps.innerHTML='<option value="">— None —</option>'+allProjs.map(function(p){return'<option value="'+esc(p)+'" '+(p===cur?'selected':'')+'>'+esc(p)+'</option>';}).join('');
-  if(!t.project&&selectedTeamProject)ps.value=selectedTeamProject;
+  if(!t.project&&getActiveTeamProject())ps.value=getActiveTeamProject();
 })();
 document.getElementById('mFilePath').value=t.filePath||'';document.getElementById('mLabels').innerHTML=state.labels.map(l=>'<span class="label-chip '+((t.labels||[]).includes(l.name)?'selected':'')+'" style="background:'+l.color+'" data-label="'+esc(l.name)+'" onclick="this.classList.toggle(\'selected\')">'+esc(l.name)+'</span>').join('');const cl=document.getElementById('mChecklist');cl.innerHTML='';(t.checklist||[]).forEach(c=>addChecklistItem(c.text,c.done));
 var lnSec=document.getElementById('mLinkedNotesSection');
@@ -4803,7 +4813,7 @@ function renderCalendarInto(el){
     html+='<div class="cal-date">'+(isToday?'<span class="today-num">'+d+'</span>':d)+'</div>';
     html+='<div class="cal-tasks">';
     dayTasks.slice(0,4).forEach(function(t){
-      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" onclick="openEditTask('+t.id+')" title="'+esc((getActiveTeamProject()? (t.title||'') : ((normalizeTeamProjectName(t.project)?(t.project+' - '):'')+(t.title||''))))+'">'+esc(getCalendarTaskDisplayTitle(t,24))+'</div>';
+      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" onclick="openEditTask('+t.id+')" title="'+esc((getActiveTeamProject()? ((t.title||t.text)||'') : ((getTaskProjectName(t)?(getTaskProjectName(t)+' - '):'')+((t.title||t.text)||''))))+'">'+esc(getCalendarTaskDisplayTitle(t,24))+'</div>';
     });
     if(dayTasks.length>4)html+='<div class="cal-expand-btn" onclick="openCalDay(\''+ds+'\')" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-4)+' more</div>';
     html+='</div></div>';
@@ -5238,10 +5248,17 @@ function generatePDFReport(){generatePDFSummary();}
 
 function renderMasterCalendar(){
   var el=document.getElementById('masterCalView');if(!el)return;
-  var myName=(state.myName||'').trim();
   var allTasks=[];
-  (state.tasks||[]).forEach(function(t){allTasks.push(Object.assign({},t,{_wsLabel:'Personal'}));});
-  teamWorkspaces.forEach(function(tw){((tw.data||{}).tasks||[]).forEach(function(t){allTasks.push(Object.assign({},t,{_wsLabel:tw.name||'Team'}));});});
+  (state.tasks||[]).forEach(function(t){
+    var label=inferTaskWorkspaceLabel(t,'Personal');
+    allTasks.push(Object.assign({},t,{_wsLabel:label,_wsSource:(label&&label!=='Personal')?'team':'personal'}));
+  });
+  teamWorkspaces.forEach(function(tw){
+    ((tw.data||{}).tasks||[]).forEach(function(t){
+      allTasks.push(Object.assign({},t,{_wsLabel:inferTaskWorkspaceLabel(t,tw.name||'Team'),_wsSource:'team'}));
+    });
+  });
+  allTasks=dedupeMasterCalendarTasks(allTasks);
 
   var now=new Date();
   var year=now.getFullYear();var month=now.getMonth();
@@ -5250,14 +5267,14 @@ function renderMasterCalendar(){
   var monthName=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
   var todayStr3=now.toISOString().split('T')[0];
 
-  var monOff=(firstDay+6)%7; // Mon=0,...,Fri=4,Sat=5,Sun=6
+  var monOff=(firstDay+6)%7;
   var html='<div class="cal-header"><h2>🗓 Master Calendar — '+monthName+'</h2></div>';
   html+='<div class="cal-grid" style="grid-template-columns:repeat(5,1fr)">';
   ['Mon','Tue','Wed','Thu','Fri'].forEach(function(d){html+='<div class="cal-day-hdr">'+d+'</div>';});
   for(var i=0;i<Math.min(monOff,5);i++)html+='<div class="cal-cell outside"></div>';
   for(var d=1;d<=daysInMonth;d++){
     var dow=new Date(year,month,d).getDay();
-    if(dow===0||dow===6)continue; // skip weekends
+    if(dow===0||dow===6)continue;
     var dateStr=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     var dayTasks=allTasks.filter(function(t){return t.due===dateStr;});
     var isToday=dateStr===todayStr3;
@@ -5265,9 +5282,10 @@ function renderMasterCalendar(){
       '<div class="cal-date">'+(isToday?'<span class="today-num">'+d+'</span>':d)+'</div>'+
       '<div class="cal-tasks">';
     dayTasks.slice(0,3).forEach(function(t){
-      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" title="'+esc(t.title||t.text||'')+'" onclick="openEditTask('+t.id+')">'+
-        '<span style="font-size:9px;background:var(--pri);color:#fff;padding:1px 4px;border-radius:3px;margin-right:3px;flex-shrink:0">'+esc(t._wsLabel)+'</span>'+
-        esc((t.title||t.text||'').substring(0,20))+
+      var wsLabel=inferTaskWorkspaceLabel(t,t._wsLabel||'Personal');
+      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" title="'+esc((t.title||t.text||''))+'" onclick="openEditTask('+t.id+')">'+
+        '<span style="font-size:9px;background:var(--pri);color:#fff;padding:1px 4px;border-radius:3px;margin-right:3px;flex-shrink:0">'+esc(wsLabel)+'</span>'+
+        esc(((t.title||t.text||'')).substring(0,20))+
       '</div>';
     });
     if(dayTasks.length>3)html+='<div class="cal-expand-btn" onclick="openMasterCalDay(\''+dateStr+'\',\''+encodeURIComponent(JSON.stringify(dayTasks))+'\')" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-3)+' more</div>';
@@ -5276,6 +5294,7 @@ function renderMasterCalendar(){
   html+='</div>';
   el.innerHTML=html;
 }
+
 
 </script>
 
@@ -6796,6 +6815,9 @@ function dev_wxEnsureSettings() {
     clone.bucket = bucket;
     clone.department = dept;
     clone.project = project;
+    clone._teamWorkspaceId = t.id;
+    clone._teamWorkspaceName = t.name||'Team';
+    clone._movedFromPersonal = true;
     clone.history = Array.isArray(clone.history) ? clone.history : [];
     clone.history.push({
       ts: new Date().toISOString(),

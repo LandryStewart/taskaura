@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- PATCH: All Projects roll-up fix v10 -->
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -2628,6 +2630,11 @@ let acqSubView='board';
 let entSubView='board';
 let legSubView='board';
 let deptFilter=null;
+function normalizeTeamProjectName(v){return(v==null?'':String(v)).trim();}
+function getActiveTeamProject(){var p=normalizeTeamProjectName(selectedTeamProject);return p||null;}
+function isTaskInSelectedTeamProject(t){var active=getActiveTeamProject();if(!(currentTeamWorkspaceId&&active))return true;return normalizeTeamProjectName(t&&t.project)===active;}
+function setTeamProjectSelection(p){selectedTeamProject=normalizeTeamProjectName(p)||null;if(currentView==='dashboard')renderDashboard();else render();}
+function getCalendarTaskDisplayTitle(t,maxLen){var rawTitle=(t&&t.title)||'';var active=getActiveTeamProject();var proj=normalizeTeamProjectName(t&&t.project);var full=!active&&proj?(proj+' - '+rawTitle):rawTitle;maxLen=maxLen||24;return full.length>maxLen?full.substring(0,maxLen):full;}
 function setView(v){if(v==='schedules'&&!hasTeamPlan()){showToast('🔒 Schedules is a Team plan feature.');return;}
 // If leaving dashboard view, restore sidebar
 if(v!=='dashboard'){var sidebarEl2=document.getElementById('sidebar');if(sidebarEl2)sidebarEl2.classList.remove('team-dashboard-mode');var teamProjSection2=document.getElementById('teamProjSidebarSection');if(teamProjSection2)teamProjSection2.remove();}
@@ -2701,7 +2708,7 @@ var a=document.createElement('a');a.href=URL.createObjectURL(blob);
 a.download=(state.projectName||'workload').replace(/[^a-zA-Z0-9 _-]/g,'')+'_outlook_tasks.csv';
 a.click();showToast('Exported '+state.tasks.length+' tasks for Outlook!');}
 
-function getFilteredTasks(){const q=document.getElementById('searchBox').value.toLowerCase(),fa=document.getElementById('filterAssignee').value,fp=document.getElementById('filterPriority').value,fl=document.getElementById('filterLabel').value;var _tasks=state.tasks;if(deptFilter)_tasks=_tasks.filter(function(t){return t.department===deptFilter;});if(currentTeamWorkspaceId&&selectedTeamProject)_tasks=_tasks.filter(function(t){return t.project===selectedTeamProject;});return _tasks.filter(t=>{if(q&&!t.title.toLowerCase().includes(q)&&!(t.assignee||'').toLowerCase().includes(q)&&!(t.labels||[]).some(l=>l.toLowerCase().includes(q)))return false;if(fa&&t.assignee!==fa)return false;if(fp&&t.priority!==fp)return false;if(fl&&!(t.labels||[]).includes(fl))return false;var fd=document.getElementById('filterDueDate').value;if(fd){var now=new Date(),ts2=todayStr();if(fd==='overdue'&&!isOverdue(t))return false;if(fd==='today'&&t.due!==ts2)return false;if(fd==='thisweek'){var dw=new Date(now);dw.setDate(dw.getDate()-dw.getDay());var ws=dw.getFullYear()+'-'+String(dw.getMonth()+1).padStart(2,'0')+'-'+String(dw.getDate()).padStart(2,'0');dw.setDate(dw.getDate()+6);var we=dw.getFullYear()+'-'+String(dw.getMonth()+1).padStart(2,'0')+'-'+String(dw.getDate()).padStart(2,'0');if(!t.due||t.due<ws||t.due>we)return false;}if(fd==='nextweek'){var d2=new Date(now);d2.setDate(d2.getDate()-d2.getDay()+7);var nws=d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');d2.setDate(d2.getDate()+6);var nwe=d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');if(!t.due||t.due<nws||t.due>nwe)return false;}if(fd==='thismonth'){var ms=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';var lday=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();var me=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(lday).padStart(2,'0');if(!t.due||t.due<ms||t.due>me)return false;}if(fd==='nodate'&&t.due)return false;if(fd==='hasdate'&&!t.due)return false;}return true;});}
+function getFilteredTasks(){const q=document.getElementById('searchBox').value.toLowerCase(),fa=document.getElementById('filterAssignee').value,fp=document.getElementById('filterPriority').value,fl=document.getElementById('filterLabel').value;var _tasks=state.tasks;if(deptFilter)_tasks=_tasks.filter(function(t){return t.department===deptFilter;});if(currentTeamWorkspaceId)_tasks=_tasks.filter(function(t){return isTaskInSelectedTeamProject(t);});return _tasks.filter(t=>{if(q&&!t.title.toLowerCase().includes(q)&&!(t.assignee||'').toLowerCase().includes(q)&&!(t.labels||[]).some(l=>l.toLowerCase().includes(q)))return false;if(fa&&t.assignee!==fa)return false;if(fp&&t.priority!==fp)return false;if(fl&&!(t.labels||[]).includes(fl))return false;var fd=document.getElementById('filterDueDate').value;if(fd){var now=new Date(),ts2=todayStr();if(fd==='overdue'&&!isOverdue(t))return false;if(fd==='today'&&t.due!==ts2)return false;if(fd==='thisweek'){var dw=new Date(now);dw.setDate(dw.getDate()-dw.getDay());var ws=dw.getFullYear()+'-'+String(dw.getMonth()+1).padStart(2,'0')+'-'+String(dw.getDate()).padStart(2,'0');dw.setDate(dw.getDate()+6);var we=dw.getFullYear()+'-'+String(dw.getMonth()+1).padStart(2,'0')+'-'+String(dw.getDate()).padStart(2,'0');if(!t.due||t.due<ws||t.due>we)return false;}if(fd==='nextweek'){var d2=new Date(now);d2.setDate(d2.getDate()-d2.getDay()+7);var nws=d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');d2.setDate(d2.getDate()+6);var nwe=d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');if(!t.due||t.due<nws||t.due>nwe)return false;}if(fd==='thismonth'){var ms=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';var lday=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();var me=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(lday).padStart(2,'0');if(!t.due||t.due<ms||t.due>me)return false;}if(fd==='nodate'&&t.due)return false;if(fd==='hasdate'&&!t.due)return false;}return true;});}
 function toggleSidebar(){if(isMobile()){toggleMobileSidebar();return;}const sb=document.getElementById('sidebar');sb.classList.toggle('collapsed');state.sidebarCollapsed=sb.classList.contains('collapsed');save();}
 function updateFilterChips(){const bar=document.getElementById('filterChipsBar'),chips=document.getElementById('filterChips');const q=document.getElementById('searchBox').value,fa=document.getElementById('filterAssignee').value,fp=document.getElementById('filterPriority').value,fl=document.getElementById('filterLabel').value;let h='';if(q)h+='<span class="filter-chip">Search: '+esc(q)+'<span class="chip-x" onclick="removeFilter(\'search\')">×</span></span>';if(fa)h+='<span class="filter-chip">Assignee: '+esc(fa)+'<span class="chip-x" onclick="removeFilter(\'assignee\')">×</span></span>';if(fp)h+='<span class="filter-chip">Priority: '+esc(fp)+'<span class="chip-x" onclick="removeFilter(\'priority\')">×</span></span>';var fdd=document.getElementById('filterDueDate').value;var fddL={overdue:'Past Due',today:'Due Today',thisweek:'Due This Week',nextweek:'Due Next Week',thismonth:'Due This Month',nodate:'No Due Date',hasdate:'Has Due Date'};if(fdd)h+='<span class="filter-chip">Due: '+(fddL[fdd]||fdd)+'<span class="chip-x" onclick="removeFilter(\'duedate\')">×</span></span>';if(fl)h+='<span class="filter-chip">Label: '+esc(fl)+'<span class="chip-x" onclick="removeFilter(\'label\')">×</span></span>';chips.innerHTML=h;bar.classList.toggle('empty',!h);}
 function removeFilter(type){if(type==='search')document.getElementById('searchBox').value='';if(type==='assignee')document.getElementById('filterAssignee').value='';if(type==='priority')document.getElementById('filterPriority').value='';if(type==='label')document.getElementById('filterLabel').value='';if(type==='duedate')document.getElementById('filterDueDate').value='';render();}
@@ -2714,7 +2721,7 @@ function expandBucket(bucketName){var overlay=document.getElementById('bucketOve
 function closeBucketExpand(){document.getElementById('bucketOverlay').classList.remove('show');document.body.style.overflow='';}
 function toggleBucketCollapse(bucket){if(!state.collapsedBuckets)state.collapsedBuckets=[];const idx=state.collapsedBuckets.indexOf(bucket);if(idx>=0)state.collapsedBuckets.splice(idx,1);else state.collapsedBuckets.push(bucket);save();renderBoard();}
 function cardHTML(t){const od=isOverdue(t),cl=(t.checklist||[]),cd=cl.filter(c=>c.done).length,ct=cl.length,sel=selectedTaskIds.has(t.id);let ringHTML='';if(ct>0){const pct=ct?Math.round(cd/ct*100):0,r=9,circ=2*Math.PI*r,offset=circ-(pct/100)*circ,col2=pct>=100?'var(--low)':'var(--pri)';ringHTML='<div class="card-cl-ring"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="'+r+'" fill="none" stroke="var(--border)" stroke-width="2.5"/><circle cx="12" cy="12" r="'+r+'" fill="none" stroke="'+col2+'" stroke-width="2.5" stroke-dasharray="'+circ.toFixed(1)+'" stroke-dashoffset="'+offset.toFixed(1)+'" transform="rotate(-90 12 12)" stroke-linecap="round"/></svg><span>'+cd+'/'+ct+'</span></div>';}return'<div class="card '+priClass(t.priority)+(od?' overdue':'')+(sel?' selected':'')+'" draggable="true" ondragstart="dragStart(event,'+t.id+')" ondragend="dragEnd(event)" onclick="openEditTask('+t.id+')"><input type="checkbox" class="card-select" '+(sel?'checked':'')+' onclick="event.stopPropagation();toggleCardSelect('+t.id+',this)"><div class="card-quick-edit"><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'assignee\',event)" title="Edit assignee">👤</button><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'due\',event)" title="Edit due">📅</button><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'priority\',event)" title="Edit priority">⚡</button></div><div class="card-title">'+esc(t.title)+'</div><div class="card-meta">'+(t.assignee?'<span class="card-avatar" style="background:'+avatarColor(t.assignee)+'" title="'+esc(t.assignee)+'">'+initials(t.assignee)+'</span>':'')+(t.due?'<span class="card-due '+(od?'overdue-text':'')+'">📅 '+fmtDate(t.due)+'</span>':'')+'<span class="card-pri '+priBadge(t.priority)+'">'+(t.priority||'Medium')+'</span></div>'+((t.labels||[]).length?'<div class="card-labels">'+(t.labels||[]).map(l=>{const lb=state.labels.find(x=>x.name===l);return'<span class="card-label" style="background:'+(lb?lb.color:'#888')+'">'+esc(l)+'</span>';}).join('')+'</div>':'')+(t.pct>0?'<div class="card-progress"><div class="card-prog-bg"><div class="card-prog-fill" style="width:'+t.pct+'%"></div></div><span class="card-prog-pct">'+t.pct+'%</span></div>':'')+(t.filePath?'<div class="card-filepath" title="'+esc(t.filePath)+'">📂 <span>'+esc(t.filePath.length>35?t.filePath.slice(-35):t.filePath)+'</span></div>':'')+ringHTML+(function(){var lnks=state.notes.filter(function(n){return n.linkedTaskId===t.id;});if(!lnks.length)return'';return lnks.map(function(n){return'<div class="card-linked-note" onclick="event.stopPropagation();jumpToLinkedNote('+n.id+')" title="Open: '+esc(n.title||'Untitled')+'">📝 '+(esc(n.title||'Linked Note'))+'</div>';}).join('');}())+'</div>';}
-function quickAdd(bucket,el){const title=el.value.trim();if(!title)return;const newTask={id:state.nextId++,title:title,bucket:bucket,priority:'Medium',pct:0,labels:[],checklist:[],filePath:'',created:new Date().toISOString().split('T')[0],history:[],department:teamDeptTab==='acquisition'?'Acquisition':teamDeptTab==='entitlement'?'Entitlements':teamDeptTab==='development'?'Development':teamDeptTab==='legal'?'Legal':'General',project:currentTeamWorkspaceId&&selectedTeamProject?selectedTeamProject:''};logTaskChange(newTask,'Created','Quick-added to '+bucket);logActivity('Task created',title);state.tasks.push(newTask);el.value='';if(currentTeamWorkspaceId&&currentView==='dashboard'){renderDashboard();}else{render();}}
+function quickAdd(bucket,el){const title=el.value.trim();if(!title)return;const newTask={id:state.nextId++,title:title,bucket:bucket,priority:'Medium',pct:0,labels:[],checklist:[],filePath:'',created:new Date().toISOString().split('T')[0],history:[],department:teamDeptTab==='acquisition'?'Acquisition':teamDeptTab==='entitlement'?'Entitlements':teamDeptTab==='development'?'Development':teamDeptTab==='legal'?'Legal':'General',project:currentTeamWorkspaceId&&getActiveTeamProject()?getActiveTeamProject():''};logTaskChange(newTask,'Created','Quick-added to '+bucket);logActivity('Task created',title);state.tasks.push(newTask);el.value='';if(currentTeamWorkspaceId&&currentView==='dashboard'){renderDashboard();}else{render();}}
 function addBucketFromBoard(){const name=prompt('New bucket name:');if(name&&name.trim()){state.buckets.push(name.trim());save();render();}}
 function moveBucket(idx,dir){var ni=idx+dir;if(ni<0||ni>=state.buckets.length)return;var t=state.buckets[idx];state.buckets[idx]=state.buckets[ni];state.buckets[ni]=t;save();render();}
 function showQuickEdit(taskId,field,event){closeAllQuickEdits();const card=event.target.closest('.card');if(!card)return;const t=state.tasks.find(x=>x.id===taskId);if(!t)return;const popup=document.createElement('div');popup.className='qe-popup';popup.onclick=function(e){e.stopPropagation();};if(field==='due')popup.innerHTML='<label>Due Date</label><input type="date" id="qeVal" value="'+(t.due||'')+'"><button onclick="applyQuickEdit('+taskId+',\'due\')">Save</button>';else if(field==='assignee')popup.innerHTML='<label>Assignee</label><input type="text" id="qeVal" value="'+esc(t.assignee||'')+'"><button onclick="applyQuickEdit('+taskId+',\'assignee\')">Save</button>';else if(field==='priority')popup.innerHTML='<label>Priority</label><select id="qeVal"><option '+(t.priority==='Critical'?'selected':'')+'>Critical</option><option '+(t.priority==='High'?'selected':'')+'>High</option><option '+(t.priority==='Medium'?'selected':'')+'>Medium</option><option '+(t.priority==='Low'?'selected':'')+'>Low</option></select><button onclick="applyQuickEdit('+taskId+',\'priority\')">Save</button>';card.appendChild(popup);var inp=popup.querySelector('#qeVal');if(inp)inp.focus();}
@@ -2834,7 +2841,7 @@ if(document.getElementById('mActualDate'))document.getElementById('mActualDate')
   var ps=document.getElementById('mProject');if(!ps)return;
   var devProjNames=(typeof devData!=='undefined'&&devData&&devData.projects)?devData.projects.map(function(p){return p.name;}):[];
   var allProjs=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]),...devProjNames,...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])].sort();
-  var cur=t.project||(selectedTeamProject||'');
+  var cur=t.project||(getActiveTeamProject()||'');
   ps.innerHTML='<option value="">— None —</option>'+allProjs.map(function(p){return'<option value="'+esc(p)+'" '+(p===cur?'selected':'')+'>'+esc(p)+'</option>';}).join('');
   if(!t.project&&selectedTeamProject)ps.value=selectedTeamProject;
 })();
@@ -4686,7 +4693,7 @@ function renderTeamSidebarProjects(){
   var _devNames=(typeof devData!=='undefined'&&devData&&devData.projects)?devData.projects.map(function(p){return p.name;}):[];
   var projects=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]),..._devNames,...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])];
   var items=projects.map(function(p,i){
-    return'<div class="team-proj-item '+(selectedTeamProject===p?'active':'')+'" data-projidx="'+i+'" style="display:flex;align-items:center;justify-content:space-between;gap:4px;">'+
+    return'<div class="team-proj-item '+(getActiveTeamProject()===normalizeTeamProjectName(p)?'active':'')+'" data-projidx="'+i+'" style="display:flex;align-items:center;justify-content:space-between;gap:4px;">'+
       '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" onclick="selectTeamProject(window.__devProjs[this.closest(\'[data-projidx]\').dataset.projidx])">'+esc(p)+'</span>'+
       '<button onclick="deleteProject(window.__devProjs[this.closest(\'[data-projidx]\').dataset.projidx])" title="Delete project" style="background:none;border:none;color:var(--text2);font-size:14px;line-height:1;padding:0 2px;cursor:pointer;opacity:.5;flex-shrink:0;" onmouseover="this.style.opacity=1;this.style.color=\'#dc2626\'" onmouseout="this.style.opacity=.5;this.style.color=\'var(--text2)\'">×</button>'+
     '</div>';
@@ -4695,7 +4702,7 @@ function renderTeamSidebarProjects(){
   projDiv.innerHTML=
     '<div class="sidebar-section-title">Projects</div>'+
     '<div class="team-proj-list">'+
-      '<div class="team-proj-item '+(selectedTeamProject===null?'active':'')+'" onclick="selectedTeamProject=null;renderDashboard()">All Projects</div>'+
+      '<div class="team-proj-item '+(getActiveTeamProject()===null?'active':'')+'" onclick="setTeamProjectSelection(null)">All Projects</div>'+
       items+
     '</div>'+
     '<div style="padding:6px 12px"><button class="top-btn" style="width:100%;justify-content:center;font-size:11px" onclick="openUnifiedProjectModal()">+ New Project</button></div>';
@@ -4796,7 +4803,7 @@ function renderCalendarInto(el){
     html+='<div class="cal-date">'+(isToday?'<span class="today-num">'+d+'</span>':d)+'</div>';
     html+='<div class="cal-tasks">';
     dayTasks.slice(0,4).forEach(function(t){
-      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" onclick="openEditTask('+t.id+')" title="'+esc(t.title||'')+'">'+esc((t.title||'').substring(0,24))+'</div>';
+      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" onclick="openEditTask('+t.id+')" title="'+esc((getActiveTeamProject()? (t.title||'') : ((normalizeTeamProjectName(t.project)?(t.project+' - '):'')+(t.title||''))))+'">'+esc(getCalendarTaskDisplayTitle(t,24))+'</div>';
     });
     if(dayTasks.length>4)html+='<div class="cal-expand-btn" onclick="openCalDay(\''+ds+'\')" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-4)+' more</div>';
     html+='</div></div>';
@@ -4874,7 +4881,7 @@ function renderEntitlementTab(el){
   deptFilter=null;
 }
 
-function selectTeamProject(p){selectedTeamProject=p||null;renderDashboard();}
+function selectTeamProject(p){setTeamProjectSelection(p);}
 function deleteProject(name){
   if(!name||!confirm('Delete project "'+name+'"?\n\nTasks assigned to this project will keep their data but lose the project assignment.'))return;
   // Remove from state.projects
@@ -4888,7 +4895,7 @@ function deleteProject(name){
   }
   // Clear project field from tasks that referenced this project
   (state.tasks||[]).forEach(function(t){if(t.project===name)t.project='';});
-  if(selectedTeamProject===name)selectedTeamProject=null;
+  if(getActiveTeamProject()===normalizeTeamProjectName(name))selectedTeamProject=null;
   save();
   renderDashboard();
 }
@@ -5121,7 +5128,7 @@ function generatePDFSummary(){
   var jsPDF2=window.jspdf?window.jspdf.jsPDF:(typeof jsPDF!=='undefined'?jsPDF:null);
   if(!jsPDF2){alert('PDF not available — jsPDF not loaded');return;}
   var doc=new jsPDF2({orientation:'landscape',unit:'mm',format:'letter'});
-  var proj=selectedTeamProject||'All Projects';
+  var proj=getActiveTeamProject()||'All Projects';
   var today=new Date();
   var todayStr2=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
   var priOrder={Critical:0,High:1,Medium:2,Low:3};

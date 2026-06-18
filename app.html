@@ -6379,5 +6379,360 @@ function dev_wxEnsureSettings() {
 }
 </script>
 
+
+<!-- ============================================================
+     >>> "Move Task to Team" feature (injected) <<<
+     Lets the user, from the Personal workspace, move any task into
+     a team workspace, choosing the team → department → project →
+     bucket. Mirrors the visual style of the existing taskModal.
+     ============================================================ -->
+<style>
+  /* Tiny set of helpers — uses the app's existing modal classes */
+  #moveToTeamModal .mtt-row{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+  #moveToTeamModal label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);}
+  #moveToTeamModal select,#moveToTeamModal input[type=text]{
+    width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;
+    font-size:13px;background:var(--bg);color:var(--text);
+  }
+  #moveToTeamModal select:focus,#moveToTeamModal input[type=text]:focus{
+    outline:none;border-color:var(--pri);box-shadow:0 0 0 2px rgba(249,115,22,.15);
+  }
+  #moveToTeamModal .mtt-hint{font-size:11px;color:var(--muted);margin-top:-4px;margin-bottom:6px;}
+  #moveToTeamModal .mtt-summary{
+    background:var(--pri-l);border:1px solid rgba(249,115,22,.35);
+    border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text);
+    line-height:1.5;
+  }
+  #moveToTeamModal .mtt-summary strong{color:var(--pri-d);}
+  #btnMoveToTeamOpen{
+    background:linear-gradient(135deg,#7c3aed,#9333ea);color:#fff;border:none;
+    margin-right:auto;padding:8px 16px;border-radius:6px;font-weight:600;
+    font-size:13px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+    transition:opacity .15s,transform .12s;
+  }
+  #btnMoveToTeamOpen:hover{opacity:.92;transform:translateY(-1px);}
+  #btnMoveToTeamOpen.hidden{display:none;}
+</style>
+
+<div class="modal-overlay" id="moveToTeamModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-hdr">
+      <div>
+        <h2>Move Task to Team</h2>
+        <div class="modal-breadcrumb" id="mttBreadcrumb"></div>
+      </div>
+      <button class="modal-close" onclick="closeMoveToTeamModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="mtt-row">
+        <label for="mttTeam">Team Workspace</label>
+        <select id="mttTeam" onchange="window.__mttRefreshProjects()"></select>
+        <div class="mtt-hint" id="mttTeamHint"></div>
+      </div>
+      <div class="mtt-row">
+        <label for="mttDept">Department</label>
+        <select id="mttDept" onchange="window.__mttRefreshBuckets();window.__mttRefreshSummary()">
+          <option value="Acquisition">Acquisition</option>
+          <option value="Entitlements" selected>Entitlements</option>
+          <option value="Development">Development</option>
+          <option value="Legal">Legal</option>
+        </select>
+      </div>
+      <div class="mtt-row">
+        <label for="mttProject">Project</label>
+        <select id="mttProject" onchange="window.__mttToggleNewProject();window.__mttRefreshSummary()"></select>
+        <input type="text" id="mttNewProject" placeholder="New project name…" style="display:none;margin-top:6px"
+               oninput="window.__mttRefreshSummary()">
+      </div>
+      <div class="mtt-row">
+        <label for="mttBucket">Bucket (column)</label>
+        <select id="mttBucket" onchange="window.__mttRefreshSummary()"></select>
+      </div>
+      <div class="mtt-summary" id="mttSummary"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeMoveToTeamModal()">Cancel</button>
+      <button class="btn-save" id="mttConfirmBtn" onclick="confirmMoveToTeam()">Move Task →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ---------- helpers ----------
+  var DEPT_LABEL_TO_KEY = {
+    'Acquisition':'acquisition',
+    'Entitlements':'entitlement',
+    'Development':'development',
+    'Legal':'legal'
+  };
+  var DEFAULT_BUCKETS = ['To Do','In Progress','Under Review','Complete'];
+
+  function _esc(s){
+    if(typeof esc==='function') return esc(s);
+    return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];});
+  }
+  function _toast(msg){ if(typeof showToast==='function') showToast(msg); else console.log('[Move to Team]',msg); }
+  function _qs(id){ return document.getElementById(id); }
+
+  // ---------- open / close ----------
+  window.openMoveToTeam = function(){
+    if(typeof editingId==='undefined' || editingId===null){
+      _toast('Save the task first, then use “Move to Team”.');
+      return;
+    }
+    if(typeof currentTeamWorkspaceId!=='undefined' && currentTeamWorkspaceId){
+      _toast('This task is already in a team workspace.');
+      return;
+    }
+    var task=(state.tasks||[]).find(function(x){return x.id===editingId;});
+    if(!task){ _toast('Task not found.'); return; }
+
+    if(!Array.isArray(window.teamWorkspaces) || !teamWorkspaces.length){
+      _toast('You don’t have any team workspaces yet. Create or join one first.');
+      return;
+    }
+
+    // Populate Team picker
+    var teamSel=_qs('mttTeam');
+    teamSel.innerHTML = teamWorkspaces.map(function(tw){
+      return '<option value="'+_esc(tw.id)+'">'+_esc(tw.name||'(unnamed team)')+'</option>';
+    }).join('');
+
+    // Default department from task if it already has one
+    var deptSel=_qs('mttDept');
+    var dlabel = (task.department && DEPT_LABEL_TO_KEY[task.department]) ? task.department : 'Entitlements';
+    deptSel.value = dlabel;
+
+    _qs('mttNewProject').style.display='none';
+    _qs('mttNewProject').value='';
+
+    _qs('mttBreadcrumb').innerHTML =
+      '<span class="mb-bucket">'+_esc(task.bucket||'')+'</span> › '+_esc(task.title||'');
+
+    window.__mttRefreshProjects();   // also triggers buckets+summary
+    _qs('moveToTeamModal').classList.add('show');
+  };
+
+  window.closeMoveToTeamModal = function(){
+    _qs('moveToTeamModal').classList.remove('show');
+  };
+
+  // ---------- cascading population ----------
+  window.__mttRefreshProjects = function(){
+    var teamId=_qs('mttTeam').value;
+    var tw=(teamWorkspaces||[]).find(function(w){return String(w.id)===String(teamId);});
+    _qs('mttTeamHint').textContent = tw ? ('Code: '+(tw.code||'—')) : '';
+    var projs=[];
+    if(tw && tw.data){
+      var d=tw.data;
+      projs = projs.concat(d.projects||[], d.scheduleProjects||[]);
+      (d.tasks||[]).forEach(function(t){ if(t.project) projs.push(t.project); });
+    }
+    // Also include any dev-app project names
+    if(tw && tw.data && tw.data.developmentData && Array.isArray(tw.data.developmentData.projects)){
+      tw.data.developmentData.projects.forEach(function(p){ if(p && p.name) projs.push(p.name); });
+    }
+    projs = Array.from(new Set(projs.filter(Boolean))).sort();
+    var sel=_qs('mttProject');
+    var opts = '<option value="">— None —</option>'
+             + projs.map(function(p){ return '<option value="'+_esc(p)+'">'+_esc(p)+'</option>'; }).join('')
+             + '<option value="__new__">➕ New project…</option>';
+    sel.innerHTML = opts;
+
+    window.__mttRefreshBuckets();
+    window.__mttRefreshSummary();
+  };
+
+  window.__mttToggleNewProject = function(){
+    var sel=_qs('mttProject'), inp=_qs('mttNewProject');
+    if(sel.value==='__new__'){ inp.style.display='block'; inp.focus(); }
+    else { inp.style.display='none'; inp.value=''; }
+  };
+
+  window.__mttRefreshBuckets = function(){
+    var teamId=_qs('mttTeam').value;
+    var deptLabel=_qs('mttDept').value;
+    var deptKey=DEPT_LABEL_TO_KEY[deptLabel];
+    var tw=(teamWorkspaces||[]).find(function(w){return String(w.id)===String(teamId);});
+    var buckets = DEFAULT_BUCKETS.slice();
+    if(tw && tw.data && tw.data.deptBuckets && tw.data.deptBuckets[deptKey] && tw.data.deptBuckets[deptKey].length){
+      buckets = tw.data.deptBuckets[deptKey];
+    }
+    var sel=_qs('mttBucket');
+    sel.innerHTML = buckets.map(function(b){return '<option value="'+_esc(b)+'">'+_esc(b)+'</option>';}).join('');
+  };
+
+  window.__mttRefreshSummary = function(){
+    var teamId=_qs('mttTeam').value;
+    var tw=(teamWorkspaces||[]).find(function(w){return String(w.id)===String(teamId);});
+    var teamName = tw ? (tw.name||'(unnamed team)') : '(unknown team)';
+    var dept = _qs('mttDept').value;
+    var projSel = _qs('mttProject').value;
+    var newProj = (_qs('mttNewProject').value||'').trim();
+    var project = projSel==='__new__' ? (newProj || '(new project — name required)') : (projSel || '— None —');
+    var bucket = _qs('mttBucket').value || '(none)';
+    var task = (state.tasks||[]).find(function(x){return x.id===editingId;});
+    var title = task ? (task.title||'Untitled') : '(no task)';
+    _qs('mttSummary').innerHTML =
+      'Moving <strong>“'+_esc(title)+'”</strong> to:<br>' +
+      '<strong>'+_esc(teamName)+'</strong> ▸ ' +
+      '<strong>'+_esc(dept)+'</strong> ▸ ' +
+      '<strong>'+_esc(project)+'</strong> ▸ ' +
+      'bucket <strong>'+_esc(bucket)+'</strong>';
+
+    // Disable confirm if "new project" selected but empty
+    var btn=_qs('mttConfirmBtn');
+    var disabled = (projSel==='__new__' && !newProj);
+    btn.disabled = disabled;
+    btn.style.opacity = disabled ? .55 : 1;
+    btn.style.cursor = disabled ? 'not-allowed' : 'pointer';
+  };
+
+  // ---------- the actual move ----------
+  window.confirmMoveToTeam = async function(){
+    if(typeof editingId==='undefined' || editingId===null){ _toast('No task selected.'); return; }
+    var task=(state.tasks||[]).find(function(x){return x.id===editingId;});
+    if(!task){ _toast('Task not found.'); return; }
+
+    var teamId=_qs('mttTeam').value;
+    var tw=(teamWorkspaces||[]).find(function(w){return String(w.id)===String(teamId);});
+    if(!tw){ _toast('Team not found.'); return; }
+
+    var dept=_qs('mttDept').value;
+    var projSel=_qs('mttProject').value;
+    var newProj=(_qs('mttNewProject').value||'').trim();
+    var project = projSel==='__new__' ? newProj : (projSel||'');
+    if(projSel==='__new__' && !newProj){ _toast('Enter a name for the new project.'); return; }
+    var bucket=_qs('mttBucket').value || 'To Do';
+
+    // Make sure destination team data is initialized
+    if(!tw.data) tw.data = { tasks:[], buckets:DEFAULT_BUCKETS.slice(), labels:[], notes:[], folders:[],
+                              projects:[], scheduleProjects:[], deptBuckets:{} };
+    if(!Array.isArray(tw.data.tasks)) tw.data.tasks=[];
+
+    // Generate a fresh id in destination space
+    var maxId = 0;
+    tw.data.tasks.forEach(function(x){ if(typeof x.id==='number' && x.id>maxId) maxId=x.id; });
+    if(typeof tw.data.nextId==='number' && tw.data.nextId>maxId) maxId = tw.data.nextId - 1;
+    var newId = maxId + 1;
+    tw.data.nextId = newId + 1;
+
+    // Deep clone the task so we don't share refs
+    var clone = JSON.parse(JSON.stringify(task));
+    clone.id = newId;
+    clone.bucket = bucket;
+    clone.department = dept;
+    clone.project = project;
+    clone.history = Array.isArray(clone.history) ? clone.history : [];
+    clone.history.push({
+      ts: new Date().toISOString(),
+      action: 'Moved to team',
+      detail: 'Personal → '+(tw.name||'team')+' / '+dept+(project?(' / '+project):'')+' / '+bucket
+    });
+
+    // Register the new project on the destination team if needed
+    if(project){
+      tw.data.projects = Array.isArray(tw.data.projects) ? tw.data.projects : [];
+      if(tw.data.projects.indexOf(project)===-1) tw.data.projects.push(project);
+    }
+
+    // Push to destination
+    tw.data.tasks.push(clone);
+
+    // Remove from personal state
+    var idx = state.tasks.indexOf(task);
+    if(idx>=0) state.tasks.splice(idx,1);
+
+    // Persist locally:
+    //  - the personal workspace via save()
+    //  - the destination team's snapshot under the same wm_workspaces map under key __team_<id>
+    try{
+      var allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');
+      allWs['__team_'+tw.id] = tw.data;
+      localStorage.setItem('wm_workspaces', JSON.stringify(allWs));
+    }catch(e){ console.warn('Local team snapshot save failed',e); }
+    if(typeof save==='function') save();
+
+    // Push to Supabase if available
+    try{
+      if(typeof _supabase!=='undefined' && _supabase && _supabase.from){
+        await _supabase.from('team_workspaces').update({
+          data: tw.data,
+          updated_at: new Date().toISOString()
+        }).eq('id', tw.id);
+      }
+    }catch(e){ console.warn('Cloud sync to team workspace failed (will retry on next save):', e); }
+
+    // Activity log on personal side (best-effort)
+    try{
+      if(typeof logActivity==='function'){
+        logActivity('Task moved to team', (task.title||'')+' → '+(tw.name||'team'));
+      }
+    }catch(e){}
+
+    closeMoveToTeamModal();
+    if(typeof closeTaskModal==='function') closeTaskModal();
+    if(typeof render==='function') render();
+    _toast('Task moved to '+(tw.name||'team')+' ✓');
+  };
+
+  // ---------- inject button into existing task modal footer ----------
+  function ensureMoveButton(){
+    var footer = document.querySelector('#taskModal .modal-footer');
+    if(!footer || document.getElementById('btnMoveToTeamOpen')) return;
+    var btn = document.createElement('button');
+    btn.id = 'btnMoveToTeamOpen';
+    btn.type = 'button';
+    btn.innerHTML = '👥 Move to Team →';
+    btn.title = 'Move this task into a team workspace';
+    btn.onclick = function(ev){ ev.preventDefault(); window.openMoveToTeam(); };
+    // Insert as the first child so it sits on the left (it already has margin-right:auto)
+    footer.insertBefore(btn, footer.firstChild);
+  }
+
+  function updateMoveButtonVisibility(){
+    var btn = document.getElementById('btnMoveToTeamOpen');
+    if(!btn) return;
+    var isEditing = (typeof editingId!=='undefined' && editingId!==null);
+    var isPersonal = !(typeof currentTeamWorkspaceId!=='undefined' && currentTeamWorkspaceId);
+    var hasTeams = Array.isArray(window.teamWorkspaces) && window.teamWorkspaces.length>0;
+    btn.classList.toggle('hidden', !(isEditing && isPersonal && hasTeams));
+  }
+
+  // Wrap the existing functions so visibility updates on open + close
+  function wrap(name, after){
+    var orig = window[name];
+    if(typeof orig!=='function') return;
+    window[name] = function(){
+      var r = orig.apply(this, arguments);
+      try{ after.apply(this, arguments); }catch(e){ console.warn(name+' wrapper:', e); }
+      return r;
+    };
+  }
+
+  // Wait until app is ready (taskModal exists)
+  function init(){
+    if(!document.getElementById('taskModal')){
+      return setTimeout(init, 200);
+    }
+    ensureMoveButton();
+    updateMoveButtonVisibility();
+
+    wrap('openEditTask',        updateMoveButtonVisibility);
+    wrap('openNewTask',         updateMoveButtonVisibility);
+    wrap('openNewTaskInBucket', updateMoveButtonVisibility);
+    wrap('openNewTaskOnDate',   updateMoveButtonVisibility);
+    wrap('closeTaskModal',      updateMoveButtonVisibility);
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
 </body>
 </html>

@@ -2805,6 +2805,7 @@ function folderDragEnterForNote(e){e.preventDefault();if(dragNoteId!==null)e.cur
 let editingId=null;
 function openNewTask(){editingId=null;populateModal({});document.getElementById('taskModal').classList.add('show');document.getElementById('modalTitle').textContent='New Task';document.getElementById('modalBreadcrumb').innerHTML='';document.getElementById('btnDeleteTask').classList.add('hidden');const cBtn=document.getElementById('btnCompleteTask');if(cBtn)cBtn.classList.add('hidden');if(document.getElementById('mDepartment'))document.getElementById('mDepartment').value=teamDeptTab==='acquisition'?'Acquisition':teamDeptTab==='entitlement'?'Entitlements':teamDeptTab==='development'?'Development':teamDeptTab==='legal'?'Legal':'General';}
 function openNewTaskInBucket(b){editingId=null;populateModal({bucket:b});document.getElementById('taskModal').classList.add('show');document.getElementById('modalTitle').textContent='New Task';document.getElementById('modalBreadcrumb').innerHTML='<span class="mb-bucket">'+esc(b)+'</span> › New Task';document.getElementById('btnDeleteTask').classList.add('hidden');}
+function openTask(id){openEditTask(id);}
 function openEditTask(id){const t=state.tasks.find(x=>x.id===id);if(!t)return;editingId=id;populateModal(t);document.getElementById('taskModal').classList.add('show');document.getElementById('modalTitle').textContent='Edit Task';document.getElementById('modalBreadcrumb').innerHTML='<span class="mb-bucket">'+esc(t.bucket)+'</span> › '+esc(t.title);document.getElementById('btnDeleteTask').classList.remove('hidden');const cBtn=document.getElementById('btnCompleteTask');if(cBtn){if((t.pct||0)>=100){cBtn.classList.add('hidden');}else{cBtn.classList.remove('hidden');}}}
 function closeTaskModal(){document.getElementById('taskModal').classList.remove('show');editingId=null;}
 function populateModal(t){
@@ -4772,9 +4773,9 @@ function renderCalendarInto(el){
     html+='<div class="cal-date">'+(isToday?'<span class="today-num">'+d+'</span>':d)+'</div>';
     html+='<div class="cal-tasks">';
     dayTasks.slice(0,3).forEach(function(t){
-      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'">'+esc((t.title||'').substring(0,22))+'</div>';
+      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" onclick="openTask('+t.id+')" title="'+esc(t.title||'')+'">'+esc((t.title||'').substring(0,22))+'</div>';
     });
-    if(dayTasks.length>3)html+='<div class="cal-expand-btn">+'+(dayTasks.length-3)+' more</div>';
+    if(dayTasks.length>3)html+='<div class="cal-expand-btn" onclick="(function(ds){var all=getFilteredTasks().filter(function(t){return t.due===ds;});if(all.length)openTask(all[3].id);})(\''+ds+'\')" style="cursor:pointer">+'+(dayTasks.length-3)+' more</div>';
     html+='</div></div>';
   }
   html+='</div>';
@@ -5040,16 +5041,57 @@ function generatePDFSummary(){
   doc.setFontSize(10);doc.setFont(undefined,'normal');
   doc.text('Generated: '+todayStr2,14,25);
 
+  // Collect dev tab items with priority from devData
+  var devPriorityRows=[];
+  if(typeof devData!=='undefined'&&devData){
+    // Project schedule items with priority
+    (devData.projects||[]).forEach(function(p){
+      if(selectedTeamProject&&p.name!==selectedTeamProject)return;
+      (p.schedule||[]).forEach(function(s){
+        if(!s.priority&&s.status==='not-started')return; // skip unprioritized not-started
+        devPriorityRows.push({
+          project:p.name,title:s.task,due:s.projectedFinish,actualDate:s.status==='completed'?s.projectedFinish:'',
+          notes:s.notes||'',priority:s.status==='completed'?'Low':s.status==='in-progress'?'High':'Medium',_devStatus:s.status,percentComplete:s.percentComplete||0
+        });
+      });
+      // Notes/tasks with priority
+      (p.notes||[]).forEach(function(n){
+        if(!n.priority||n.priority==='low')return;
+        devPriorityRows.push({
+          project:p.name,title:n.task,due:n.dueDate||'',actualDate:'',
+          notes:n.noteText||'',priority:n.priority==='urgent'?'Critical':n.priority==='high'?'High':n.priority==='medium'?'Medium':'Low',_devStatus:n.completed?'completed':'in-progress',percentComplete:n.percentComplete||0
+        });
+      });
+    });
+    // NonProject sections with priority
+    Object.keys(devData.nonProject||{}).forEach(function(key){
+      (devData.nonProject[key]||[]).forEach(function(item){
+        if(!item.priority||item.priority==='low')return;
+        devPriorityRows.push({
+          project:key.replace(/([A-Z])/g,' $1').replace(/^./,function(s){return s.toUpperCase();}),
+          title:item.task,due:item.dueDate||'',actualDate:'',
+          notes:item.noteText||'',priority:item.priority==='urgent'?'Critical':item.priority==='high'?'High':'Medium',
+          _devStatus:item.completed?'completed':'in-progress',percentComplete:item.percentComplete||0
+        });
+      });
+    });
+    devPriorityRows.sort(function(a,b){return(priOrder[a.priority]||2)-(priOrder[b.priority]||2);});
+  }
+
   var depts=[
     {name:'Acquisition',color:[249,115,22],dept:'Acquisition'},
     {name:'Entitlements',color:[124,58,237],dept:'Entitlements'},
-    {name:'Development',color:[22,163,74],dept:'Development'},
+    {name:'Development',color:[22,163,74],dept:'Development',_devRows:devPriorityRows},
     {name:'Legal',color:[37,99,235],dept:'Legal'}
   ];
 
   var yStart=35;
   depts.forEach(function(d){
     var tasks=(state.tasks||[]).filter(function(t){return t.department===d.dept&&(!selectedTeamProject||t.project===selectedTeamProject);});
+    // For Development, merge in devData priority rows
+    if(d._devRows&&d._devRows.length){
+      d._devRows.forEach(function(r){tasks.push({title:r.title,project:r.project,due:r.due,actualDate:r.actualDate,notes:r.notes,priority:r.priority});});
+    }
     tasks.sort(function(a,b){return(priOrder[a.priority]||2)-(priOrder[b.priority]||2);});
 
     var rows=tasks.map(function(t){
@@ -5122,12 +5164,12 @@ function renderMasterCalendar(){
       '<div class="cal-date">'+(isToday?'<span class="today-num">'+d+'</span>':d)+'</div>'+
       '<div class="cal-tasks">';
     dayTasks.slice(0,3).forEach(function(t){
-      html+='<div class="cal-task" title="'+esc(t.title||t.text||'')+'">'+
+      html+='<div class="cal-task" style="cursor:pointer" title="'+esc(t.title||t.text||'')+'" onclick="openTask('+t.id+')">'+
         '<span style="font-size:9px;background:var(--pri);color:#fff;padding:1px 4px;border-radius:3px;margin-right:3px;flex-shrink:0">'+esc(t._wsLabel)+'</span>'+
         esc((t.title||t.text||'').substring(0,20))+
       '</div>';
     });
-    if(dayTasks.length>3)html+='<div class="cal-expand-btn">+'+(dayTasks.length-3)+' more</div>';
+    if(dayTasks.length>3)html+='<div class="cal-expand-btn" style="cursor:pointer">+'+(dayTasks.length-3)+' more</div>';
     html+='</div></div>';
   }
   html+='</div>';
@@ -5230,6 +5272,50 @@ function dev_openModal(title, bodyHtml, onSave) {
   ov.onclick = e => { if(e.target===ov) dev_closeModal(); };
 }
 function dev_closeModal() { const m=document.getElementById('dev-modal-overlay'); if(m) m.remove(); }
+function dev_importJSON(input) {
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if(!imported.projects && !imported.nonProject) { alert('Invalid file — expected Ground Control JSON format.'); return; }
+      const mode = confirm(
+        'How would you like to import?\n\n' +
+        'OK = Merge (add to existing data, skip duplicates by ID)\n' +
+        'Cancel = Replace (overwrite all existing Development data)'
+      );
+      if(mode) {
+        // Merge mode — add projects/items that don't already exist by ID
+        const existingProjIds = new Set(devData.projects.map(p=>p.id));
+        (imported.projects||[]).forEach(p=>{ if(!existingProjIds.has(p.id)) devData.projects.push(p); });
+        if(imported.nonProject) {
+          Object.keys(imported.nonProject).forEach(key=>{
+            if(!devData.nonProject[key]) devData.nonProject[key]=[];
+            const existingIds = new Set(devData.nonProject[key].map(x=>x.id));
+            (imported.nonProject[key]||[]).forEach(item=>{ if(!existingIds.has(item.id)) devData.nonProject[key].push(item); });
+          });
+        }
+        if(imported.milestones) {
+          const existMsIds = new Set((devData.milestones||[]).map(m=>m.projectId+'_'+m.phaseId));
+          (imported.milestones||[]).forEach(m=>{ if(!existMsIds.has(m.projectId+'_'+m.phaseId)) { if(!devData.milestones) devData.milestones=[]; devData.milestones.push(m); } });
+        }
+        if(imported.changeLog) { devData.changeLog = [...(imported.changeLog||[]), ...(devData.changeLog||[])]; }
+      } else {
+        // Replace mode
+        if(!confirm('This will REPLACE all existing Development data. Are you sure?')) return;
+        devData = imported;
+        dev_ensureSections();
+      }
+      dev_syncProjectsToState();
+      dev_saveData();
+      devView = 'portfolio';
+      dev_render();
+      dev_showToast('Import successful — ' + (imported.projects||[]).length + ' projects loaded');
+    } catch(err) { alert('Failed to parse JSON: ' + err.message); }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
 
 // ---- navigation ----
 function dev_nav(v, opts={}) {
@@ -5281,7 +5367,7 @@ function dev_svgIcon(name, size) {
 }
 
 function dev_renderHeader() {
-  return `<header class="app-header"><div class="header-mark">${dev_svgIcon('dumptruck',21)}</div><h1>Ground Control <span style="font-weight:400;font-size:13px;opacity:.7">| DFW West</span></h1><div class="header-actions"><button onclick="dev_printMeetingReport()">Print / PDF</button></div></header>`;
+  return `<header class="app-header"><div class="header-mark">${dev_svgIcon('dumptruck',21)}</div><h1>Ground Control <span style="font-weight:400;font-size:13px;opacity:.7">| DFW West</span></h1><div class="header-actions"><button onclick="dev_printMeetingReport()">Print / PDF</button><button onclick="document.getElementById('devImportFile').click()" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.25)">📂 Import JSON</button><input type="file" id="devImportFile" accept=".json" style="display:none" onchange="dev_importJSON(this)"></div></header>`;
 }
 
 function dev_renderSidebar() {

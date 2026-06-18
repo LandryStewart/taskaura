@@ -2758,6 +2758,23 @@ function calCellDragLeave(e){e.currentTarget.classList.remove('drag-over');}
 function calDrop(e,ds){e.preventDefault();e.currentTarget.classList.remove('drag-over');if(calDragTaskId==null)return;var t=state.tasks.find(x=>x.id===calDragTaskId);if(t){var oldDue=t.due||'none';logTaskChange(t,'Due date changed','Calendar drag: '+(oldDue)+' → '+ds);logActivity('Due date changed',t.title+' → '+ds);t.due=ds;calDragTaskId=null;save();renderCalendar();}}
 function openCalDay(ds){var tasks=getFilteredTasks().filter(t=>t.due===ds);var d=new Date(ds+'T00:00:00');document.getElementById('calDayTitle').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});var body=document.getElementById('calDayBody'),html='';if(!tasks.length)html='<div class="cal-day-no-tasks">No tasks on this day</div>';else tasks.forEach(t=>{html+='<div class="cal-day-task '+priClass(t.priority)+'" onclick="closeCalDay();openEditTask('+t.id+')"><div class="cal-day-task-title">'+esc(t.title)+'</div>'+(t.assignee?'<span class="cal-day-task-assignee">'+esc(t.assignee)+'</span>':'')+'<span class="cal-day-task-pri '+priBadge(t.priority)+'" style="background:'+priColor(t.priority)+'">'+esc(t.priority||'Medium')+'</span></div>';});body.innerHTML=html;document.getElementById('calDayModal').classList.add('show');}
 function closeCalDay(){document.getElementById('calDayModal').classList.remove('show');}
+function openMasterCalDay(ds,tasksJSON){
+  var tasks=JSON.parse(decodeURIComponent(tasksJSON));
+  var d=new Date(ds+'T00:00:00');
+  document.getElementById('calDayTitle').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  var body=document.getElementById('calDayBody'),html='';
+  if(!tasks.length)html='<div class="cal-day-no-tasks">No tasks on this day</div>';
+  else tasks.forEach(function(t){
+    html+='<div class="cal-day-task" style="cursor:pointer" onclick="closeCalDay();openEditTask('+t.id+')">'+
+      (t._wsLabel?'<span style="font-size:9px;background:var(--pri);color:#fff;padding:1px 5px;border-radius:3px;margin-right:6px">'+esc(t._wsLabel)+'</span>':'')+
+      '<div class="cal-day-task-title">'+esc(t.title||t.text||'')+'</div>'+
+      (t.assignee?'<span class="cal-day-task-assignee">'+esc(t.assignee)+'</span>':'')+
+      '<span class="cal-day-task-pri" style="background:'+priColor(t.priority||'Medium')+'">'+esc(t.priority||'Medium')+'</span>'+
+    '</div>';
+  });
+  body.innerHTML=html;
+  document.getElementById('calDayModal').classList.add('show');
+}
 function updateTodayBadge(){const ts=todayStr(),count=state.tasks.filter(t=>t.due===ts&&(t.pct||0)<100).length;document.getElementById('todayBadge').textContent=count+' today';}
 let dragId=null;
 function dragStart(e,id){dragId=id;e.target.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
@@ -4789,7 +4806,7 @@ function renderCalendarInto(el){
     dayTasks.slice(0,4).forEach(function(t){
       html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" onclick="openEditTask('+t.id+')" title="'+esc(t.title||'')+'">'+esc((t.title||'').substring(0,24))+'</div>';
     });
-    if(dayTasks.length>4)html+='<div class="cal-expand-btn" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-4)+' more</div>';
+    if(dayTasks.length>4)html+='<div class="cal-expand-btn" onclick="openCalDay(\''+ds+'\')" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-4)+' more</div>';
     html+='</div></div>';
   }
   html+='</div>';
@@ -5187,7 +5204,7 @@ function renderMasterCalendar(){
         esc((t.title||t.text||'').substring(0,20))+
       '</div>';
     });
-    if(dayTasks.length>3)html+='<div class="cal-expand-btn" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-3)+' more</div>';
+    if(dayTasks.length>3)html+='<div class="cal-expand-btn" onclick="openMasterCalDay(\''+dateStr+'\',\''+encodeURIComponent(JSON.stringify(dayTasks))+'\')" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-3)+' more</div>';
     html+='</div></div>';
   }
   html+='</div>';

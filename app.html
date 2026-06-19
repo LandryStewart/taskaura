@@ -5717,6 +5717,12 @@ function renderMasterCalendar(){
   });
   allTasks=dedupeMasterCalendarTasks(allTasks);
 
+  // Filter by selected project if one is active
+  var _mcActiveProj=getActiveTeamProject();
+  if(_mcActiveProj){
+    allTasks=allTasks.filter(function(t){return getTaskProjectName(t)===_mcActiveProj;});
+  }
+
   var now=new Date();
   var year=now.getFullYear();var month=now.getMonth();
   var firstDay=new Date(year,month,1).getDay();
@@ -5725,7 +5731,8 @@ function renderMasterCalendar(){
   var todayStr3=now.toISOString().split('T')[0];
 
   var monOff=(firstDay+6)%7;
-  var html='<div class="cal-header"><h2>🗓 Master Calendar — '+monthName+'</h2></div>';
+  var projLabel=_mcActiveProj?' — '+_mcActiveProj:'';
+  var html='<div class="cal-header"><h2>🗓 Master Calendar'+projLabel+' — '+monthName+'</h2></div>';
   html+='<div class="cal-grid" style="grid-template-columns:repeat(5,1fr)">';
   ['Mon','Tue','Wed','Thu','Fri'].forEach(function(d){html+='<div class="cal-day-hdr">'+d+'</div>';});
   for(var i=0;i<Math.min(monOff,5);i++)html+='<div class="cal-cell outside"></div>';

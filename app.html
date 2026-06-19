@@ -654,13 +654,14 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .pd-clock-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;animation:clockPulse 2.4s ease-in-out infinite;flex-shrink:0;}
 @keyframes clockPulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(74,222,128,.5);}50%{opacity:.55;box-shadow:0 0 0 4px rgba(74,222,128,0);}}
 .pd-tagline{font-size:13px;color:rgba(203,213,225,.75);font-weight:400;}
-.pd-ring-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;animation:ringFloat 6s ease-in-out infinite;}
-.pd-ring{width:88px;height:88px;filter:drop-shadow(0 0 12px rgba(249,115,22,.45));}
-.pd-ring-track{fill:none;stroke:rgba(255,255,255,.1);stroke-width:9;}
-.pd-ring-fill{fill:none;stroke:url(#ringGradOrange);stroke-width:9;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;animation:ringDraw .9s cubic-bezier(.4,0,.2,1) .3s both;}
-.pd-ring-label{font-size:9px;font-weight:700;color:rgba(148,163,184,.7);letter-spacing:.5px;text-transform:uppercase;}
+.pd-live-widget{display:flex;flex-direction:column;gap:8px;flex-shrink:0;min-width:140px;animation:ringFloat 6s ease-in-out infinite;}
+.pd-live-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 14px;backdrop-filter:blur(4px);}
+.pd-live-label{font-size:9px;font-weight:700;color:rgba(148,163,184,.6);letter-spacing:.6px;text-transform:uppercase;margin-bottom:3px;}
+.pd-live-val{font-size:18px;font-weight:800;color:#fff;line-height:1.1;}
+.pd-live-sub{font-size:10px;color:rgba(203,213,225,.65);margin-top:2px;}
+.pd-stock-up{color:#4ade80;}.pd-stock-down{color:#f87171;}
 .pd-kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
-@media(max-width:700px){.pd-kpi-row{grid-template-columns:1fr;}.pd-hero-grid{grid-template-columns:1fr;}.pd-ring-wrap{display:none;}}
+@media(max-width:700px){.pd-kpi-row{grid-template-columns:1fr;}.pd-hero-grid{grid-template-columns:1fr;}.pd-live-widget{display:none;}}
 .pd-kpi{border-radius:14px;padding:20px 18px 16px;cursor:pointer;position:relative;background:var(--card);border:1px solid var(--border);border-top-width:3px;transition:transform .22s cubic-bezier(.22,.9,.3,1),box-shadow .22s,border-color .22s;box-shadow:var(--shadow);animation:fadeSlideUp .45s cubic-bezier(.22,.9,.3,1) both;}
 .pd-kpi:nth-child(1){animation-delay:.08s;}
 .pd-kpi:nth-child(2){animation-delay:.16s;}
@@ -836,6 +837,15 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .btn-complete{background:#16a34a;border:none;color:#fff;margin-right:4px;padding:8px 20px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;}
 .btn-complete:hover{background:#15803d;}
 
+/* ── Note History ── */
+.note-history-btn{margin-top:6px;background:none;border:1px dashed var(--border);border-radius:6px;color:var(--text2);font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer;width:100%;text-align:left;transition:all .15s;}
+.note-history-btn:hover{border-color:var(--pri);color:var(--pri);}
+.note-history-panel{margin-top:6px;background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:none;}
+.note-history-panel.open{display:block;}
+.note-history-item{padding:8px 12px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text2);}
+.note-history-item:last-child{border-bottom:none;}
+.note-history-ts{font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px;}
+.note-history-text{color:var(--text);white-space:pre-wrap;line-height:1.5;font-size:12px;}
 /* ── Task History Timeline ── */
 .task-history-section{margin-top:6px;padding:10px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border);max-height:220px;overflow-y:auto;}
 .task-history-section .th-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
@@ -1426,7 +1436,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 <div class="modal-overlay" id="scheduleModal"><div class="modal" style="width:420px"><div class="modal-hdr"><h2 id="scheduleModalTitle">Add Task</h2><button class="modal-close" onclick="closeScheduleModal()">×</button></div><div class="modal-body"><input type="hidden" id="sProjectId" value=""><div><label>Task Name *</label><input type="text" id="sName" placeholder="e.g. Site Grading..."></div><div class="modal-row"><div><label>Start Date</label><input type="date" id="sStart"></div><div><label>End Date</label><input type="date" id="sEnd"></div></div><div class="modal-row"><div><label>Color</label><input type="color" id="sColor" value="#2563eb"></div><div><label>Progress %</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="sProg" min="0" max="100" value="0" oninput="document.getElementById('sProgVal').textContent=this.value+'%'" style="flex:1"><span id="sProgVal" style="font-size:13px;font-weight:600;min-width:32px">0%</span></div></div></div></div><div class="modal-footer"><button class="btn-delete hidden" id="btnDeleteSchedule" onclick="deleteScheduleTask()">Delete</button><button class="btn-cancel" onclick="closeScheduleModal()">Cancel</button><button class="btn-save" onclick="saveScheduleTask()">Save</button></div></div></div>
 <div class="cal-day-modal" id="calDayModal"><div class="cal-day-panel"><div class="cal-day-panel-hdr"><h3 id="calDayTitle"></h3><button class="cal-day-panel-close" onclick="closeCalDay()">×</button></div><div class="cal-day-panel-body" id="calDayBody"></div></div></div>
 <div class="modal-overlay" id="taskModal"><div class="modal"><div class="modal-hdr"><div><h2 id="modalTitle">New Task</h2><div class="modal-breadcrumb" id="modalBreadcrumb"></div></div><button class="modal-close" onclick="closeTaskModal()">×</button></div><div class="modal-body"><div><label>Task Title *</label><input type="text" id="mTitle" placeholder="Enter task title..."></div><datalist id="assigneeList"></datalist>
-<div class="modal-row"><div><label>Assignee</label><input type="text" id="mAssignee" placeholder="Name" list="assigneeList" autocomplete="off"></div><div><label>Bucket</label><select id="mBucket"></select></div></div><div class="modal-row"><div><label>Due Date</label><input type="date" id="mDue"></div><div><label>Priority</label><select id="mPriority"><option value="Medium">Medium</option><option value="Critical">Critical</option><option value="High">High</option><option value="Low">Low</option></select></div></div><div class="modal-row"><div><label>Department</label><select id="mDepartment"><option value="General">General</option><option value="Acquisition">Acquisition</option><option value="Entitlements">Entitlements</option><option value="Development">Development</option><option value="Legal">Legal</option></select></div><div><label>Project</label><select id="mProject"><option value="">— None —</option></select></div></div><div class="modal-row"><div><label>Actual Date</label><input type="date" id="mActualDate"></div></div><div class="modal-row"><div><label>% Complete</label><div style="display:flex;align-items:center;gap:10px"><input type="range" id="mPct" min="0" max="100" value="0" oninput="document.getElementById('mPctVal').textContent=this.value+'%'" style="flex:1"><span id="mPctVal" style="font-size:13px;font-weight:600;min-width:36px">0%</span></div></div></div><div><label>Labels</label><div class="label-chips" id="mLabels"></div></div><div><label>Description / Notes</label><textarea id="mNotes" placeholder="Add details..."></textarea></div><div><label>FILE PATH</label>
+<div class="modal-row"><div><label>Assignee</label><input type="text" id="mAssignee" placeholder="Name" list="assigneeList" autocomplete="off"></div><div><label>Bucket</label><select id="mBucket"></select></div></div><div class="modal-row"><div><label>Due Date</label><input type="date" id="mDue"></div><div><label>Priority</label><select id="mPriority"><option value="Medium">Medium</option><option value="Critical">Critical</option><option value="High">High</option><option value="Low">Low</option></select></div></div><div class="modal-row"><div><label>Department</label><select id="mDepartment"><option value="General">General</option><option value="Acquisition">Acquisition</option><option value="Entitlements">Entitlements</option><option value="Development">Development</option><option value="Legal">Legal</option></select></div><div><label>Project</label><select id="mProject"><option value="">— None —</option></select></div></div><div class="modal-row"><div><label>Actual Date</label><input type="date" id="mActualDate"></div></div><div class="modal-row"><div><label>% Complete</label><div style="display:flex;align-items:center;gap:10px"><input type="range" id="mPct" min="0" max="100" value="0" oninput="document.getElementById('mPctVal').textContent=this.value+'%'" style="flex:1"><span id="mPctVal" style="font-size:13px;font-weight:600;min-width:36px">0%</span></div></div></div><div><label>Labels</label><div class="label-chips" id="mLabels"></div></div><div><label>Description / Notes</label><textarea id="mNotes" placeholder="Add details..."></textarea><div id="mNoteHistorySection"></div></div><div><label>FILE PATH</label>
 <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">
 <input id="mFilePath" class="form-control" placeholder="e.g. R:\DFW\b. Active\Saddleside..." style="flex:1;">
 <button type="button" class="btn-fp" onclick="copyFilePath()" title="Copy to clipboard">Copy</button>
@@ -1865,8 +1875,12 @@ async function switchToTeamWorkspace(id){
 function renderWorkspaceTabs(){
   const tabs=document.getElementById('workspaceTabs');if(!tabs)return;
   const isWork=!currentTeamWorkspaceId&&currentWorkspace==='work';
-  let html='<div class="workspace-tab '+(isWork?'active':'')+'" onclick="switchWorkspace(\'work\')">Personal Dashboard <span class="tab-dot"></span></div>';
-  // Team workspaces shown as cards on dashboard — no tabs
+  let html='<div class="workspace-tab '+(isWork?'active':'')+'" data-ws="work" onclick="switchWorkspace(\'work\')">🏠 Personal<span class="tab-dot"></span></div>';
+  // One tab per team for quick switching
+  teamWorkspaces.forEach(function(tw){
+    var isActive=currentTeamWorkspaceId===tw.id;
+    html+='<div class="workspace-tab'+(isActive?' active':'')+'" onclick="switchToTeamWorkspace(\''+tw.id+'\')">'+esc(tw.name)+'</div>';
+  });
   html+='<div class="workspace-tab add-team-tab" onclick="openTeamPanel()">＋ Team</div>';
   tabs.innerHTML=html;
 }
@@ -2237,19 +2251,20 @@ function renderPersonalDashboard(el){
     total===0?'All clear — nothing on your plate right now':
     'You have '+total+' open task'+(total>1?'s':'')+' across your workspaces';
 
-  // SVG ring
-  const circ=251.2;
-  const offset=circ*(1-donePct/100);
-  const ringHTML=
-    '<svg class="pd-ring" viewBox="0 0 100 100">'+
-      '<defs><linearGradient id="ringGradOrange" x1="0%" y1="0%" x2="100%" y2="100%">'+
-        '<stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#f97316"/>'+
-      '</linearGradient></defs>'+
-      '<circle class="pd-ring-track" cx="50" cy="50" r="40"/>'+
-      '<circle class="pd-ring-fill" cx="50" cy="50" r="40" style="--ring-offset:'+offset+';stroke-dasharray:'+circ+';stroke-dashoffset:'+offset+'"/>'+
-      '<text x="50" y="46" text-anchor="middle" font-size="18" font-weight="900" fill="white">'+donePct+'</text>'+
-      '<text x="50" y="58" text-anchor="middle" font-size="9" fill="rgba(148,163,184,.8)">% done</text>'+
-    '</svg>';
+  // Live weather + FOR stock widget (replaces completion ring)
+  const liveWidgetHTML=
+    '<div class="pd-live-widget">'+
+      '<div class="pd-live-card" id="pdWeatherCard">'+
+        '<div class="pd-live-label">Weather</div>'+
+        '<div class="pd-live-val" id="pdWeatherVal">…</div>'+
+        '<div class="pd-live-sub" id="pdWeatherSub">fetching…</div>'+
+      '</div>'+
+      '<div class="pd-live-card" id="pdStockCard">'+
+        '<div class="pd-live-label">FOR Stock</div>'+
+        '<div class="pd-live-val" id="pdStockVal">…</div>'+
+        '<div class="pd-live-sub" id="pdStockSub">fetching…</div>'+
+      '</div>'+
+    '</div>';
 
   // Workspace breakdown
   const wsList=[{name:'Work',id:null},...teamWorkspaces.map(tw=>({name:tw.name,id:tw.id}))];
@@ -2328,7 +2343,7 @@ function renderPersonalDashboard(el){
           '<div class="pd-tagline">'+esc(tagline)+'</div>'+
           '<div class="pd-clock"><span class="pd-clock-dot"></span><span id="pdClockText"></span></div>'+
         '</div>'+
-        '<div class="pd-ring-wrap">'+ringHTML+'<div class="pd-ring-label">Completion</div></div>'+
+        liveWidgetHTML+
       '</div>'+
     '</div>'+
 
@@ -2466,6 +2481,7 @@ function renderPersonalDashboard(el){
       '</div>':'');
   animateKpiNums(el);
   startPdClock();
+  loadPdLiveWidgets();
   if(currentUser&&currentUser.email==='landrystewart@live.com')loadPendingUsers();
 }
 
@@ -2481,6 +2497,50 @@ function startPdClock(){
   if(pdClockTimer)clearInterval(pdClockTimer);
   tick();
   pdClockTimer=setInterval(tick,30000);
+}
+
+// ── Live weather + FOR stock fetcher ─────────────────────────────────────────
+var _pdWeatherCache=null,_pdStockCache=null;
+function loadPdLiveWidgets(){
+  // Weather via Open-Meteo (no key needed) — use geolocation
+  function setWeather(temp,desc,unit){
+    var el=document.getElementById('pdWeatherVal');var sub=document.getElementById('pdWeatherSub');
+    if(el)el.textContent=Math.round(temp)+'°'+unit;if(sub)sub.textContent=desc;
+  }
+  function fetchWeatherLatLon(lat,lon){
+    fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current_weather=true&temperature_unit=fahrenheit&wind_speed_unit=mph')
+      .then(function(r){return r.json();}).then(function(d){
+        if(!d.current_weather)return;
+        var wc=d.current_weather.weathercode;
+        var codeMap={0:'Clear',1:'Mainly Clear',2:'Partly Cloudy',3:'Overcast',45:'Foggy',48:'Icy Fog',51:'Light Drizzle',53:'Drizzle',55:'Heavy Drizzle',61:'Light Rain',63:'Rain',65:'Heavy Rain',71:'Light Snow',73:'Snow',75:'Heavy Snow',80:'Showers',81:'Showers',82:'Heavy Showers',95:'Thunderstorm',96:'Thunderstorm',99:'Thunderstorm'};
+        var desc=codeMap[wc]||'Code '+wc;
+        setWeather(d.current_weather.temperature,desc+' · '+Math.round(d.current_weather.windspeed)+' mph wind','F');
+        _pdWeatherCache={temp:d.current_weather.temperature,desc:desc,wind:d.current_weather.windspeed};
+      }).catch(function(){setWeather(0,'Unavailable','');});
+  }
+  if(_pdWeatherCache){setWeather(_pdWeatherCache.temp,_pdWeatherCache.desc+' · '+Math.round(_pdWeatherCache.wind)+' mph wind','F');}
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(function(pos){fetchWeatherLatLon(pos.coords.latitude,pos.coords.longitude);},function(){fetchWeatherLatLon(32.7767,-96.7970);});// fallback: Dallas
+  }else{fetchWeatherLatLon(32.7767,-96.7970);}
+  // FOR stock via Yahoo Finance
+  function setStock(price,change,changePct){
+    var el=document.getElementById('pdStockVal');var sub=document.getElementById('pdStockSub');
+    if(!el)return;
+    var up=change>=0;
+    el.innerHTML='<span class="'+(up?'pd-stock-up':'pd-stock-down')+'">'+(up?'▲':'▼')+'$'+price.toFixed(2)+'</span>';
+    if(sub)sub.textContent=(up?'+':'')+change.toFixed(2)+' ('+changePct.toFixed(2)+'%) today';
+    _pdStockCache={price,change,changePct};
+  }
+  if(_pdStockCache){setStock(_pdStockCache.price,_pdStockCache.change,_pdStockCache.changePct);}
+  fetch('https://query1.finance.yahoo.com/v8/finance/chart/FOR?range=1d&interval=5m')
+    .then(function(r){return r.json();}).then(function(d){
+      var meta=d.chart&&d.chart.result&&d.chart.result[0]&&d.chart.result[0].meta;
+      if(!meta){var sub=document.getElementById('pdStockSub');if(sub)sub.textContent='Data unavailable';return;}
+      var price=meta.regularMarketPrice||0;
+      var prev=meta.previousClose||meta.chartPreviousClose||price;
+      var chg=price-prev;var chgPct=prev?chg/prev*100:0;
+      setStock(price,chg,chgPct);
+    }).catch(function(){var sub=document.getElementById('pdStockSub');if(sub)sub.textContent='Data unavailable';});
 }
 
 // Human-friendly relative due label
@@ -2900,9 +2960,25 @@ if(histSec){
     histSec.innerHTML='<div class="task-history-section"><div class="th-title"><span>📋</span> History</div><div class="th-empty">No changes recorded yet</div></div>';
   }else{histSec.innerHTML='';}
 }
+// Note history panel (below the notes textarea)
+var nhSec=document.getElementById('mNoteHistorySection');
+if(nhSec){
+  if(t.id&&t.notesHistory&&t.notesHistory.length){
+    var nh=t.notesHistory;
+    nhSec.innerHTML='<button class="note-history-btn" onclick="this.nextElementSibling.classList.toggle(\'open\');this.textContent=this.nextElementSibling.classList.contains(\'open\')?\'▲ Hide note history ('+nh.length+')\':\'📋 Note history ('+nh.length+')\'" >📋 Note history ('+nh.length+')</button>'+
+      '<div class="note-history-panel">'+nh.slice(0,20).map(function(h){
+        var dt=new Date(h.savedAt);
+        var ts=dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+        return'<div class="note-history-item"><div class="note-history-ts">'+esc(ts)+'</div><div class="note-history-text">'+esc(h.notes)+'</div></div>';
+      }).join('')+'</div>';
+  }else{nhSec.innerHTML='';}
+}
 }
 function addChecklistItem(text,done){const cl=document.getElementById('mChecklist'),div=document.createElement('div');div.className='cl-item';const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!done;const inp=document.createElement('input');inp.type='text';inp.value=text||'';inp.placeholder='Checklist item...';const rm=document.createElement('button');rm.className='cl-rm';rm.innerHTML='×';rm.onclick=()=>div.remove();div.appendChild(cb);div.appendChild(inp);div.appendChild(rm);cl.appendChild(div);}
-function saveTask(){const title=document.getElementById('mTitle').value.trim();if(!title){showToast('Task title is required.');return;}const _assigneeName=document.getElementById('mAssignee').value.trim();const data={title,assignee:_assigneeName,assigneeId:(_assigneeName&&(state.memberIds||{})[_assigneeName])||null,bucket:document.getElementById('mBucket').value,due:document.getElementById('mDue').value,priority:document.getElementById('mPriority').value,pct:parseInt(document.getElementById('mPct').value)||0,notes:document.getElementById('mNotes').value,filePath:document.getElementById('mFilePath').value.trim(),labels:[...document.querySelectorAll('#mLabels .label-chip.selected')].map(e=>e.dataset.label),checklist:[...document.querySelectorAll('#mChecklist .cl-item')].map(e=>({text:e.querySelector('input[type=text]').value,done:e.querySelector('input[type=checkbox]').checked})),department:document.getElementById('mDepartment')?document.getElementById('mDepartment').value:'General',actualDate:document.getElementById('mActualDate')?document.getElementById('mActualDate').value:'',project:document.getElementById('mProject')?document.getElementById('mProject').value:''};if(editingId!=null){const t=state.tasks.find(x=>x.id===editingId);if(t){const changes=[];if(t.title!==data.title)changes.push('Title: '+t.title+' → '+data.title);if(t.bucket!==data.bucket)changes.push('Moved: '+t.bucket+' → '+data.bucket);if(t.priority!==data.priority)changes.push('Priority: '+t.priority+' → '+data.priority);if(t.due!==data.due)changes.push('Due: '+(t.due||'none')+' → '+(data.due||'none'));if(t.assignee!==data.assignee)changes.push('Assignee: '+(t.assignee||'none')+' → '+(data.assignee||'none'));if(t.pct!==data.pct)changes.push('Progress: '+t.pct+'% → '+data.pct+'%');if(JSON.stringify(t.labels||[])!==JSON.stringify(data.labels))changes.push('Labels updated');if(changes.length){logTaskChange(t,'Edited',changes.join('; '));logActivity('Task edited',t.title+(changes.length>1?' ('+changes.length+' changes)':''));}Object.assign(t,data);}}else{data.id=state.nextId++;data.created=new Date().toISOString().split('T')[0];data.history=[];logTaskChange(data,'Created','Created via modal');logActivity('Task created',data.title);state.tasks.push(data);}closeTaskModal();render();}
+function saveTask(){const title=document.getElementById('mTitle').value.trim();if(!title){showToast('Task title is required.');return;}const _assigneeName=document.getElementById('mAssignee').value.trim();const data={title,assignee:_assigneeName,assigneeId:(_assigneeName&&(state.memberIds||{})[_assigneeName])||null,bucket:document.getElementById('mBucket').value,due:document.getElementById('mDue').value,priority:document.getElementById('mPriority').value,pct:parseInt(document.getElementById('mPct').value)||0,notes:document.getElementById('mNotes').value,filePath:document.getElementById('mFilePath').value.trim(),labels:[...document.querySelectorAll('#mLabels .label-chip.selected')].map(e=>e.dataset.label),checklist:[...document.querySelectorAll('#mChecklist .cl-item')].map(e=>({text:e.querySelector('input[type=text]').value,done:e.querySelector('input[type=checkbox]').checked})),department:document.getElementById('mDepartment')?document.getElementById('mDepartment').value:'General',actualDate:document.getElementById('mActualDate')?document.getElementById('mActualDate').value:'',project:document.getElementById('mProject')?document.getElementById('mProject').value:''};if(editingId!=null){const t=state.tasks.find(x=>x.id===editingId);if(t){const changes=[];if(t.title!==data.title)changes.push('Title: '+t.title+' → '+data.title);if(t.bucket!==data.bucket)changes.push('Moved: '+t.bucket+' → '+data.bucket);if(t.priority!==data.priority)changes.push('Priority: '+t.priority+' → '+data.priority);if(t.due!==data.due)changes.push('Due: '+(t.due||'none')+' → '+(data.due||'none'));if(t.assignee!==data.assignee)changes.push('Assignee: '+(t.assignee||'none')+' → '+(data.assignee||'none'));if(t.pct!==data.pct)changes.push('Progress: '+t.pct+'% → '+data.pct+'%');if(JSON.stringify(t.labels||[])!==JSON.stringify(data.labels))changes.push('Labels updated');if(changes.length){logTaskChange(t,'Edited',changes.join('; '));logActivity('Task edited',t.title+(changes.length>1?' ('+changes.length+' changes)':''));}
+// Archive old notes if changed
+if((t.notes||'').trim()!==(data.notes||'').trim()&&(t.notes||'').trim()){if(!t.notesHistory)t.notesHistory=[];t.notesHistory.unshift({notes:t.notes,savedAt:new Date().toISOString()});}
+Object.assign(t,data);}}else{data.id=state.nextId++;data.created=new Date().toISOString().split('T')[0];data.history=[];logTaskChange(data,'Created','Created via modal');logActivity('Task created',data.title);state.tasks.push(data);}closeTaskModal();render();}
 function deleteTask(){const t=state.tasks.find(x=>x.id===editingId);if(!t)return;const removed=t,idx=state.tasks.indexOf(t);state.tasks=state.tasks.filter(x=>x.id!==editingId);closeTaskModal();render();showToast('Task "'+removed.title+'" deleted',function(){state.tasks.splice(idx,0,removed);render();});}
 function completeTaskConfirm(){const t=state.tasks.find(x=>x.id===editingId);if(!t)return;if(!confirm('Mark "'+t.title+'" as complete?\n\nThis will move it to the Complete bucket and clear its due date, assignee, and labels.'))return;const completeBucket=state.buckets.find(b=>b.toLowerCase().includes('complet'))||state.buckets[state.buckets.length-1];const oldData={bucket:t.bucket,due:t.due,assignee:t.assignee,assigneeId:t.assigneeId,labels:t.labels?[...t.labels]:[],pct:t.pct};logTaskChange(t,'Completed','Moved to '+completeBucket+', progress set to 100%');logActivity('Task completed',t.title);t.bucket=completeBucket;t.due='';t.assignee='';t.assigneeId=null;t.labels=[];t.pct=100;closeTaskModal();render();showToast('✅ "'+t.title+'" completed!',function(){t.bucket=oldData.bucket;t.due=oldData.due;t.assignee=oldData.assignee;t.assigneeId=oldData.assigneeId;t.labels=oldData.labels;t.pct=oldData.pct;render();});}
 function openSettings(){

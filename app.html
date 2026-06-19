@@ -2758,9 +2758,17 @@ let selectedTeamProject=null;
 let acqSubView='board';
 let entSubView='board';
 let legSubView='board';
-let deptListSort={};// keyed by dept name e.g. deptListSort['Acquisition']={col,asc}
-function _deptSort(){var k=deptFilter||'__default__';if(!deptListSort[k])deptListSort[k]={col:'priority',asc:true};return deptListSort[k];}
-function deptSortListBy(c,headId,bodyId){var s=_deptSort();if(s.col===c)s.asc=!s.asc;else{s.col=c;s.asc=true;}renderListInto(headId,bodyId);}
+let deptListSort={};// keyed by dept name e.g. deptListSort['Acquisition']={col,asc,dept}
+function _deptSort(){var k=deptFilter||'__default__';if(!deptListSort[k])deptListSort[k]={col:'priority',asc:true,dept:deptFilter};return deptListSort[k];}
+function deptSortListBy(c,headId,bodyId){
+  var s=_deptSort();
+  if(s.col===c)s.asc=!s.asc;else{s.col=c;s.asc=true;}
+  // Restore deptFilter so getFilteredTasks() scopes to the right department
+  var prevFilter=deptFilter;
+  deptFilter=s.dept;
+  renderListInto(headId,bodyId);
+  deptFilter=prevFilter;
+}
 let deptFilter=null;
 function normalizeTeamProjectName(v){var s=(v==null?'':String(v)).trim();if(/^all\s+projects$/i.test(s))return'';return s;}
 function getActiveTeamProject(){var p=normalizeTeamProjectName(selectedTeamProject);return p||null;}
@@ -4930,7 +4938,7 @@ function renderListInto(headId,bodyId){
   var _ds=_deptSort(),sc=_ds.col,sa=_ds.asc;
   tasks.sort(function(a,b){
     var va,vb;
-    if(sc==='priority'){va=priOrder[a.priority]||2;vb=priOrder[b.priority]||2;return sa?va-vb:vb-va;}
+    if(sc==='priority'){va=priOrder[a.priority]??2;vb=priOrder[b.priority]??2;return sa?va-vb:vb-va;}
     if(sc==='pct'){va=a.pct||0;vb=b.pct||0;return sa?va-vb:vb-va;}
     va=a[sc]||'';vb=b[sc]||'';
     return sa?String(va).localeCompare(String(vb)):String(vb).localeCompare(String(va));

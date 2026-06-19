@@ -656,10 +656,10 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 @keyframes clockPulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(74,222,128,.5);}50%{opacity:.55;box-shadow:0 0 0 4px rgba(74,222,128,0);}}
 .pd-tagline{font-size:13px;color:rgba(203,213,225,.75);font-weight:400;}
 .pd-live-widget{display:flex;flex-direction:column;gap:8px;flex-shrink:0;min-width:140px;animation:ringFloat 6s ease-in-out infinite;}
-.pd-live-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 14px;backdrop-filter:blur(4px);}
-.pd-live-label{font-size:9px;font-weight:700;color:rgba(148,163,184,.6);letter-spacing:.6px;text-transform:uppercase;margin-bottom:3px;}
-.pd-live-val{font-size:18px;font-weight:800;color:#fff;line-height:1.1;}
-.pd-live-sub{font-size:10px;color:rgba(203,213,225,.65);margin-top:2px;}
+.pd-live-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:10px 16px;min-width:110px;}
+.pd-live-label{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:3px;}
+.pd-live-val{font-size:20px;font-weight:800;color:var(--text);line-height:1.1;}
+.pd-live-sub{font-size:11px;color:var(--text2);margin-top:2px;}
 .pd-stock-up{color:#4ade80;}.pd-stock-down{color:#f87171;}
 .pd-kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
 @media(max-width:700px){.pd-kpi-row{grid-template-columns:1fr;}.pd-hero-grid{grid-template-columns:1fr;}.pd-live-widget{display:none;}}
@@ -2442,15 +2442,6 @@ function renderPersonalDashboard(el){
     // Detail panel (collapsible)
     '<div id="dashDetailPanel" style="display:none" class="dash-detail-panel"></div>'+
 
-    // My Priorities — above workspaces
-    '<div style="margin-top:28px;margin-bottom:4px;border-top:1px solid var(--border);padding-top:20px">'+
-      '<div class="pd-panels" style="margin-top:0">'+
-        '<div class="pd-panel pd-span6">'+
-          '<div class="pd-panel-title" style="margin-bottom:12px">My Priorities</div>'+
-          prioritiesHTML+
-        '</div>'+
-      '</div>'+
-    '</div>'+
 
     // Workspace cards
     (function(){

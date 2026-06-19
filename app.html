@@ -5333,6 +5333,18 @@ function renderLegalTab(el){
   deptFilter=null;
 }
 
+function smryToggle(id){
+  var colKey='smry_col_'+(currentTeamWorkspaceId||'x');
+  var collapsed={};
+  try{collapsed=JSON.parse(sessionStorage.getItem(colKey)||'{}');}catch(e){}
+  collapsed[id]=!collapsed[id];
+  try{sessionStorage.setItem(colKey,JSON.stringify(collapsed));}catch(e){}
+  var body=document.getElementById('smry-body-'+id);
+  var chev=document.getElementById('smry-chev-'+id);
+  if(body){if(collapsed[id])body.classList.add('hidden');else body.classList.remove('hidden');}
+  if(chev){if(collapsed[id])chev.classList.remove('up');else chev.classList.add('up');}
+}
+
 function renderSummaryTab(el){
   var proj=selectedTeamProject;
   var filter=function(t){return!proj||t.project===proj;};
@@ -5346,28 +5358,30 @@ function renderSummaryTab(el){
   var totalWeek=allOpen.filter(function(t){return t.due&&t.due>todayStr2&&t.due<=weekLaterStr;}).length;
   var tw=teamWorkspaces.find(function(w){return w.id===currentTeamWorkspaceId;});
   var wsName=tw?tw.name:'Team';
-  var greeting=(function(){var h=new Date().getHours();return h<12?'Good morning':'Good afternoon';})();
+  var hr=new Date().getHours();
+  var greeting=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+
+  // Collapse state: true = collapsed
+  var colKey='smry_col_'+(currentTeamWorkspaceId||'x');
+  var collapsed={};
+  try{collapsed=JSON.parse(sessionStorage.getItem(colKey)||'{}');}catch(e){}
 
   var depts=[
-    {key:'Acquisition',  id:'acq', icon:'🏡', color:'#0ea5e9', bg:'#e0f2fe', darkBg:'#0c2a3b', match:function(t){return t.department==='Acquisition';}, tab:'acquisition'},
-    {key:'Entitlements', id:'ent', icon:'📋', color:'#8b5cf6', bg:'#ede9fe', darkBg:'#1e1240', match:function(t){return t.department==='Entitlements'||t.department==='Entitlement';}, tab:'entitlement'},
-    {key:'Development',  id:'dev', icon:'🏗',  color:'#f59e0b', bg:'#fef3c7', darkBg:'#2d1f00', match:function(t){return t.department==='Development';}, tab:'development'},
-    {key:'Legal',        id:'leg', icon:'⚖️',  color:'#10b981', bg:'#d1fae5', darkBg:'#0a2e1e', match:function(t){return t.department==='Legal';}, tab:'legal'}
+    {key:'Acquisition',  id:'acq', icon:'🏡', match:function(t){return t.department==='Acquisition';},          tab:'acquisition'},
+    {key:'Entitlements', id:'ent', icon:'📋', match:function(t){return t.department==='Entitlements'||t.department==='Entitlement';}, tab:'entitlement'},
+    {key:'Development',  id:'dev', icon:'🏗',  match:function(t){return t.department==='Development';},           tab:'development'},
+    {key:'Legal',        id:'leg', icon:'⚖️',  match:function(t){return t.department==='Legal';},                 tab:'legal'}
   ];
 
-  // Collapse state persisted in sessionStorage
-  var colKey='smry_collapsed_'+currentTeamWorkspaceId;
-  var collapsed={};try{collapsed=JSON.parse(sessionStorage.getItem(colKey)||'{}');}catch(e){}
-  // Default: all expanded
-  depts.forEach(function(d){if(collapsed[d.id]===undefined)collapsed[d.id]=false;});
-
-  function deptTab(t){return t.department==='Entitlements'||t.department==='Entitlement'?'entitlement':(t.department||'').toLowerCase();}
+  function deptTabName(t){
+    var d=(t.department||'').toLowerCase();
+    return(d==='entitlements'||d==='entitlement')?'entitlement':d;
+  }
 
   function taskRow(t,urgency){
     var proj2=t.project?'<span class="smry-task-proj">'+esc(t.project)+'</span>':'';
-    var dc=urgency==='overdue'?'overdue':urgency==='today'?'today':'week';
-    var dueLabel=t.due?'<span class="smry-task-due '+dc+'">'+fmtDate(t.due)+'</span>':'';
-    return'<div class="smry-task-row" onclick="selectTeamProject(\''+escAttr(t.project||'')+'\');switchTeamDeptTab(\''+deptTab(t)+'\')">'+
+    var dueLabel=t.due?'<span class="smry-task-due '+urgency+'">'+fmtDate(t.due)+'</span>':'';
+    return'<div class="smry-task-row" onclick="selectTeamProject(\''+escAttr(t.project||'')+'\');switchTeamDeptTab(\''+deptTabName(t)+'\')">'+
       '<span class="smry-task-name">'+esc(t.title||t.text||'')+'</span>'+proj2+dueLabel+'</div>';
   }
 
@@ -5376,78 +5390,61 @@ function renderSummaryTab(el){
     var overdue=tasks.filter(function(t){return t.due&&t.due<todayStr2;}).sort(function(a,b){return a.due>b.due?1:-1;});
     var dueToday=tasks.filter(function(t){return t.due===todayStr2;});
     var dueWeek=tasks.filter(function(t){return t.due&&t.due>todayStr2&&t.due<=weekLaterStr;}).sort(function(a,b){return a.due>b.due?1:-1;});
-    var isOpen=!collapsed[dept.id];
+    var isOpen=!collapsed[dept.id]; // default open
 
-    var chips='';
-    if(overdue.length)chips+='<span class="smry-chip red">'+overdue.length+' overdue</span>';
-    if(dueToday.length)chips+='<span class="smry-chip amber">'+dueToday.length+' today</span>';
-    if(!overdue.length&&!dueToday.length)chips+='<span class="smry-chip slate">'+tasks.length+' open</span>';
+    // Badges in header
+    var badges='';
+    if(overdue.length) badges+='<span class="smry-badge red">'+overdue.length+' overdue</span>';
+    if(dueToday.length) badges+='<span class="smry-badge amber">'+dueToday.length+' today</span>';
+    if(!overdue.length&&!dueToday.length) badges+='<span class="smry-badge muted">'+tasks.length+' open</span>';
 
+    // Body content
     var body='';
     if(overdue.length){
-      body+='<div class="smry-group-lbl" style="color:#dc2626">'+
-        '<span style="width:8px;height:8px;border-radius:50%;background:#dc2626;display:inline-block"></span>Overdue&nbsp;<span style="opacity:.5">('+overdue.length+')</span></div>'+
-        overdue.map(function(t){return taskRow(t,'overdue');}).join('');
+      body+='<div class="smry-group-hdr red">⚠ Overdue <span style="opacity:.55;font-weight:500">('+overdue.length+')</span></div>';
+      body+=overdue.map(function(t){return taskRow(t,'overdue');}).join('');
+      if(dueToday.length||dueWeek.length) body+='<div class="smry-divider"></div>';
     }
     if(dueToday.length){
-      body+='<div class="smry-group-lbl" style="color:var(--pri)">'+
-        '<span style="width:8px;height:8px;border-radius:50%;background:var(--pri);display:inline-block"></span>Due Today&nbsp;<span style="opacity:.5">('+dueToday.length+')</span></div>'+
-        dueToday.map(function(t){return taskRow(t,'today');}).join('');
+      body+='<div class="smry-group-hdr amber">● Due Today <span style="opacity:.55;font-weight:500">('+dueToday.length+')</span></div>';
+      body+=dueToday.map(function(t){return taskRow(t,'today');}).join('');
+      if(dueWeek.length) body+='<div class="smry-divider"></div>';
     }
     if(dueWeek.length){
-      body+='<div class="smry-group-lbl" style="color:var(--text2)">'+
-        '<span style="width:8px;height:8px;border-radius:50%;background:var(--border);display:inline-block"></span>This Week&nbsp;<span style="opacity:.5">('+dueWeek.length+')</span></div>'+
-        dueWeek.map(function(t){return taskRow(t,'week');}).join('');
+      body+='<div class="smry-group-hdr">○ This Week <span style="opacity:.55;font-weight:500">('+dueWeek.length+')</span></div>';
+      body+=dueWeek.map(function(t){return taskRow(t,'week');}).join('');
     }
     if(!overdue.length&&!dueToday.length&&!dueWeek.length){
-      body='<div class="smry-empty">All clear — nothing due this week ✓</div>';
+      body='<div class="smry-all-clear">All clear — nothing due this week ✓</div>';
     }
 
-    return'<div class="smry-dept-card" id="smry-card-'+dept.id+'">'+
-      '<div class="smry-dept-hdr" style="border-left-color:'+dept.color+'" onclick="smryToggle(\''+dept.id+'\')">'+
-        '<div class="smry-dept-accent" style="background:'+dept.bg+'">'+dept.icon+'</div>'+
+    return'<div class="smry-dept-card">'+
+      '<div class="smry-dept-hdr" onclick="smryToggle(\''+dept.id+'\')">'+
+        '<span class="smry-dept-icon">'+dept.icon+'</span>'+
         '<span class="smry-dept-title">'+dept.key+'</span>'+
-        '<div class="smry-dept-chips">'+chips+'</div>'+
-        '<span class="smry-dept-chevron'+(isOpen?' open':'')+'" id="smry-chev-'+dept.id+'">▼</span>'+
+        '<div class="smry-dept-meta">'+badges+'</div>'+
+        '<span class="smry-chevron'+(isOpen?' up':'')+'" id="smry-chev-'+dept.id+'">▼</span>'+
       '</div>'+
-      '<div class="smry-dept-body'+(isOpen?' open':'')+'" id="smry-body-'+dept.id+'">'+
-        '<div class="smry-dept-inner">'+body+'</div>'+
-      '</div>'+
+      '<div class="smry-dept-body'+(isOpen?'':' hidden')+'" id="smry-body-'+dept.id+'">'+body+'</div>'+
     '</div>';
   }
 
   var html='<div class="smry-wrap">'+
     '<div class="smry-hero">'+
-      '<div class="smry-hero-top">'+
-        '<div>'+
-          '<div class="smry-ws-name">'+esc(greeting)+', '+esc(wsName)+'</div>'+
-          '<div class="smry-date">'+new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+'</div>'+
-        '</div>'+
-      '</div>'+
+      '<div class="smry-ws-name">'+esc(greeting)+', '+esc(wsName)+'</div>'+
+      '<div class="smry-date">'+new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+'</div>'+
       '<div class="smry-kpis">'+
-        '<div class="smry-kpi red"><span class="smry-kpi-num">'+totalOverdue+'</span><span class="smry-kpi-lbl">Overdue</span></div>'+
-        '<div class="smry-kpi amber"><span class="smry-kpi-num">'+totalToday+'</span><span class="smry-kpi-lbl">Due Today</span></div>'+
-        '<div class="smry-kpi blue"><span class="smry-kpi-num">'+totalWeek+'</span><span class="smry-kpi-lbl">This Week</span></div>'+
-        '<div class="smry-kpi green"><span class="smry-kpi-num">'+allOpen.length+'</span><span class="smry-kpi-lbl">Total Open</span></div>'+
+        '<div class="smry-kpi kpi-red"><span class="smry-kpi-num">'+totalOverdue+'</span><span class="smry-kpi-lbl">Overdue</span></div>'+
+        '<div class="smry-kpi kpi-amber"><span class="smry-kpi-num">'+totalToday+'</span><span class="smry-kpi-lbl">Due Today</span></div>'+
+        '<div class="smry-kpi kpi-pri"><span class="smry-kpi-num">'+totalWeek+'</span><span class="smry-kpi-lbl">This Week</span></div>'+
+        '<div class="smry-kpi kpi-muted"><span class="smry-kpi-num">'+allOpen.length+'</span><span class="smry-kpi-lbl">Total Open</span></div>'+
       '</div>'+
     '</div>'+
-    '<div class="smry-body">'+
-      depts.map(deptCard).join('')+
-    '</div>'+
+    '<div class="smry-body">'+depts.map(deptCard).join('')+'</div>'+
   '</div>';
 
   el.innerHTML=html;
-  el.style.display='flex';el.style.flexDirection='column';el.style.flex='1';el.style.minHeight='0';el.style.overflow='hidden';
-
-  // Attach collapse toggle (no re-render needed, just DOM toggle)
-  window.smryToggle=function(id){
-    collapsed[id]=!collapsed[id];
-    try{sessionStorage.setItem(colKey,JSON.stringify(collapsed));}catch(e){}
-    var body=document.getElementById('smry-body-'+id);
-    var chev=document.getElementById('smry-chev-'+id);
-    if(body)body.classList.toggle('open',!collapsed[id]);
-    if(chev)chev.classList.toggle('open',!collapsed[id]);
-  };
+  el.style.cssText='display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;';
 }
 
 function generatePDFSummary(){

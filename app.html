@@ -2253,6 +2253,8 @@ function renderDashboard(){
   var tw=teamWorkspaces.find(function(w){return w.id===currentTeamWorkspaceId;});
   var wsName=tw?tw.name:'Team Workspace';
 
+  var isOwner=currentUser&&currentUser.email==='landrystewart@live.com';
+
   // Tab bar + content
   el.innerHTML='<div class="dept-tabs">'+
     '<button onclick="switchTeamDeptTab(\'acquisition\')" class="'+(teamDeptTab==='acquisition'?'active':'')+'">Acquisition</button>'+
@@ -2260,6 +2262,7 @@ function renderDashboard(){
     '<button onclick="switchTeamDeptTab(\'development\')" class="'+(teamDeptTab==='development'?'active':'')+'">Development</button>'+
     '<button onclick="switchTeamDeptTab(\'legal\')" class="'+(teamDeptTab==='legal'?'active':'')+'">Legal</button>'+
     '<button onclick="switchTeamDeptTab(\'summary\')" class="summary-tab '+(teamDeptTab==='summary'?'active':'')+'">📊 Summary</button>'+
+    (isOwner?'<button onclick="switchTeamDeptTab(\'members\')" class="summary-tab '+(teamDeptTab==='members'?'active':'')+'" style="margin-left:4px">👥 Members</button>':'')+
   '</div>'+
   '<div id="deptTabContent" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;"></div>';
 
@@ -2270,6 +2273,7 @@ function renderDashboard(){
   else if(teamDeptTab==='development')renderDevelopmentTab(tabEl);
   else if(teamDeptTab==='legal')renderLegalTab(tabEl);
   else if(teamDeptTab==='summary')renderSummaryTab(tabEl);
+  else if(teamDeptTab==='members')renderMembersTab(tabEl);
 }
 
 function renderPersonalDashboard(el){
@@ -2765,7 +2769,16 @@ async function revokeUser(userId){
 function logTaskChange(task,action,details){
   if(!task)return;
   if(!task.history)task.history=[];
-  task.history.unshift({action:action,details:details||'',ts:new Date().toISOString(),user:(state.myName||'').trim()||'User'});
+  // Prefer the authenticated user's name/email over state.myName, which can
+  // reflect whoever last saved the workspace (often the owner).
+  var who='User';
+  if(currentUser){
+    var authName=(currentUser.user_metadata&&currentUser.user_metadata.full_name)||'';
+    who=authName||currentUser.email||'User';
+  }else if((state.myName||'').trim()){
+    who=state.myName.trim();
+  }
+  task.history.unshift({action:action,details:details||'',ts:new Date().toISOString(),user:who});
   if(task.history.length>50)task.history=task.history.slice(0,50);
 }
 function logActivity(action,details){
@@ -5333,6 +5346,107 @@ function renderLegalTab(el){
   deptFilter=null;
 }
 
+function smryGroupToggle(cardId, groupId){
+  var key='smryg_'+cardId+'_'+groupId;
+  var el=document.getElementById(key);
+  var chev=document.getElementById(key+'_chev');
+  if(!el)return;
+  var isHidden=el.classList.contains('hidden');
+  if(isHidden){
+    el.classList.remove('hidden');
+    if(chev)chev.classList.add('up');
+    try{sessionStorage.removeItem(key);}catch(e){}
+  }else{
+    el.classList.add('hidden');
+    if(chev)chev.classList.remove('up');
+    try{sessionStorage.setItem(key,'1');}catch(e){}
+  }
+}
+
+async function renderMembersTab(el){
+  el.style.cssText='display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;';
+  el.innerHTML='<div style="padding:20px 24px;flex:1;overflow-y:auto;">'+
+    '<div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px">👥 Team Members</div>'+
+    '<div style="font-size:12px;color:var(--muted);margin-bottom:20px">Manage access and plan for everyone on this workspace.</div>'+
+    '<div id="membersMgmtList"><div style="color:var(--muted);font-size:13px">Loading...</div></div>'+
+  '</div>';
+  await loadMembersTab();
+}
+
+async function loadMembersTab(){
+  var list=document.getElementById('membersMgmtList');
+  if(!list)return;
+  try{
+    var r=await _supabase.from('profiles').select('id,email,full_name,approved,plan');
+    if(r.error&&r.error.message&&r.error.message.indexOf('plan')>=0){
+      r=await _supabase.from('profiles').select('id,email,full_name,approved');
+    }
+    if(r.error){list.innerHTML='<div style="color:#dc2626;font-size:13px">Error: '+esc(r.error.message)+'</div>';return;}
+    var users=(r.data||[]).filter(function(u){return u.email!=='landrystewart@live.com';});
+    if(!users.length){list.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">No members yet.</div>';return;}
+    var pending=users.filter(function(u){return!u.approved;});
+    var active=users.filter(function(u){return u.approved;});
+    var html='';
+
+    function userRow(u, isPending){
+      var name=u.full_name||u.email||'Unknown';
+      var av='<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--pri),#228b22);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">'+esc(initials(name))+'</div>';
+      var planBadge=u.plan==='team'
+        ?'<span style="font-size:10px;font-weight:700;background:linear-gradient(135deg,#1a6b1a,#228b22);color:#fff;padding:2px 8px;border-radius:8px">TEAM</span>'
+        :'<span style="font-size:10px;font-weight:700;background:var(--bg);color:var(--muted);border:1px solid var(--border);padding:2px 8px;border-radius:8px">FREE</span>';
+      var actions='';
+      if(isPending){
+        actions='<button onclick="memberApprove(\''+u.id+'\')" style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer">✓ Approve</button>'+
+          '<button onclick="memberDeny(\''+u.id+'\')" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer">✕ Deny</button>';
+      }else{
+        var planBtn=u.plan==='team'
+          ?'<button onclick="memberSetPlan(\''+u.id+'\',\'free\')" style="border:1px solid var(--border);background:none;border-radius:6px;padding:4px 10px;font-size:11px;color:var(--text2);cursor:pointer">↓ Downgrade</button>'
+          :'<button onclick="memberSetPlan(\''+u.id+'\',\'team\')" style="background:linear-gradient(135deg,#1a6b1a,#228b22);border:none;border-radius:6px;padding:4px 10px;font-size:11px;color:#fff;font-weight:600;cursor:pointer">⬆ Upgrade</button>';
+        actions=planBtn+'<button onclick="memberRevoke(\''+u.id+'\')" style="border:1px solid var(--border);background:none;border-radius:6px;padding:4px 10px;font-size:11px;color:#dc2626;cursor:pointer">Revoke</button>';
+      }
+      return'<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:var(--card)">'+
+        av+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:13px;font-weight:600;color:var(--text)">'+esc(name)+'</div>'+
+          '<div style="font-size:11px;color:var(--muted)">'+esc(u.email||'')+'</div>'+
+        '</div>'+
+        (!isPending?planBadge:'')+
+        '<div style="display:flex;gap:6px;flex-shrink:0">'+actions+'</div>'+
+      '</div>';
+    }
+
+    if(pending.length){
+      html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#d97706;margin-bottom:10px">⏳ Pending Approval ('+pending.length+')</div>';
+      html+=pending.map(function(u){return userRow(u,true);}).join('');
+      html+='<div style="height:1px;background:var(--border);margin:16px 0"></div>';
+    }
+    if(active.length){
+      html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--low);margin-bottom:10px">✓ Active Members ('+active.length+')</div>';
+      html+=active.map(function(u){return userRow(u,false);}).join('');
+    }
+    list.innerHTML=html;
+  }catch(e){list.innerHTML='<div style="color:#dc2626;font-size:13px">Error: '+esc(e.message)+'</div>';}
+}
+
+async function memberApprove(id){
+  await _supabase.from('profiles').update({approved:true,plan:'free'}).eq('id',id);
+  showToast('✓ User approved');loadMembersTab();loadPendingUsers();
+}
+async function memberDeny(id){
+  if(!confirm('Remove this user?'))return;
+  await _supabase.from('profiles').delete().eq('id',id);
+  showToast('User removed');loadMembersTab();loadPendingUsers();
+}
+async function memberSetPlan(id,plan){
+  await _supabase.from('profiles').update({plan:plan}).eq('id',id);
+  showToast(plan==='team'?'⬆ Upgraded to Team':'Set to Free');loadMembersTab();loadPendingUsers();
+}
+async function memberRevoke(id){
+  if(!confirm('Revoke access for this user?'))return;
+  await _supabase.from('profiles').update({approved:false}).eq('id',id);
+  showToast('Access revoked');loadMembersTab();loadPendingUsers();
+}
+
 function smryToggle(id){
   var colKey='smry_col_'+(currentTeamWorkspaceId||'x');
   var collapsed={};
@@ -5398,21 +5512,31 @@ function renderSummaryTab(el){
     if(dueToday.length) badges+='<span class="smry-badge amber">'+dueToday.length+' today</span>';
     if(!overdue.length&&!dueToday.length) badges+='<span class="smry-badge muted">'+tasks.length+' open</span>';
 
-    // Body content
+    // Body content — each group is collapsible, starts expanded
+    function grpKey(g){return 'smryg_'+dept.id+'_'+g;}
+    function grpCollapsed(g){try{return sessionStorage.getItem(grpKey(g))==='1';}catch(e){return false;}}
+    function groupBlock(label,cls,sym,tasks2,urgency,gid){
+      var gClosed=grpCollapsed(gid);
+      var id=dept.id+'_'+gid;
+      return'<div class="smry-group-hdr '+cls+'" style="cursor:pointer;justify-content:space-between" onclick="smryGroupToggle(\''+dept.id+'\',\''+gid+'\')">'+
+        '<span>'+sym+' '+label+' <span style="opacity:.55;font-weight:500">('+tasks2.length+')</span></span>'+
+        '<span class="smry-chevron'+(gClosed?'':' up')+'" id="smryg_'+dept.id+'_'+gid+'_chev">▼</span>'+
+      '</div>'+
+      '<div id="smryg_'+dept.id+'_'+gid+'"'+(gClosed?' class="hidden"':'')+'>'+
+        tasks2.map(function(t){return taskRow(t,urgency);}).join('')+
+      '</div>';
+    }
     var body='';
     if(overdue.length){
-      body+='<div class="smry-group-hdr red">⚠ Overdue <span style="opacity:.55;font-weight:500">('+overdue.length+')</span></div>';
-      body+=overdue.map(function(t){return taskRow(t,'overdue');}).join('');
+      body+=groupBlock('Overdue','red','⚠',overdue,'overdue','od');
       if(dueToday.length||dueWeek.length) body+='<div class="smry-divider"></div>';
     }
     if(dueToday.length){
-      body+='<div class="smry-group-hdr amber">● Due Today <span style="opacity:.55;font-weight:500">('+dueToday.length+')</span></div>';
-      body+=dueToday.map(function(t){return taskRow(t,'today');}).join('');
+      body+=groupBlock('Due Today','amber','●',dueToday,'today','td');
       if(dueWeek.length) body+='<div class="smry-divider"></div>';
     }
     if(dueWeek.length){
-      body+='<div class="smry-group-hdr">○ This Week <span style="opacity:.55;font-weight:500">('+dueWeek.length+')</span></div>';
-      body+=dueWeek.map(function(t){return taskRow(t,'week');}).join('');
+      body+=groupBlock('This Week','','○',dueWeek,'week','wk');
     }
     if(!overdue.length&&!dueToday.length&&!dueWeek.length){
       body='<div class="smry-all-clear">All clear — nothing due this week ✓</div>';

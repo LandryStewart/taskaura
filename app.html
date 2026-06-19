@@ -4937,7 +4937,7 @@ function renderTeamSidebarProjects(){
     '<div class="sidebar-section-title">Departments</div>'+
       '<div class="team-proj-list" style="margin-bottom:8px">'+
       '<div class="team-proj-item '+(masterCalDeptFilter===null?'active':'')+'" onclick="masterCalDeptFilter=null;renderMasterCalendar();" style="font-weight:600">All Departments</div>'+
-      depts.map(function(d){
+      [{key:'acquisition',label:'Acquisition'},{key:'entitlement',label:'Entitlement'},{key:'development',label:'Development'},{key:'legal',label:'Legal'}].map(function(d){
         return '<div class="team-proj-item '+(masterCalDeptFilter===d.key?'active':'')+'" onclick="masterCalDeptFilter=\''+d.key+'\';renderMasterCalendar();">'+d.label+'</div>';
       }).join('')+
       '</div>'+

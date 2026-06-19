@@ -4837,7 +4837,7 @@ function switchTeamDeptTab(name){
 }
 
 function renderTeamSidebarProjects(){
-  if(!currentTeamWorkspaceId || currentView!=='dashboard') return;
+  if(!currentTeamWorkspaceId || (currentView!=='dashboard' && currentView!=='mastercal')) return;
   var sidebarEl=document.getElementById('sidebar');if(!sidebarEl)return;
 
   // Hide all existing sidebar-sections (Views, Filters, Saved Filters, mobile actions)
@@ -5468,6 +5468,8 @@ function generatePDFSummary(){
 function generatePDFReport(){generatePDFSummary();}
 
 function renderMasterCalendar(){
+  // In team workspaces, show the project sidebar (same as dashboard) instead of generic nav items
+  if(currentTeamWorkspaceId){renderTeamSidebarProjects();}
   var el=document.getElementById('masterCalView');if(!el)return;
   var allTasks=[];
   (state.tasks||[]).forEach(function(t){

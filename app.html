@@ -2746,7 +2746,7 @@ function avatarColor(name){if(!name)return'var(--pri)';let h=0;for(let i=0;i<nam
 function todayStr(){const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).substr(2,6);}
 let currentView='dashboard';
-let teamDeptTab='acquisition';
+let teamDeptTab='summary';
 let selectedTeamProject=null;
 let acqSubView='board';
 let entSubView='board';
@@ -5292,62 +5292,75 @@ function renderLegalTab(el){
 function renderSummaryTab(el){
   var proj=selectedTeamProject;
   var filter=function(t){return!proj||t.project===proj;};
-  var today=new Date();today.setHours(0,0,0,0);
-  var weekLater=new Date(today);weekLater.setDate(weekLater.getDate()+7);
+  var todayDate=new Date();todayDate.setHours(0,0,0,0);
+  var todayStr2=todayDate.toISOString().split('T')[0];
+  var weekLater=new Date(todayDate);weekLater.setDate(weekLater.getDate()+7);
+  var weekLaterStr=weekLater.toISOString().split('T')[0];
 
-  var devTasks=(state.tasks||[]).filter(function(t){return t.department==='Development'&&filter(t);});
-  var acqTasks=(state.tasks||[]).filter(function(t){return t.department==='Acquisition'&&filter(t);});
-  var entTasks=(state.tasks||[]).filter(function(t){return t.department==='Entitlements'&&filter(t);});
+  var depts=[
+    {key:'Acquisition',   icon:'🏡', match:function(t){return t.department==='Acquisition';}},
+    {key:'Entitlements',  icon:'📋', match:function(t){return t.department==='Entitlements'||t.department==='Entitlement';}},
+    {key:'Development',   icon:'🏗',  match:function(t){return t.department==='Development';}},
+    {key:'Legal',         icon:'⚖️',  match:function(t){return t.department==='Legal';}}
+  ];
 
-  var buckets=['To Do','In Progress','Under Review','Complete'];
-
-  function bucketCounts(tasks){
-    return buckets.map(function(b){
-      return'<div class="summary-stat-row"><span>'+b+'</span><strong>'+tasks.filter(function(t){return(t.bucket||'To Do')===b;}).length+'</strong></div>';
-    }).join('');
+  function taskRow(t, urgency){
+    var proj2=t.project?'<span style="font-size:10px;background:var(--border);color:var(--text2);padding:1px 6px;border-radius:10px;margin-left:6px;white-space:nowrap">'+esc(t.project)+'</span>':'';
+    var dueLabel=t.due?'<span style="margin-left:auto;font-size:11px;color:'+(urgency==='overdue'?'#dc2626':urgency==='today'?'var(--pri)':'var(--muted)')+'">'+fmtDate(t.due)+'</span>':'';
+    return'<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;cursor:pointer" onclick="selectTeamProject(\''+escAttr(t.project||'')+'\');switchTeamDeptTab(\''+((t.department||'').toLowerCase()==='entitlement'||((t.department||'').toLowerCase()==='entitlements')?'entitlement':(t.department||'').toLowerCase())+'\')">'+
+      '<span style="flex:1;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(t.title||t.text||'')+'</span>'+proj2+dueLabel+'</div>';
   }
 
-  var devAvg=devTasks.length?Math.round(devTasks.reduce(function(s,t){return s+(t.pct||0);},0)/devTasks.length):0;
-  var devComplete=devTasks.filter(function(t){return(t.pct||0)>=100;}).length;
+  function deptSection(dept){
+    var tasks=(state.tasks||[]).filter(function(t){return dept.match(t)&&filter(t)&&(t.pct||0)<100;});
+    var overdue=tasks.filter(function(t){return t.due&&t.due<todayStr2;}).sort(function(a,b){return a.due>b.due?1:-1;});
+    var dueToday=tasks.filter(function(t){return t.due===todayStr2;});
+    var dueWeek=tasks.filter(function(t){return t.due&&t.due>todayStr2&&t.due<=weekLaterStr;}).sort(function(a,b){return a.due>b.due?1:-1;});
 
-  var weekTasks=function(tasks){
-    return tasks.filter(function(t){if(!t.due||(t.pct||0)>=100)return false;var d=new Date(t.due+'T00:00:00');return d>=today&&d<=weekLater;});
-  };
+    var html='<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:0;min-width:240px;flex:1;">'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'+
+        '<span style="font-size:18px">'+dept.icon+'</span>'+
+        '<h3 style="font-size:15px;font-weight:700;color:var(--text);margin:0">'+dept.key+'</h3>'+
+        '<span style="margin-left:auto;font-size:11px;color:var(--muted)">'+tasks.length+' open</span>'+
+      '</div>';
 
-  var acqWeek=weekTasks(acqTasks);
-  var entWeek=weekTasks(entTasks);
-  var entDue=entTasks.filter(function(t){if(!t.due||(t.pct||0)>=100)return false;var d=new Date(t.due+'T00:00:00');return d<=weekLater;});
+    if(overdue.length){
+      html+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#dc2626;letter-spacing:.5px;margin-bottom:4px">⚠ Overdue ('+overdue.length+')</div>';
+      html+=overdue.map(function(t){return taskRow(t,'overdue');}).join('');
+      html+='<div style="margin-top:8px"></div>';
+    }
+    if(dueToday.length){
+      html+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--pri);letter-spacing:.5px;margin-bottom:4px">Due Today ('+dueToday.length+')</div>';
+      html+=dueToday.map(function(t){return taskRow(t,'today');}).join('');
+      html+='<div style="margin-top:8px"></div>';
+    }
+    if(dueWeek.length){
+      html+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text2);letter-spacing:.5px;margin-bottom:4px">Due This Week ('+dueWeek.length+')</div>';
+      html+=dueWeek.map(function(t){return taskRow(t,'week');}).join('');
+    }
+    if(!overdue.length&&!dueToday.length&&!dueWeek.length){
+      html+='<div style="font-size:12px;color:var(--muted);padding:8px 0">Nothing due this week ✓</div>';
+    }
 
-  var html='<div class="summary-panels">'+
-    '<div class="summary-panel">'+
-      '<h3>🏗 Development</h3>'+
-      '<div class="summary-stat-row"><span>Total Tasks</span><strong>'+devTasks.length+'</strong></div>'+
-      '<div class="summary-stat-row"><span>Complete</span><strong style="color:var(--low)">'+devComplete+'</strong></div>'+
-      '<div class="summary-stat-row"><span>Avg % Complete</span><strong>'+devAvg+'%</strong></div>'+
+    html+='</div>';
+    return html;
+  }
+
+  var tw=teamWorkspaces.find(function(w){return w.id===currentTeamWorkspaceId;});
+  var wsName=tw?tw.name:'Team';
+
+  var html='<div style="padding:18px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px;">'+
+    '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0">'+
+      '<h2 style="font-size:18px;font-weight:800;color:var(--text);margin:0">'+esc(wsName)+' — Summary</h2>'+
+      '<span style="font-size:12px;color:var(--muted);margin-left:4px">'+new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+'</span>'+
     '</div>'+
-    '<div class="summary-panel">'+
-      '<h3>🏡 Acquisition</h3>'+
-      bucketCounts(acqTasks)+
-      (acqWeek.length?'<div style="margin-top:8px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2)">Due This Week</div>'+
-        acqWeek.map(function(t){return'<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)">'+esc(t.title||t.text||'')+'<span style="float:right;color:var(--muted)">'+fmtDate(t.due)+'</span></div>';}).join(''):'<div style="font-size:12px;color:var(--muted);margin-top:8px">Nothing due this week</div>')+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;align-items:start;">'+
+      depts.map(deptSection).join('')+
     '</div>'+
-    '<div class="summary-panel">'+
-      '<h3>📋 Entitlement</h3>'+
-      bucketCounts(entTasks)+
-      (entWeek.length?'<div style="margin-top:8px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2)">Due This Week</div>'+
-        entWeek.map(function(t){return'<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)">'+esc(t.title||t.text||'')+'<span style="float:right;color:var(--muted)">'+fmtDate(t.due)+'</span></div>';}).join(''):'<div style="font-size:12px;color:var(--muted);margin-top:8px">Nothing due this week</div>')+
-    '</div>'+
-  '</div>'+
-  '<div class="summary-due-section">'+
-    '<h3>📋 Entitlement Tasks Due This Week</h3>'+
-    (entDue.length?entDue.map(function(t){return'<div class="summary-due-item">'+
-      '<strong>'+esc(t.title||t.text||'')+'</strong>'+
-      (t.project?'<span style="font-size:11px;color:var(--muted);margin-left:8px">'+esc(t.project)+'</span>':'')+
-      (t.due?'<span style="float:right;font-size:11px">'+fmtDate(t.due)+'</span>':'')+
-    '</div>';}).join(''):'<div style="color:var(--muted);font-size:13px">No entitlement tasks due this week.</div>')+
   '</div>';
 
   el.innerHTML=html;
+  el.style.display='flex';el.style.flexDirection='column';el.style.flex='1';el.style.minHeight='0';el.style.overflow='hidden';
 }
 
 function generatePDFSummary(){

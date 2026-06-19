@@ -1904,6 +1904,11 @@ async function switchToTeamWorkspace(id){
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'team_workspaces',filter:'id=eq.'+id},function(payload){
       if(payload.new&&payload.new.data){
         const incomingData=payload.new.data;
+        // Skip if local state is newer — prevents overwriting tasks/buckets added
+        // between a cloud push and the resulting realtime echo coming back
+        const localTs=state._lastSaved||'';
+        const remoteTs=incomingData._lastSaved||'';
+        if(localTs&&remoteTs&&localTs>remoteTs){return;}
         // Merge incoming chat messages so we don't lose local ones sent mid-flight
         const existingMsgIds=new Set((state.chatMessages||[]).map(m=>m.id));
         const newMsgs=(incomingData.chatMessages||[]).filter(m=>!existingMsgIds.has(m.id));
@@ -5284,6 +5289,7 @@ function renderLegalTab(el){
   if(!state.deptBuckets) state.deptBuckets = {};
   if(!Array.isArray(state.deptBuckets.legal) || state.deptBuckets.legal.length === 0){
     state.deptBuckets.legal = ['Internal Counsel','External Counsel','Completed'];
+    save();
   }
   // One-time migration: pull any Legal Tracker tasks into state.tasks as department='Legal'
   if(state.legalData && Array.isArray(state.legalData.tasks) && state.legalData.tasks.length && !state.__legalMigrated){

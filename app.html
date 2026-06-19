@@ -1332,6 +1332,9 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 <script src="/vendor/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
+<!-- TOPO BACKGROUND -->
+<canvas id="topo-bg" style="position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.10;" aria-hidden="true"></canvas>
+
 <div class="auth-overlay" id="authOverlay">
  <div class="auth-card">
   <h1 style="font-family:'General Sans',sans-serif;font-weight:700;letter-spacing:-0.035em;">Task<span style="color:#228b22;font-weight:600;letter-spacing:-0.12em;margin:0 .05em">//</span>Aura</h1>
@@ -4934,14 +4937,6 @@ function renderTeamSidebarProjects(){
       '<div class="team-proj-list" style="margin-bottom:4px">'+
       '<div class="nav-item" onclick="setView(\'dashboard\')" style="padding:7px 10px;font-size:13px"><span class="nav-icon">◈</span><span>Dashboard</span></div>'+
       '</div>'+
-      '<div style="height:1px;background:var(--border);margin:0 12px 8px"></div>'+
-    '<div class="sidebar-section-title">Departments</div>'+
-      '<div class="team-proj-list" style="margin-bottom:8px">'+
-      '<div class="team-proj-item '+(masterCalDeptFilter===null?'active':'')+'" onclick="masterCalDeptFilter=null;renderMasterCalendar();" style="font-weight:600">All Departments</div>'+
-      [{key:'acquisition',label:'Acquisition'},{key:'entitlement',label:'Entitlement'},{key:'development',label:'Development'},{key:'legal',label:'Legal'}].map(function(d){
-        return '<div class="team-proj-item '+(masterCalDeptFilter===d.key?'active':'')+'" onclick="masterCalDeptFilter=\''+d.key+'\';renderMasterCalendar();">'+d.label+'</div>';
-      }).join('')+
-      '</div>'+
       '<div style="height:1px;background:var(--border);margin:0 12px 8px"></div>';
   }
 
@@ -7486,6 +7481,112 @@ function dev_wxEnsureSettings() {
   } else {
     init();
   }
+})();
+</script>
+
+<script>
+// ── TOPO BACKGROUND ──
+(function() {
+  var canvas = document.getElementById('topo-bg');
+  if (!canvas) return;
+  function h(n) { var s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
+  function noise(x, y) {
+    var ix = Math.floor(x), iy = Math.floor(y), fx = x-ix, fy = y-iy;
+    var ux = fx*fx*fx*(fx*(fx*6-15)+10), uy = fy*fy*fy*(fy*(fy*6-15)+10);
+    return h(ix+iy*57)*(1-ux)*(1-uy) + h(ix+1+iy*57)*ux*(1-uy) +
+           h(ix+(iy+1)*57)*(1-ux)*uy + h(ix+1+(iy+1)*57)*ux*uy;
+  }
+  function fbm(x, y) {
+    var v=0,a=0.5,f=1;
+    for(var i=0;i<6;i++){v+=noise(x*f,y*f)*a;a*=0.5;f*=2.01;}
+    return v;
+  }
+  function drawTopo() {
+    var W = window.innerWidth, H = window.innerHeight;
+    canvas.width = W; canvas.height = H;
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,W,H);
+    var STEP = 4;
+    var cols = Math.ceil(W/STEP)+2, rows = Math.ceil(H/STEP)+2;
+    var sx = 5.5/cols, sy = 5.5/rows;
+    var field = new Float32Array(cols*rows);
+    for(var r=0;r<rows;r++) for(var c=0;c<cols;c++)
+      field[r*cols+c] = fbm(c*sx, r*sy);
+    var LEVELS = 24;
+    for(var lv=0;lv<LEVELS;lv++){
+      var thresh = 0.20 + (lv/LEVELS)*0.54;
+      var isDashed = (lv % 5 === 2);
+      var segs = [];
+      for(var r2=0;r2<rows-1;r2++){
+        for(var c2=0;c2<cols-1;c2++){
+          var v0=field[r2*cols+c2], v1=field[r2*cols+c2+1],
+              v2=field[(r2+1)*cols+c2+1], v3=field[(r2+1)*cols+c2];
+          var idx=(v0>thresh?1:0)|(v1>thresh?2:0)|(v2>thresh?4:0)|(v3>thresh?8:0);
+          if(idx===0||idx===15) continue;
+          var x0=c2*STEP, y0=r2*STEP;
+          var lp=function(va,vb,a,b){ var t=(thresh-va)/(vb-va); return a+(b-a)*t; };
+          var T={x:lp(v0,v1,x0,x0+STEP),y:y0};
+          var R={x:x0+STEP,y:lp(v1,v2,y0,y0+STEP)};
+          var B={x:lp(v3,v2,x0,x0+STEP),y:y0+STEP};
+          var L={x:x0,y:lp(v0,v3,y0,y0+STEP)};
+          switch(idx){
+            case 1:case 14:segs.push([L,T]);break;
+            case 2:case 13:segs.push([T,R]);break;
+            case 3:case 12:segs.push([L,R]);break;
+            case 4:case 11:segs.push([R,B]);break;
+            case 6:case 9: segs.push([T,B]);break;
+            case 7:case 8: segs.push([L,B]);break;
+            case 5: segs.push([L,T],[R,B]);break;
+            case 10:segs.push([T,R],[L,B]);break;
+          }
+        }
+      }
+      var key = function(p){ return Math.round(p.x)+','+Math.round(p.y); };
+      var adj = {};
+      segs.forEach(function(seg,si){
+        var k0=key(seg[0]),k1=key(seg[1]);
+        (adj[k0]||(adj[k0]=[])).push({si:si,flip:false});
+        (adj[k1]||(adj[k1]=[])).push({si:si,flip:true});
+      });
+      var used=new Uint8Array(segs.length), chains=[];
+      segs.forEach(function(seg,si){
+        if(used[si]) return;
+        used[si]=1;
+        var chain=[seg[0],seg[1]];
+        var cur=seg[1];
+        for(var iter=0;iter<segs.length*2;iter++){
+          var nbrs=adj[key(cur)]||[], nxt=null;
+          for(var n=0;n<nbrs.length;n++){if(!used[nbrs[n].si]){nxt=nbrs[n];break;}}
+          if(!nxt) break;
+          used[nxt.si]=1;
+          var ns=segs[nxt.si];
+          var np=nxt.flip?ns[0]:ns[1];
+          chain.push(np); cur=np;
+        }
+        if(chain.length>1) chains.push(chain);
+      });
+      ctx.beginPath();
+      ctx.strokeStyle='rgba(34,139,34,1)';
+      ctx.lineWidth = isDashed ? 0.6 : 0.9;
+      ctx.setLineDash(isDashed ? [6,9] : []);
+      chains.forEach(function(pts){
+        if(pts.length<2) return;
+        ctx.moveTo(pts[0].x,pts[0].y);
+        if(pts.length===2){ ctx.lineTo(pts[1].x,pts[1].y); return; }
+        for(var i=0;i<pts.length-1;i++){
+          var p0=pts[Math.max(0,i-1)], p1=pts[i], p2=pts[i+1], p3=pts[Math.min(pts.length-1,i+2)];
+          ctx.bezierCurveTo(
+            p1.x+(p2.x-p0.x)/6, p1.y+(p2.y-p0.y)/6,
+            p2.x-(p3.x-p1.x)/6, p2.y-(p3.y-p1.y)/6,
+            p2.x, p2.y
+          );
+        }
+      });
+      ctx.stroke();
+    }
+  }
+  drawTopo();
+  window.addEventListener('resize', drawTopo);
 })();
 </script>
 

@@ -708,29 +708,17 @@ document.getElementById('signup-password').addEventListener('keydown', e => { if
   var canvas = document.getElementById('topo-bg');
   if (!canvas) return;
 
-  function seed(n) { return Math.sin(n * 127.1 + 311.7) * 43758.5453 % 1; }
-
-  function smoothstep(a, b, t) { t = Math.max(0, Math.min(1, (t - a) / (b - a))); return t * t * (3 - 2 * t); }
-
-  // Simple value noise: sample a 2D grid with interpolation
-  function noise2d(x, y) {
-    var ix = Math.floor(x), iy = Math.floor(y);
-    var fx = x - ix, fy = y - iy;
-    var tx = fx * fx * (3 - 2 * fx);
-    var ty = fy * fy * (3 - 2 * fy);
-    var a = seed(ix + iy * 57);
-    var b = seed(ix + 1 + iy * 57);
-    var c = seed(ix + (iy + 1) * 57);
-    var d = seed(ix + 1 + (iy + 1) * 57);
-    return a + (b - a) * tx + (c - a) * ty + (a - b - c + d) * tx * ty;
+  // Value noise with quintic interpolation
+  function h(n) { var s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
+  function noise(x, y) {
+    var ix = Math.floor(x), iy = Math.floor(y), fx = x-ix, fy = y-iy;
+    var ux = fx*fx*fx*(fx*(fx*6-15)+10), uy = fy*fy*fy*(fy*(fy*6-15)+10);
+    return h(ix+iy*57)*(1-ux)*(1-uy) + h(ix+1+iy*57)*ux*(1-uy) +
+           h(ix+(iy+1)*57)*(1-ux)*uy + h(ix+1+(iy+1)*57)*ux*uy;
   }
-
   function fbm(x, y) {
-    var v = 0, amp = 0.5, freq = 1;
-    for (var i = 0; i < 6; i++) {
-      v += noise2d(x * freq, y * freq) * amp;
-      amp *= 0.48; freq *= 1.97;
-    }
+    var v=0,a=0.5,f=1;
+    for(var i=0;i<6;i++){v+=noise(x*f,y*f)*a;a*=0.5;f*=2.01;}
     return v;
   }
 
@@ -738,88 +726,98 @@ document.getElementById('signup-password').addEventListener('keydown', e => { if
     var W = window.innerWidth, H = window.innerHeight;
     canvas.width = W; canvas.height = H;
     var ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, W, H);
+    ctx.clearRect(0,0,W,H);
 
-    var scale = 2.8;
-    var levels = 28;
-    var lineColor = 'rgba(255,255,255,1)';
+    var STEP = 4;
+    var cols = Math.ceil(W/STEP)+2, rows = Math.ceil(H/STEP)+2;
+    // Scale so we get ~5 large hill groups across the width
+    var sx = 5.5/cols, sy = 5.5/rows;
 
-    // March each row of pixels and draw iso-contour lines
-    // Use a scanline approach: for each contour level, trace horizontal crossings
-    var step = 4; // pixel resolution of the field sample grid
-    var cols = Math.ceil(W / step) + 1;
-    var rows = Math.ceil(H / step) + 1;
+    var field = new Float32Array(cols*rows);
+    for(var r=0;r<rows;r++) for(var c=0;c<cols;c++)
+      field[r*cols+c] = fbm(c*sx, r*sy);
 
-    // Build field
-    var field = new Float32Array(cols * rows);
-    for (var row = 0; row < rows; row++) {
-      for (var col = 0; col < cols; col++) {
-        var nx = (col / cols) * scale;
-        var ny = (row / rows) * scale;
-        field[row * cols + col] = fbm(nx, ny);
-      }
-    }
+    var LEVELS = 24;
 
-    // Marching squares for each threshold
-    for (var lv = 0; lv < levels; lv++) {
-      var thresh = 0.22 + (lv / levels) * 0.52;
-      var isDashed = (lv % 6 === 0);
+    for(var lv=0;lv<LEVELS;lv++){
+      var thresh = 0.20 + (lv/LEVELS)*0.54;
+      var isDashed = (lv % 5 === 2);
 
-      ctx.beginPath();
-      ctx.strokeStyle = lineColor;
-      ctx.lineWidth = isDashed ? 0.7 : 1.1;
-      if (isDashed) ctx.setLineDash([5, 8]);
-      else ctx.setLineDash([]);
-
-      for (var r = 0; r < rows - 1; r++) {
-        for (var c = 0; c < cols - 1; c++) {
-          var v0 = field[r * cols + c];
-          var v1 = field[r * cols + c + 1];
-          var v2 = field[(r + 1) * cols + c + 1];
-          var v3 = field[(r + 1) * cols + c];
-
-          var b0 = v0 > thresh ? 1 : 0;
-          var b1 = v1 > thresh ? 1 : 0;
-          var b2 = v2 > thresh ? 1 : 0;
-          var b3 = v3 > thresh ? 1 : 0;
-          var idx = b0 | (b1 << 1) | (b2 << 2) | (b3 << 3);
-
-          if (idx === 0 || idx === 15) continue;
-
-          var x0 = c * step, y0 = r * step;
-
-          function lerp(a, b, va, vb) {
-            var t = (thresh - va) / (vb - va);
-            return a + (b - a) * t;
-          }
-
-          // Edge midpoints
-          var top    = { x: lerp(x0, x0 + step, v0, v1), y: y0 };
-          var right  = { x: x0 + step, y: lerp(y0, y0 + step, v1, v2) };
-          var bottom = { x: lerp(x0, x0 + step, v3, v2), y: y0 + step };
-          var left   = { x: x0, y: lerp(y0, y0 + step, v0, v3) };
-
-          var segs = {
-            1:  [left, top],    2:  [top, right],
-            3:  [left, right],  4:  [right, bottom],
-            5:  [top, right, bottom, left], // saddle — skip detail
-            6:  [top, bottom],  7:  [left, bottom],
-            8:  [bottom, left], 9:  [bottom, top],
-            10: [right, top, left, bottom],
-            11: [right, top],   12: [right, left],
-            13: [right, bottom],14: [left, bottom]
-          };
-
-          var seg = segs[idx];
-          if (!seg) continue;
-          if (seg.length === 4) {
-            ctx.moveTo(seg[0].x, seg[0].y); ctx.lineTo(seg[1].x, seg[1].y);
-            ctx.moveTo(seg[2].x, seg[2].y); ctx.lineTo(seg[3].x, seg[3].y);
-          } else {
-            ctx.moveTo(seg[0].x, seg[0].y); ctx.lineTo(seg[1].x, seg[1].y);
+      // --- Marching squares: collect raw segments ---
+      var segs = [];
+      for(var r=0;r<rows-1;r++){
+        for(var c=0;c<cols-1;c++){
+          var v0=field[r*cols+c], v1=field[r*cols+c+1],
+              v2=field[(r+1)*cols+c+1], v3=field[(r+1)*cols+c];
+          var idx=(v0>thresh?1:0)|(v1>thresh?2:0)|(v2>thresh?4:0)|(v3>thresh?8:0);
+          if(idx===0||idx===15) continue;
+          var x0=c*STEP, y0=r*STEP;
+          function lp(va,vb,a,b){ var t=(thresh-va)/(vb-va); return a+(b-a)*t; }
+          var T={x:lp(v0,v1,x0,x0+STEP),y:y0};
+          var R={x:x0+STEP,y:lp(v1,v2,y0,y0+STEP)};
+          var B={x:lp(v3,v2,x0,x0+STEP),y:y0+STEP};
+          var L={x:x0,y:lp(v0,v3,y0,y0+STEP)};
+          switch(idx){
+            case 1:case 14:segs.push([L,T]);break;
+            case 2:case 13:segs.push([T,R]);break;
+            case 3:case 12:segs.push([L,R]);break;
+            case 4:case 11:segs.push([R,B]);break;
+            case 6:case 9: segs.push([T,B]);break;
+            case 7:case 8: segs.push([L,B]);break;
+            case 5: segs.push([L,T],[R,B]);break;
+            case 10:segs.push([T,R],[L,B]);break;
           }
         }
       }
+
+      // --- Join segments into polylines ---
+      var key = function(p){ return Math.round(p.x)+','+Math.round(p.y); };
+      var adj = {};
+      segs.forEach(function(seg,si){
+        var k0=key(seg[0]),k1=key(seg[1]);
+        (adj[k0]||(adj[k0]=[])).push({si:si,flip:false});
+        (adj[k1]||(adj[k1]=[])).push({si:si,flip:true});
+      });
+      var used=new Uint8Array(segs.length), chains=[];
+      segs.forEach(function(seg,si){
+        if(used[si]) return;
+        used[si]=1;
+        var chain=[seg[0],seg[1]];
+        // walk forward
+        var cur=seg[1];
+        for(var iter=0;iter<segs.length*2;iter++){
+          var nbrs=adj[key(cur)]||[], nxt=null;
+          for(var n=0;n<nbrs.length;n++){
+            if(!used[nbrs[n].si]){nxt=nbrs[n];break;}
+          }
+          if(!nxt) break;
+          used[nxt.si]=1;
+          var ns=segs[nxt.si];
+          var np=nxt.flip?ns[0]:ns[1];
+          chain.push(np); cur=np;
+        }
+        if(chain.length>1) chains.push(chain);
+      });
+
+      // --- Draw as smooth catmull-rom bezier ---
+      ctx.beginPath();
+      ctx.strokeStyle='rgba(255,255,255,1)';
+      ctx.lineWidth = isDashed ? 0.7 : 1.05;
+      ctx.setLineDash(isDashed ? [6,9] : []);
+
+      chains.forEach(function(pts){
+        if(pts.length<2) return;
+        ctx.moveTo(pts[0].x,pts[0].y);
+        if(pts.length===2){ ctx.lineTo(pts[1].x,pts[1].y); return; }
+        for(var i=0;i<pts.length-1;i++){
+          var p0=pts[Math.max(0,i-1)], p1=pts[i], p2=pts[i+1], p3=pts[Math.min(pts.length-1,i+2)];
+          ctx.bezierCurveTo(
+            p1.x+(p2.x-p0.x)/6, p1.y+(p2.y-p0.y)/6,
+            p2.x-(p3.x-p1.x)/6, p2.y-(p3.y-p1.y)/6,
+            p2.x, p2.y
+          );
+        }
+      });
       ctx.stroke();
     }
   }

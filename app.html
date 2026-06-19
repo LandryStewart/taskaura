@@ -2279,7 +2279,10 @@ function renderDashboard(){
 function renderPersonalDashboard(el){
   const myName=(state.myName||'').trim()||(currentUser&&((currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email.split('@')[0]))||'';
 
-  const myTasks=getPersonalTasks();
+  let myTasks=getPersonalTasks();
+  // Apply search filter if active
+  var _pdSearch=(document.getElementById('searchBox')||{}).value;
+  if(_pdSearch&&_pdSearch.trim()){var _pdQ=_pdSearch.trim().toLowerCase();myTasks=myTasks.filter(function(t){return(t.title||t.text||'').toLowerCase().includes(_pdQ)||(t.assignee||'').toLowerCase().includes(_pdQ)||(t.project||'').toLowerCase().includes(_pdQ)||(t.notes||'').toLowerCase().includes(_pdQ);});}
 
   // First-run: brand-new user with no tasks and no teams yet
   if(myTasks.length===0&&(!teamWorkspaces||teamWorkspaces.length===0)){
@@ -5738,6 +5741,18 @@ function renderMasterCalendar(){
     });
   });
   allTasks=dedupeMasterCalendarTasks(allTasks);
+
+  // Filter by search query if one is active
+  var _mcSearch=(document.getElementById('searchBox')||{}).value;
+  if(_mcSearch&&_mcSearch.trim()){
+    var _mcQ=_mcSearch.trim().toLowerCase();
+    allTasks=allTasks.filter(function(t){
+      return (t.title||t.text||'').toLowerCase().includes(_mcQ)||
+             (t.assignee||'').toLowerCase().includes(_mcQ)||
+             (t.project||'').toLowerCase().includes(_mcQ)||
+             (t.notes||'').toLowerCase().includes(_mcQ);
+    });
+  }
 
   // Filter by department if one is selected
   if(masterCalDeptFilter){

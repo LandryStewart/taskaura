@@ -5377,9 +5377,16 @@ async function loadMembersTab(){
   var list=document.getElementById('membersMgmtList');
   if(!list)return;
   try{
-    var r=await _supabase.from('profiles').select('id,email,full_name,approved,plan');
+    // Step 1: get user_ids that belong to THIS workspace
+    var mRes=await _supabase.from('team_workspace_members').select('user_id').eq('workspace_id',currentTeamWorkspaceId);
+    if(mRes.error){list.innerHTML='<div style="color:#dc2626;font-size:13px">Error loading members: '+esc(mRes.error.message)+'</div>';return;}
+    var memberUserIds=(mRes.data||[]).map(function(m){return m.user_id;});
+    if(!memberUserIds.length){list.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">No members have joined this workspace yet.</div>';return;}
+
+    // Step 2: get profiles for only those user_ids
+    var r=await _supabase.from('profiles').select('id,email,full_name,approved,plan').in('id',memberUserIds);
     if(r.error&&r.error.message&&r.error.message.indexOf('plan')>=0){
-      r=await _supabase.from('profiles').select('id,email,full_name,approved');
+      r=await _supabase.from('profiles').select('id,email,full_name,approved').in('id',memberUserIds);
     }
     if(r.error){list.innerHTML='<div style="color:#dc2626;font-size:13px">Error: '+esc(r.error.message)+'</div>';return;}
     var users=(r.data||[]).filter(function(u){return u.email!=='landrystewart@live.com';});

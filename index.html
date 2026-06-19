@@ -314,7 +314,7 @@
 <body>
 
 <!-- TOPO BACKGROUND -->
-<canvas id="topo-bg" style="position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:.12;" aria-hidden="true"></canvas>
+<canvas id="topo-bg" style="position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:.22;" aria-hidden="true"></canvas>
 
 <!-- AUTH MODALS -->
 <div class="modal-overlay" id="modal-signin">
@@ -727,9 +727,9 @@ document.getElementById('signup-password').addEventListener('keydown', e => { if
 
   function fbm(x, y) {
     var v = 0, amp = 0.5, freq = 1;
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < 6; i++) {
       v += noise2d(x * freq, y * freq) * amp;
-      amp *= 0.5; freq *= 2.1;
+      amp *= 0.48; freq *= 1.97;
     }
     return v;
   }
@@ -740,8 +740,8 @@ document.getElementById('signup-password').addEventListener('keydown', e => { if
     var ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, W, H);
 
-    var scale = 3.5;
-    var levels = 18;
+    var scale = 2.8;
+    var levels = 28;
     var lineColor = 'rgba(255,255,255,1)';
 
     // March each row of pixels and draw iso-contour lines
@@ -762,12 +762,12 @@ document.getElementById('signup-password').addEventListener('keydown', e => { if
 
     // Marching squares for each threshold
     for (var lv = 0; lv < levels; lv++) {
-      var thresh = 0.28 + (lv / levels) * 0.44;
-      var isDashed = (lv % 5 === 0);
+      var thresh = 0.22 + (lv / levels) * 0.52;
+      var isDashed = (lv % 6 === 0);
 
       ctx.beginPath();
       ctx.strokeStyle = lineColor;
-      ctx.lineWidth = isDashed ? 0.6 : 0.9;
+      ctx.lineWidth = isDashed ? 0.7 : 1.1;
       if (isDashed) ctx.setLineDash([5, 8]);
       else ctx.setLineDash([]);
 

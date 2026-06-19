@@ -2399,56 +2399,64 @@ function renderPersonalDashboard(el){
   }).join('');
 
   el.innerHTML=
+    // Hover styles for KPI cards
+    '<style>.pd-kpi{cursor:pointer;transition:box-shadow .15s,transform .15s;}.pd-kpi:hover{box-shadow:0 6px 20px rgba(0,0,0,.13);transform:translateY(-2px);}</style>'+
     invitesHTML+joinReqHTML+myReqHTML+
-    // Hero
-    '<div class="pd-hero">'+
-      '<div class="pd-hero-grid">'+
-        '<div>'+
-          '<div class="pd-greeting">'+greeting+'</div>'+
-          '<div class="pd-name">'+esc(myName)+'</div>'+
-          '<div class="pd-tagline">'+esc(tagline)+'</div>'+
-          '<div class="pd-clock"><span class="pd-clock-dot"></span><span id="pdClockText"></span></div>'+
-        '</div>'+
-        liveWidgetHTML+
+
+    // Slim greeting bar (single row)
+    '<div style="display:flex;align-items:center;gap:16px;padding:12px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:16px;flex-wrap:wrap;">'+
+      '<div style="display:flex;align-items:baseline;gap:8px;flex:1;min-width:200px">'+
+        '<span style="font-size:16px;font-weight:800;color:var(--text)">'+greeting+(myName?', '+esc(myName.split(' ')[0]):'')+'</span>'+
+        '<span style="font-size:13px;color:var(--text2);font-weight:400">'+esc(tagline)+'</span>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex-shrink:0">'+
+        '<span class="pd-clock-dot"></span><span id="pdClockText"></span>'+
       '</div>'+
     '</div>'+
 
     // Detail panel (collapsible)
     '<div id="dashDetailPanel" style="display:none" class="dash-detail-panel"></div>'+
 
-    // KPI cards
+    // KPI cards — scoped to All Workspaces
     '<div class="pd-kpi-row">'+
       '<div class="pd-kpi pd-kpi-blue" onclick="showPersonalDetail(\'all\')" title="View all open tasks">'+
         '<div class="pd-kpi-num">'+total+'</div>'+
         '<div class="pd-kpi-title">Open Tasks</div>'+
-        '<div class="pd-kpi-hint">tap to expand</div>'+
+        '<div class="pd-kpi-hint" style="color:var(--muted);font-size:10px;margin-top:2px">All Workspaces</div>'+
       '</div>'+
       '<div class="pd-kpi pd-kpi-red" onclick="showPersonalDetail(\'overdue\')" title="View overdue">'+
         '<div class="pd-kpi-num" style="'+(overdueCount?'color:#dc2626':'')+'">'+overdueCount+'</div>'+
         '<div class="pd-kpi-title">Overdue</div>'+
-        '<div class="pd-kpi-hint">'+(overdueCount?'needs attention':'all clear')+'</div>'+
+        '<div class="pd-kpi-hint" style="color:var(--muted);font-size:10px;margin-top:2px">All Workspaces</div>'+
       '</div>'+
       '<div class="pd-kpi pd-kpi-amber" onclick="showPersonalDetail(\'today\')" title="Due today">'+
         '<div class="pd-kpi-num" style="'+(dueToday?'color:#d97706':'')+'">'+dueToday+'</div>'+
         '<div class="pd-kpi-title">Due Today</div>'+
-        '<div class="pd-kpi-hint">'+(dueToday?'on your plate':'nothing today')+'</div>'+
+        '<div class="pd-kpi-hint" style="color:var(--muted);font-size:10px;margin-top:2px">All Workspaces</div>'+
       '</div>'+
     '</div>'+
 
-    // Team workspace cards (right after KPIs, before bento panels)
-    // Workspace cards — personal + teams
+    // My Priorities — above workspaces
+    '<div style="margin-top:28px;margin-bottom:4px;border-top:1px solid var(--border);padding-top:20px">'+
+      '<div class="pd-panels" style="margin-top:0">'+
+        '<div class="pd-panel pd-span6">'+
+          '<div class="pd-panel-title" style="margin-bottom:12px">My Priorities</div>'+
+          prioritiesHTML+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+
+    // Workspace cards
     (function(){
-      // Personal workspace tasks from the wm_workspaces store
       var allWs=JSON.parse(localStorage.getItem('wm_workspaces')||'{}');
       var pTasks=(allWs.work||{}).tasks||[];
       var pTotal=pTasks.length;
       var pDone=pTasks.filter(function(t){return(t.pct||0)>=100;}).length;
       var pOverdue=pTasks.filter(function(t){if((t.pct||0)>=100||!t.due)return false;return t.due<todayStr();}).length;
       var pPct=pTotal?Math.round(pDone/pTotal*100):0;
-      var html='<div style="margin-top:4px;margin-bottom:18px">'+
-        '<div class="pd-panel-title" style="margin-bottom:10px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">My Workspaces</div>'+
+      var html='<div style="margin-top:28px;margin-bottom:18px;border-top:1px solid var(--border);padding-top:20px">'+
+        '<div class="pd-panel-title" style="margin-bottom:14px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">My Workspaces</div>'+
         '<div class="pd-team-grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">'+
-        // Personal workspace card
         '<div class="pd-team-card" style="padding:24px 22px" onclick="enterPersonalWorkspace()">'+
           '<div class="pd-team-card-name" style="font-size:17px;margin-bottom:10px"><span class="tc-icon" style="font-size:22px">🏠</span>Personal</div>'+
           '<div class="pd-team-card-stats" style="font-size:13px;gap:16px;margin-bottom:12px">'+
@@ -2456,19 +2464,19 @@ function renderPersonalDashboard(el){
             '<span class="pd-team-card-stat" style="color:var(--low)">✓ '+pDone+' done</span>'+
             (pOverdue?'<span class="pd-team-card-stat" style="color:var(--crit)">⚠ '+pOverdue+' overdue</span>':'')+
           '</div>'+
-          '<div class="pd-team-card-bar" style="height:6px;margin-bottom:12px"><div class="pd-team-card-bar-fill" style="width:'+pPct+'%"></div></div>'+
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'+
+            '<div class="pd-team-card-bar" style="height:6px;flex:1"><div class="pd-team-card-bar-fill" style="width:'+pPct+'%"></div></div>'+
+            '<span style="font-size:11px;font-weight:700;color:var(--text2);min-width:32px;text-align:right">'+pPct+'%</span>'+
+          '</div>'+
           '<div style="font-size:11px;color:var(--muted);margin-top:4px">Private — only you can see this</div>'+
         '</div>';
-      // Team cards — read from teamWorkspaces array (already loaded from Supabase)
       teamWorkspaces.forEach(function(tw){
         var twData=tw.data||{};
         var isLegalWs=twData.workspaceType==='legal';
         var members=twData.teamMembers||[];
         var memAvatars=members.slice(0,5).map(function(m){return'<div class="pd-team-card-avatar" style="background:'+avatarColor(m)+'">'+initials(m)+'</div>';}).join('');
         if(members.length>5)memAvatars+='<div class="pd-team-card-avatar" style="background:var(--border);color:var(--text2)">+'+(members.length-5)+'</div>';
-
         if(isLegalWs){
-          // Legal workspace card
           var ld=twData.legalData||{};
           var ltTasks=ld.tasks||[];
           var ltTotal=ltTasks.length;
@@ -2482,11 +2490,13 @@ function renderPersonalDashboard(el){
               '<span class="pd-team-card-stat" style="color:#16a34a">⚡ '+ltActive+' active</span>'+
               (ltCrit?'<span class="pd-team-card-stat" style="color:var(--crit)">🔴 '+ltCrit+' critical</span>':'')+
             '</div>'+
-            '<div class="pd-team-card-bar" style="height:6px;margin-bottom:12px"><div class="pd-team-card-bar-fill" style="width:'+ltPct+'%;background:#16a34a"></div></div>'+
+            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'+
+              '<div class="pd-team-card-bar" style="height:6px;flex:1"><div class="pd-team-card-bar-fill" style="width:'+ltPct+'%;background:#16a34a"></div></div>'+
+              '<span style="font-size:11px;font-weight:700;color:var(--text2);min-width:32px;text-align:right">'+ltPct+'%</span>'+
+            '</div>'+
             (memAvatars?'<div class="pd-team-card-members" style="margin-top:4px">'+memAvatars+'</div>':'')+
           '</div>';
         } else {
-          // Regular team card
           var twTasks=twData.tasks||[];
           var twTotal=twTasks.length;
           var twDone=twTasks.filter(function(t){return(t.pct||0)>=100;}).length;
@@ -2499,24 +2509,19 @@ function renderPersonalDashboard(el){
               '<span class="pd-team-card-stat" style="color:var(--low)">✓ '+twDone+' done</span>'+
               (twOverdue?'<span class="pd-team-card-stat" style="color:var(--crit)">⚠ '+twOverdue+' overdue</span>':'')+
             '</div>'+
-            '<div class="pd-team-card-bar" style="height:6px;margin-bottom:12px"><div class="pd-team-card-bar-fill" style="width:'+twPct+'%"></div></div>'+
+            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'+
+              '<div class="pd-team-card-bar" style="height:6px;flex:1"><div class="pd-team-card-bar-fill" style="width:'+twPct+'%"></div></div>'+
+              '<span style="font-size:11px;font-weight:700;color:var(--text2);min-width:32px;text-align:right">'+twPct+'%</span>'+
+            '</div>'+
             (memAvatars?'<div class="pd-team-card-members" style="margin-top:4px">'+memAvatars+'</div>':'')+
           '</div>';
         }
       });
-      // Add team button
       html+='<div class="pd-team-card pd-team-add" onclick="openTeamPanel()" style="display:flex;align-items:center;justify-content:center;min-height:120px;border-style:dashed;opacity:.7;padding:24px 22px">'+
         '<div style="text-align:center;color:var(--text2)"><div style="font-size:28px;margin-bottom:6px">＋</div><div style="font-size:13px;font-weight:600">New Team</div></div>'+
       '</div></div></div>';
       return html;
     })()+
-    // Data panels (bento)
-    '<div class="pd-panels">'+
-      '<div class="pd-panel pd-span6">'+
-        '<div class="pd-panel-title">My Priorities</div>'+
-        prioritiesHTML+
-      '</div>'+
-    '</div>'+
     // Activity log (today's session)
     (function(){
       var log=(state.activityLog||[]);
@@ -2547,7 +2552,6 @@ function renderPersonalDashboard(el){
       '</div>':'');
   animateKpiNums(el);
   startPdClock();
-  loadPdLiveWidgets();
   if(currentUser&&currentUser.email==='landrystewart@live.com')loadPendingUsers();
 }
 

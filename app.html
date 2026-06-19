@@ -2805,6 +2805,7 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).substr(
 let currentView='dashboard';
 let teamDeptTab='summary';
 let selectedTeamProject=null;
+let masterCalDeptFilter=null; // department filter for master calendar
 let acqSubView='board';
 let entSubView='board';
 let legSubView='board';
@@ -2839,6 +2840,7 @@ function dedupeMasterCalendarTasks(tasks){var map={};(tasks||[]).forEach(functio
 function setView(v){if(v==='schedules'&&!hasTeamPlan()){showToast('🔒 Schedules is a Team plan feature.');return;}
 // If leaving dashboard view, restore sidebar — but keep team sidebar intact for mastercal
 var _keepTeamSidebar=(v==='mastercal'&&currentTeamWorkspaceId);
+if(v!=='mastercal')masterCalDeptFilter=null;
 if(v!=='dashboard'&&!_keepTeamSidebar){var sidebarEl2=document.getElementById('sidebar');if(sidebarEl2)sidebarEl2.classList.remove('team-dashboard-mode');var teamProjSection2=document.getElementById('teamProjSidebarSection');if(teamProjSection2)teamProjSection2.remove();}
 // Restore all sidebar-sections visibility only when truly leaving team dashboard (not for mastercal in team)
 if((v !== 'dashboard' || !currentTeamWorkspaceId)&&!_keepTeamSidebar){
@@ -4920,6 +4922,21 @@ function renderTeamSidebarProjects(){
   projDiv.style.display='';
   var _devNames=(typeof devData!=='undefined'&&devData&&devData.projects)?devData.projects.map(function(p){return p.name;}):[];
   var projects=[...new Set([...(state.projects||[]),...(state.scheduleProjects||[]),..._devNames,...(state.tasks||[]).map(function(t){return t.project;}).filter(Boolean)])];
+
+  // In mastercal view, prepend a Department filter section
+  var deptHtml='';
+  if(currentView==='mastercal'){
+    var depts=[{key:'acquisition',label:'Acquisition'},{key:'entitlement',label:'Entitlement'},{key:'development',label:'Development'},{key:'legal',label:'Legal'}];
+    deptHtml='<div class="sidebar-section-title" style="margin-top:4px">Departments</div>'+
+      '<div class="team-proj-list" style="margin-bottom:8px">'+
+      '<div class="team-proj-item '+(masterCalDeptFilter===null?'active':'')+'" onclick="masterCalDeptFilter=null;renderMasterCalendar();" style="font-weight:600">All Departments</div>'+
+      depts.map(function(d){
+        return '<div class="team-proj-item '+(masterCalDeptFilter===d.key?'active':'')+'" onclick="masterCalDeptFilter=\''+d.key+'\';renderMasterCalendar();">'+d.label+'</div>';
+      }).join('')+
+      '</div>'+
+      '<div style="height:1px;background:var(--border);margin:0 12px 8px"></div>';
+  }
+
   var items=projects.map(function(p,i){
     return'<div class="team-proj-item '+(getActiveTeamProject()===normalizeTeamProjectName(p)?'active':'')+'" data-projidx="'+i+'" style="display:flex;align-items:center;justify-content:space-between;gap:4px;">'+
       '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" onclick="selectTeamProject(window.__devProjs[this.closest(\'[data-projidx]\').dataset.projidx])">'+esc(p)+'</span>'+
@@ -4928,6 +4945,7 @@ function renderTeamSidebarProjects(){
   }).join('');
   window.__devProjs=projects;
   projDiv.innerHTML=
+    deptHtml+
     '<div class="sidebar-section-title">Projects</div>'+
     '<div class="team-proj-list">'+
       '<div class="team-proj-item '+(getActiveTeamProject()===null?'active':'')+'" onclick="setTeamProjectSelection(null)">All Projects</div>'+
@@ -5718,6 +5736,10 @@ function renderMasterCalendar(){
   });
   allTasks=dedupeMasterCalendarTasks(allTasks);
 
+  // Filter by department if one is selected
+  if(masterCalDeptFilter){
+    allTasks=allTasks.filter(function(t){return (t.department||'').toLowerCase()===masterCalDeptFilter;});
+  }
   // Filter by selected project if one is active
   var _mcActiveProj=getActiveTeamProject();
   if(_mcActiveProj){
@@ -5732,7 +5754,9 @@ function renderMasterCalendar(){
   var todayStr3=now.toISOString().split('T')[0];
 
   var monOff=(firstDay+6)%7;
-  var projLabel=_mcActiveProj?' — '+_mcActiveProj:'';
+  var _deptLabels={acquisition:'Acquisition',entitlement:'Entitlement',development:'Development',legal:'Legal'};
+  var _filterLabel=masterCalDeptFilter?(_deptLabels[masterCalDeptFilter]||masterCalDeptFilter):(_mcActiveProj||'');
+  var projLabel=_filterLabel?' — '+_filterLabel:'';
   var html='<div class="cal-header"><h2>🗓 Master Calendar'+projLabel+' — '+monthName+'</h2></div>';
   html+='<div class="cal-grid" style="grid-template-columns:repeat(5,1fr)">';
   ['Mon','Tue','Wed','Thu','Fri'].forEach(function(d){html+='<div class="cal-day-hdr">'+d+'</div>';});

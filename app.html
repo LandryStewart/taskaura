@@ -1560,6 +1560,10 @@ let currentUser = null;
 let _unlockingApp = false;
 
 function initSupabaseAuth() {
+  // onAuthStateChange fires with the initial session state in Supabase v2,
+  // so a separate getSession() call is redundant and caused a race condition
+  // where showLoginScreen() (redirect to /) was triggered twice, producing
+  // two login screens.
   _supabase.auth.onAuthStateChange(function(event, session) {
     if (session && session.user) {
       currentUser = session.user;
@@ -1569,17 +1573,6 @@ function initSupabaseAuth() {
     } else {
       currentUser = null;
       _unlockingApp = false;
-      showLoginScreen();
-    }
-  });
-  // Check existing session immediately
-  _supabase.auth.getSession().then(function(result) {
-    if (result.data && result.data.session) {
-      currentUser = result.data.session.user;
-      if (!_unlockingApp && document.getElementById('authOverlay').classList.contains('hidden') === false) {
-        unlockApp();
-      }
-    } else {
       showLoginScreen();
     }
   });

@@ -1448,6 +1448,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 <div class="settings-overlay" id="settingsOverlay"><div class="settings-panel"><div class="modal-hdr"><h2>⚙ Settings</h2><button class="modal-close" onclick="closeSettings()">×</button></div>
 <div class="settings-section"><h3>Buckets</h3><div class="sett-list" id="settBuckets"></div><button class="sett-add" onclick="addBucketSetting()">+ Add Bucket</button></div>
 <div class="settings-section"><h3>Labels</h3><div class="sett-list" id="settLabels"></div><button class="sett-add" onclick="addLabelSetting()">+ Add Label</button></div>
+<div class="settings-section"><h3>Data Tools</h3><button class="sett-add" style="background:#dc2626;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px" onclick="fixCorruptedBuckets();closeSettings()">🔧 Fix Corrupted Task Buckets</button><p style="font-size:11px;color:var(--text2);margin-top:6px">Resets any task whose bucket doesn't match a known bucket back to the first valid bucket for its department.</p></div>
 <div class="settings-section"><h3>Preferences</h3><div class="toggle-row"><span>🌙 Dark Mode</span><label class="switch"><input type="checkbox" id="togDark" onchange="toggleDark()"><span class="slider"></span></label></div><div class="toggle-row"><span>📐 Compact Cards</span><label class="switch"><input type="checkbox" id="togCompact" onchange="toggleCompact()"><span class="slider"></span></label></div></div>
 <div class="settings-section"><h3>Data</h3>
 <p style="font-size:11px;color:var(--text2);margin-bottom:10px">Your data syncs to the cloud automatically. You can still download a local backup anytime.</p>
@@ -4988,13 +4989,13 @@ function renderCalendarInto(el){
     });
     var isToday=ds===todayS;
     var calDeptArg=deptFilter?'\''+deptFilter+'\'':'null';
-    html+='<div class="cal-cell'+(isToday?' today':'')+'" onclick="openNewTaskOnDate(\''+ds+'\','+calDeptArg+')" style="cursor:pointer">';
+    html+='<div class="cal-cell'+(isToday?' today':'')+'" onclick="openNewTaskOnDate(\''+ds+'\','+calDeptArg+')">';
     html+='<div class="cal-date">'+(isToday?'<span class="today-num">'+d+'</span>':d)+(dayTasks.length?'<span style="margin-left:6px;font-size:10px;color:var(--text2);font-weight:600">'+dayTasks.length+' task'+(dayTasks.length===1?'':'s')+'</span>':'')+'</div>';
     html+='<div class="cal-tasks">';
     dayTasks.slice(0,maxVisible).forEach(function(t){
-      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" onclick="openEditTask('+t.id+')" title="'+esc((getActiveTeamProject()? ((t.title||t.text)||'') : ((getTaskProjectName(t)?(getTaskProjectName(t)+' - '):'')+((t.title||t.text)||''))))+'">'+esc(getCalendarTaskDisplayTitle(t,40))+'</div>';
+      html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" onclick="event.stopPropagation();openEditTask('+t.id+')" title="'+esc((getActiveTeamProject()? ((t.title||t.text)||'') : ((getTaskProjectName(t)?(getTaskProjectName(t)+' - '):'')+((t.title||t.text)||''))))+'">'+esc(getCalendarTaskDisplayTitle(t,40))+'</div>';
     });
-    if(dayTasks.length>maxVisible)html+='<div class="cal-expand-btn" onclick="openCalDay(\''+ds+'\')" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-maxVisible)+' more</div>';
+    if(dayTasks.length>maxVisible)html+='<div class="cal-expand-btn" onclick="event.stopPropagation();openCalDay(\''+ds+'\')" style="cursor:pointer;font-size:10px;color:var(--pri);padding:2px 0">+'+(dayTasks.length-maxVisible)+' more</div>';
     html+='</div></div>';
   }
   html+='</div>';
@@ -5009,8 +5010,9 @@ function renderAcquisitionTab(el){
     '<button class="dept-sub-btn'+(acqSubView==='calendar'?' active':'')+'" onclick="acqSubView=\'calendar\';renderDashboard()">◻ Calendar</button>'+
     '<button class="dept-sub-btn" style="margin-left:auto" onclick="openBucketEditor(\'acquisition\')" title="Edit bucket columns">⚙ Buckets</button>'+
   '</div>';
-  el.innerHTML=subNav+'<div id="acqViewContainer" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;min-height:400px;"></div>';
-  el.style.display='flex';el.style.flexDirection='column';el.style.flex='1';el.style.minHeight='0';el.style.overflow='hidden';
+  var acqIsCalendar=acqSubView==='calendar';
+  el.innerHTML=subNav+'<div id="acqViewContainer" style="flex:1;display:flex;flex-direction:column;min-height:0;'+(acqIsCalendar?'overflow:auto;':'overflow:hidden;')+'min-height:400px;"></div>';
+  el.style.display='flex';el.style.flexDirection='column';el.style.flex='1';el.style.minHeight='0';el.style.overflow=acqIsCalendar?'auto':'hidden';
   var container=document.getElementById('acqViewContainer');
   if(acqSubView==='board'){
     container.style.overflow='hidden';
@@ -5047,8 +5049,9 @@ function renderEntitlementTab(el){
       '<button class="top-btn" style="background:#f97316;color:#fff;border-color:#f97316;font-size:11px" onclick="migrateTasksToEntitlements()">→ Assign all to Entitlements</button>'+
       '<button class="top-btn" style="font-size:11px" onclick="this.parentElement.style.display=\'none\'">Dismiss</button>'+
     '</div>':'';
-  el.innerHTML=migBanner+subNav+'<div id="entViewContainer" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;min-height:400px;"></div>';
-  el.style.display='flex';el.style.flexDirection='column';el.style.flex='1';el.style.minHeight='0';el.style.overflow='hidden';
+  var entIsCalendar=entSubView==='calendar';
+  el.innerHTML=migBanner+subNav+'<div id="entViewContainer" style="flex:1;display:flex;flex-direction:column;min-height:0;'+(entIsCalendar?'overflow:auto;':'overflow:hidden;')+'min-height:400px;"></div>';
+  el.style.display='flex';el.style.flexDirection='column';el.style.flex='1';el.style.minHeight='0';el.style.overflow=entIsCalendar?'auto':'hidden';
   var container=document.getElementById('entViewContainer');
   if(entSubView==='board'){
     container.style.overflow='hidden';
@@ -5102,6 +5105,31 @@ function dev_syncProjectsToState(){
   devData.projects.forEach(function(p){if(p.name&&!state.projects.includes(p.name))state.projects.push(p.name);});
 }
 
+function fixCorruptedBuckets(){
+  // Recovery: tasks whose bucket doesn't match any known bucket are reset to the first valid bucket for their department
+  var deptBuckets=state.deptBuckets||{};
+  var defaultBucketsByDept={
+    Acquisition:(deptBuckets.acquisition||['To Do','In Progress','Under Review','Complete']),
+    Entitlements:(deptBuckets.entitlement||['To Do','In Progress','Under Review','Complete']),
+    Development:(deptBuckets.development||['To Do','In Progress','Under Review','Complete']),
+    Legal:(deptBuckets.legal||['Internal Counsel','External Counsel','Completed'])
+  };
+  var personalBuckets=state.buckets||['To Do','In Progress','Under Review','Complete'];
+  var allKnownBuckets=new Set([...personalBuckets]);
+  Object.values(defaultBucketsByDept).forEach(function(bs){bs.forEach(function(b){allKnownBuckets.add(b);});});
+  var fixed=0;
+  (state.tasks||[]).forEach(function(t){
+    if(t.bucket&&!allKnownBuckets.has(t.bucket)){
+      // bucket is corrupt — reset to first bucket for the task's department
+      var dept=t.department;
+      var validBuckets=defaultBucketsByDept[dept]||personalBuckets;
+      t.bucket=validBuckets[0];
+      fixed++;
+    }
+  });
+  if(fixed>0){save();render();showToast('Fixed '+fixed+' task bucket'+(fixed===1?'':'s'));}
+  else{showToast('No corrupted buckets found — all tasks look good!');}
+}
 function migrateTasksToEntitlements(){
   var count=0;
   (state.tasks||[]).forEach(function(t){
@@ -5229,8 +5257,9 @@ function renderLegalTab(el){
     '<button class="dept-sub-btn'+(legSubView==='calendar'?' active':'')+'" onclick="legSubView=\'calendar\';renderDashboard()">◻ Calendar</button>'+
     '<button class="dept-sub-btn" style="margin-left:auto" onclick="openBucketEditor(\'legal\')" title="Edit bucket columns">⚙ Buckets</button>'+
   '</div>';
-  el.innerHTML=subNav+'<div id="legViewContainer" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;min-height:400px;"></div>';
-  el.style.display='flex';el.style.flexDirection='column';el.style.flex='1';el.style.minHeight='0';el.style.overflow='hidden';
+  var legIsCalendar=legSubView==='calendar';
+  el.innerHTML=subNav+'<div id="legViewContainer" style="flex:1;display:flex;flex-direction:column;min-height:0;'+(legIsCalendar?'overflow:auto;':'overflow:hidden;')+'min-height:400px;"></div>';
+  el.style.display='flex';el.style.flexDirection='column';el.style.flex='1';el.style.minHeight='0';el.style.overflow=legIsCalendar?'auto':'hidden';
   var container=document.getElementById('legViewContainer');
   if(legSubView==='board'){
     container.style.overflow='hidden';

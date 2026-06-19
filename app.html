@@ -2839,7 +2839,7 @@ function inferTaskWorkspaceLabel(t,fallbackLabel){var label=(t&&t._teamWorkspace
 function dedupeMasterCalendarTasks(tasks){var map={};(tasks||[]).forEach(function(t){var key=getTaskDedupeKey(t);var existing=map[key];if(!existing){map[key]=t;return;}var curScore=((t._wsSource==='team')?20:0)+((t._wsLabel&&t._wsLabel!=='Personal')?10:0);var oldScore=((existing._wsSource==='team')?20:0)+((existing._wsLabel&&existing._wsLabel!=='Personal')?10:0);if(curScore>=oldScore)map[key]=t;});return Object.keys(map).map(function(k){return map[k];});}
 function setView(v){if(v==='schedules'&&!hasTeamPlan()){showToast('🔒 Schedules is a Team plan feature.');return;}
 // If leaving dashboard view, restore sidebar
-if(v!=='mastercal')masterCalDeptFilter=null;
+if(v!=='mastercal'){masterCalDeptFilter=null;selectedTeamProject=null;}
 if(v!=='dashboard'){var sidebarEl2=document.getElementById('sidebar');if(sidebarEl2)sidebarEl2.classList.remove('team-dashboard-mode');var teamProjSection2=document.getElementById('teamProjSidebarSection');if(teamProjSection2)teamProjSection2.remove();}
 // Restore all sidebar-sections visibility only when truly leaving team dashboard
 if(v !== 'dashboard' || !currentTeamWorkspaceId){

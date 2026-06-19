@@ -2502,45 +2502,75 @@ function startPdClock(){
 // ── Live weather + FOR stock fetcher ─────────────────────────────────────────
 var _pdWeatherCache=null,_pdStockCache=null;
 function loadPdLiveWidgets(){
-  // Weather via Open-Meteo (no key needed) — use geolocation
-  function setWeather(temp,desc,unit){
-    var el=document.getElementById('pdWeatherVal');var sub=document.getElementById('pdWeatherSub');
-    if(el)el.textContent=Math.round(temp)+'°'+unit;if(sub)sub.textContent=desc;
+
+  // ── Weather ───────────────────────────────────────────────────────────────
+  function setWeatherEl(val,sub){
+    var ev=document.getElementById('pdWeatherVal');var es=document.getElementById('pdWeatherSub');
+    if(ev)ev.textContent=val;if(es)es.textContent=sub;
   }
-  function fetchWeatherLatLon(lat,lon){
-    fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current_weather=true&temperature_unit=fahrenheit&wind_speed_unit=mph')
-      .then(function(r){return r.json();}).then(function(d){
-        if(!d.current_weather)return;
-        var wc=d.current_weather.weathercode;
-        var codeMap={0:'Clear',1:'Mainly Clear',2:'Partly Cloudy',3:'Overcast',45:'Foggy',48:'Icy Fog',51:'Light Drizzle',53:'Drizzle',55:'Heavy Drizzle',61:'Light Rain',63:'Rain',65:'Heavy Rain',71:'Light Snow',73:'Snow',75:'Heavy Snow',80:'Showers',81:'Showers',82:'Heavy Showers',95:'Thunderstorm',96:'Thunderstorm',99:'Thunderstorm'};
-        var desc=codeMap[wc]||'Code '+wc;
-        setWeather(d.current_weather.temperature,desc+' · '+Math.round(d.current_weather.windspeed)+' mph wind','F');
-        _pdWeatherCache={temp:d.current_weather.temperature,desc:desc,wind:d.current_weather.windspeed};
-      }).catch(function(){setWeather(0,'Unavailable','');});
+  function fetchWeather(lat,lon){
+    fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon
+      +'&current_weather=true&temperature_unit=fahrenheit&wind_speed_unit=mph')
+    .then(function(r){if(!r.ok)throw new Error(r.status);return r.json();})
+    .then(function(d){
+      var cw=d&&d.current_weather;
+      if(!cw){setWeatherEl('—','No data');return;}
+      var codes={0:'Clear ☀️',1:'Mostly Clear',2:'Partly Cloudy ⛅',3:'Overcast ☁️',
+        45:'Foggy',48:'Icy Fog',51:'Light Drizzle',53:'Drizzle 🌧️',55:'Heavy Drizzle',
+        61:'Light Rain 🌦️',63:'Rain 🌧️',65:'Heavy Rain',71:'Light Snow ❄️',73:'Snow',
+        75:'Heavy Snow',80:'Showers',81:'Showers',82:'Heavy Showers',
+        95:'Thunderstorm ⛈️',96:'Thunderstorm',99:'Thunderstorm'};
+      var desc=codes[cw.weathercode]||'Cond. '+cw.weathercode;
+      var val=Math.round(cw.temperature)+'°F';
+      var sub=desc+' · '+Math.round(cw.windspeed)+' mph';
+      setWeatherEl(val,sub);
+      _pdWeatherCache={val:val,sub:sub};
+    })
+    .catch(function(){setWeatherEl('—','Unavailable');});
   }
-  if(_pdWeatherCache){setWeather(_pdWeatherCache.temp,_pdWeatherCache.desc+' · '+Math.round(_pdWeatherCache.wind)+' mph wind','F');}
+  if(_pdWeatherCache){setWeatherEl(_pdWeatherCache.val,_pdWeatherCache.sub);}
   if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(function(pos){fetchWeatherLatLon(pos.coords.latitude,pos.coords.longitude);},function(){fetchWeatherLatLon(32.7767,-96.7970);});// fallback: Dallas
-  }else{fetchWeatherLatLon(32.7767,-96.7970);}
-  // FOR stock via Yahoo Finance
-  function setStock(price,change,changePct){
-    var el=document.getElementById('pdStockVal');var sub=document.getElementById('pdStockSub');
-    if(!el)return;
-    var up=change>=0;
-    el.innerHTML='<span class="'+(up?'pd-stock-up':'pd-stock-down')+'">'+(up?'▲':'▼')+'$'+price.toFixed(2)+'</span>';
-    if(sub)sub.textContent=(up?'+':'')+change.toFixed(2)+' ('+changePct.toFixed(2)+'%) today';
-    _pdStockCache={price,change,changePct};
+    navigator.geolocation.getCurrentPosition(
+      function(p){fetchWeather(p.coords.latitude,p.coords.longitude);},
+      function(){fetchWeather(32.7767,-96.7970);}, // Dallas fallback
+      {timeout:6000}
+    );
+  }else{fetchWeather(32.7767,-96.7970);}
+
+  // ── FOR Stock — via allorigins CORS proxy, fallback direct ───────────────
+  function setStockEl(val,sub){
+    var ev=document.getElementById('pdStockVal');var es=document.getElementById('pdStockSub');
+    if(ev)ev.innerHTML=val;if(es)es.textContent=sub;
   }
-  if(_pdStockCache){setStock(_pdStockCache.price,_pdStockCache.change,_pdStockCache.changePct);}
-  fetch('https://query1.finance.yahoo.com/v8/finance/chart/FOR?range=1d&interval=5m')
-    .then(function(r){return r.json();}).then(function(d){
-      var meta=d.chart&&d.chart.result&&d.chart.result[0]&&d.chart.result[0].meta;
-      if(!meta){var sub=document.getElementById('pdStockSub');if(sub)sub.textContent='Data unavailable';return;}
-      var price=meta.regularMarketPrice||0;
-      var prev=meta.previousClose||meta.chartPreviousClose||price;
-      var chg=price-prev;var chgPct=prev?chg/prev*100:0;
-      setStock(price,chg,chgPct);
-    }).catch(function(){var sub=document.getElementById('pdStockSub');if(sub)sub.textContent='Data unavailable';});
+  function parseStockData(d){
+    var meta=d&&d.chart&&d.chart.result&&d.chart.result[0]&&d.chart.result[0].meta;
+    if(!meta||!meta.regularMarketPrice)return null;
+    var price=meta.regularMarketPrice;
+    var prev=meta.previousClose||meta.chartPreviousClose||price;
+    return{price:price,chg:price-prev,pct:prev?(price-prev)/prev*100:0};
+  }
+  function renderStock(s){
+    if(!s){setStockEl('—','Market closed or unavailable');return;}
+    var up=s.chg>=0;
+    var arrow=up?'▲ ':'▼ ';
+    var cls=up?'pd-stock-up':'pd-stock-down';
+    setStockEl('<span class="'+cls+'">'+arrow+'$'+s.price.toFixed(2)+'</span>',
+      (up?'+':'')+s.chg.toFixed(2)+' ('+Math.abs(s.pct).toFixed(2)+'%) today');
+    _pdStockCache=s;
+  }
+  if(_pdStockCache){renderStock(_pdStockCache);}
+  var yUrl='https://query2.finance.yahoo.com/v8/finance/chart/FOR?range=1d&interval=5m';
+  // Try allorigins proxy (bypasses CORS)
+  fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(yUrl))
+    .then(function(r){if(!r.ok)throw new Error(r.status);return r.json();})
+    .then(function(d){renderStock(parseStockData(d));})
+    .catch(function(){
+      // Fallback: corsproxy.io
+      fetch('https://corsproxy.io/?'+encodeURIComponent(yUrl))
+        .then(function(r){return r.json();})
+        .then(function(d){renderStock(parseStockData(d));})
+        .catch(function(){setStockEl('—','Data unavailable');});
+    });
 }
 
 // Human-friendly relative due label
@@ -2965,12 +2995,21 @@ var nhSec=document.getElementById('mNoteHistorySection');
 if(nhSec){
   if(t.id&&t.notesHistory&&t.notesHistory.length){
     var nh=t.notesHistory;
-    nhSec.innerHTML='<button class="note-history-btn" onclick="this.nextElementSibling.classList.toggle(\'open\');this.textContent=this.nextElementSibling.classList.contains(\'open\')?\'▲ Hide note history ('+nh.length+')\':\'📋 Note history ('+nh.length+')\'" >📋 Note history ('+nh.length+')</button>'+
-      '<div class="note-history-panel">'+nh.slice(0,20).map(function(h){
-        var dt=new Date(h.savedAt);
-        var ts=dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-        return'<div class="note-history-item"><div class="note-history-ts">'+esc(ts)+'</div><div class="note-history-text">'+esc(h.notes)+'</div></div>';
-      }).join('')+'</div>';
+    var nhItems=nh.slice(0,20).map(function(h){
+      var dt=new Date(h.savedAt);
+      var ts=dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' at '+dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+      return'<div class="note-history-item"><div class="note-history-ts">'+esc(ts)+'</div><div class="note-history-text">'+esc(h.notes)+'</div></div>';
+    }).join('');
+    nhSec.innerHTML=
+      '<button class="note-history-btn" id="nhToggleBtn" onclick="'+
+        'var p=document.getElementById(\'nhPanel\');'+
+        'var open=p.classList.toggle(\'open\');'+
+        'document.getElementById(\'nhToggleBtn\').textContent=(open?\'▲ Hide\':\'📋 Show\')+\' note history ('+nh.length+')\';'+
+      '">📋 Show note history ('+nh.length+')</button>'+
+      '<div class="note-history-panel" id="nhPanel">'+nhItems+'</div>';
+  }else if(t.id){
+    // Show a subtle hint that history will accumulate once notes change
+    nhSec.innerHTML='<div style="margin-top:5px;font-size:10px;color:var(--muted);font-style:italic">✏️ Edit and save notes to start tracking history</div>';
   }else{nhSec.innerHTML='';}
 }
 }

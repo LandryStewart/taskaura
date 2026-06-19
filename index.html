@@ -84,7 +84,7 @@
     @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1 !important; transform: none !important; transition: none; } }
 
     /* ── MODALS (auth) ── */
-    .modal-overlay { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); align-items: center; justify-content: center; padding: 16px; }
+    .modal-overlay { display: none; position: fixed; inset: 0; z-index: 1000; isolation: isolate; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); align-items: center; justify-content: center; padding: 16px; }
     .modal-overlay.open { display: flex; }
     .modal { background: var(--surface); border: 1px solid var(--border-lt); border-radius: 18px; padding: 2.5rem; width: 100%; max-width: 420px; box-shadow: 0 40px 100px rgba(0,0,0,0.7); position: relative; animation: slideUp .25s cubic-bezier(.22,.9,.3,1); max-height: 92vh; overflow-y: auto; }
     @keyframes slideUp { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -119,7 +119,7 @@
     .toast.error .toast-icon { color: var(--error); }
 
     /* ── NAV ── */
-    .nav-wrap { position: sticky; top: 0; z-index: 100; background: rgba(9,9,11,.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+    .nav-wrap { position: sticky; top: 0; z-index: 100; isolation: isolate; background: rgba(9,9,11,.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
     nav { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 64px; }
     .nav-logo { display: flex; align-items: center; gap: .55rem; cursor: pointer; }
     .logo-mark { width: 26px; height: 26px; border-radius: 7px; background: linear-gradient(135deg, var(--orange-dk), var(--orange-lt)); display: flex; align-items: center; justify-content: center; font-family: 'General Sans', 'Inter', sans-serif; font-weight: 600; font-size: .95rem; color: #fff; box-shadow: 0 2px 10px rgba(34,139,34,.4); }
@@ -312,6 +312,9 @@
   </style>
 </head>
 <body>
+
+<!-- TOPO BACKGROUND -->
+<canvas id="topo-bg" style="position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.055;" aria-hidden="true"></canvas>
 
 <!-- AUTH MODALS -->
 <div class="modal-overlay" id="modal-signin">
@@ -699,6 +702,131 @@ function scrollToTop() {
 
 document.getElementById('signin-password').addEventListener('keydown', e => { if (e.key === 'Enter') signIn(); });
 document.getElementById('signup-password').addEventListener('keydown', e => { if (e.key === 'Enter') signUp(); });
+
+// ── TOPO BACKGROUND ──
+(function() {
+  var canvas = document.getElementById('topo-bg');
+  if (!canvas) return;
+
+  function seed(n) { return Math.sin(n * 127.1 + 311.7) * 43758.5453 % 1; }
+
+  function smoothstep(a, b, t) { t = Math.max(0, Math.min(1, (t - a) / (b - a))); return t * t * (3 - 2 * t); }
+
+  // Simple value noise: sample a 2D grid with interpolation
+  function noise2d(x, y) {
+    var ix = Math.floor(x), iy = Math.floor(y);
+    var fx = x - ix, fy = y - iy;
+    var tx = fx * fx * (3 - 2 * fx);
+    var ty = fy * fy * (3 - 2 * fy);
+    var a = seed(ix + iy * 57);
+    var b = seed(ix + 1 + iy * 57);
+    var c = seed(ix + (iy + 1) * 57);
+    var d = seed(ix + 1 + (iy + 1) * 57);
+    return a + (b - a) * tx + (c - a) * ty + (a - b - c + d) * tx * ty;
+  }
+
+  function fbm(x, y) {
+    var v = 0, amp = 0.5, freq = 1;
+    for (var i = 0; i < 5; i++) {
+      v += noise2d(x * freq, y * freq) * amp;
+      amp *= 0.5; freq *= 2.1;
+    }
+    return v;
+  }
+
+  function drawTopo() {
+    var W = window.innerWidth, H = window.innerHeight;
+    canvas.width = W; canvas.height = H;
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, W, H);
+
+    var scale = 3.5;
+    var levels = 18;
+    var lineColor = 'rgba(34,139,34,1)';
+
+    // March each row of pixels and draw iso-contour lines
+    // Use a scanline approach: for each contour level, trace horizontal crossings
+    var step = 4; // pixel resolution of the field sample grid
+    var cols = Math.ceil(W / step) + 1;
+    var rows = Math.ceil(H / step) + 1;
+
+    // Build field
+    var field = new Float32Array(cols * rows);
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < cols; col++) {
+        var nx = (col / cols) * scale;
+        var ny = (row / rows) * scale;
+        field[row * cols + col] = fbm(nx, ny);
+      }
+    }
+
+    // Marching squares for each threshold
+    for (var lv = 0; lv < levels; lv++) {
+      var thresh = 0.28 + (lv / levels) * 0.44;
+      var isDashed = (lv % 5 === 0);
+
+      ctx.beginPath();
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = isDashed ? 0.6 : 0.9;
+      if (isDashed) ctx.setLineDash([5, 8]);
+      else ctx.setLineDash([]);
+
+      for (var r = 0; r < rows - 1; r++) {
+        for (var c = 0; c < cols - 1; c++) {
+          var v0 = field[r * cols + c];
+          var v1 = field[r * cols + c + 1];
+          var v2 = field[(r + 1) * cols + c + 1];
+          var v3 = field[(r + 1) * cols + c];
+
+          var b0 = v0 > thresh ? 1 : 0;
+          var b1 = v1 > thresh ? 1 : 0;
+          var b2 = v2 > thresh ? 1 : 0;
+          var b3 = v3 > thresh ? 1 : 0;
+          var idx = b0 | (b1 << 1) | (b2 << 2) | (b3 << 3);
+
+          if (idx === 0 || idx === 15) continue;
+
+          var x0 = c * step, y0 = r * step;
+
+          function lerp(a, b, va, vb) {
+            var t = (thresh - va) / (vb - va);
+            return a + (b - a) * t;
+          }
+
+          // Edge midpoints
+          var top    = { x: lerp(x0, x0 + step, v0, v1), y: y0 };
+          var right  = { x: x0 + step, y: lerp(y0, y0 + step, v1, v2) };
+          var bottom = { x: lerp(x0, x0 + step, v3, v2), y: y0 + step };
+          var left   = { x: x0, y: lerp(y0, y0 + step, v0, v3) };
+
+          var segs = {
+            1:  [left, top],    2:  [top, right],
+            3:  [left, right],  4:  [right, bottom],
+            5:  [top, right, bottom, left], // saddle — skip detail
+            6:  [top, bottom],  7:  [left, bottom],
+            8:  [bottom, left], 9:  [bottom, top],
+            10: [right, top, left, bottom],
+            11: [right, top],   12: [right, left],
+            13: [right, bottom],14: [left, bottom]
+          };
+
+          var seg = segs[idx];
+          if (!seg) continue;
+          if (seg.length === 4) {
+            ctx.moveTo(seg[0].x, seg[0].y); ctx.lineTo(seg[1].x, seg[1].y);
+            ctx.moveTo(seg[2].x, seg[2].y); ctx.lineTo(seg[3].x, seg[3].y);
+          } else {
+            ctx.moveTo(seg[0].x, seg[0].y); ctx.lineTo(seg[1].x, seg[1].y);
+          }
+        }
+      }
+      ctx.stroke();
+    }
+  }
+
+  drawTopo();
+  window.addEventListener('resize', drawTopo);
+})();
 
 // Scroll reveal (graceful: if IO unsupported, everything stays visible)
 (function(){

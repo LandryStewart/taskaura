@@ -2758,16 +2758,16 @@ let selectedTeamProject=null;
 let acqSubView='board';
 let entSubView='board';
 let legSubView='board';
-let deptListSort={};// keyed by dept name e.g. deptListSort['Acquisition']={col,asc,dept}
-function _deptSort(){var k=deptFilter||'__default__';if(!deptListSort[k])deptListSort[k]={col:'priority',asc:true,dept:deptFilter};return deptListSort[k];}
-function deptSortListBy(c,headId,bodyId){
-  var s=_deptSort();
+let deptListSort={};// keyed by dept name
+function _deptSort(dept){var k=dept||deptFilter||'__default__';if(!deptListSort[k])deptListSort[k]={col:'priority',asc:true};return deptListSort[k];}
+function deptSortListBy(c,headId,bodyId,dept){
+  // dept is passed explicitly so it's available even after deptFilter is reset to null
+  var s=_deptSort(dept);
   if(s.col===c)s.asc=!s.asc;else{s.col=c;s.asc=true;}
-  // Restore deptFilter so getFilteredTasks() scopes to the right department
-  var prevFilter=deptFilter;
-  deptFilter=s.dept;
-  renderListInto(headId,bodyId);
-  deptFilter=prevFilter;
+  var prev=deptFilter;
+  deptFilter=dept||null;
+  renderListInto(headId,bodyId,dept);
+  deptFilter=prev;
 }
 let deptFilter=null;
 function normalizeTeamProjectName(v){var s=(v==null?'':String(v)).trim();if(/^all\s+projects$/i.test(s))return'';return s;}
@@ -4932,10 +4932,16 @@ function renderBoardInto(el){
   el.innerHTML=html;
 }
 
-function renderListInto(headId,bodyId){
+function renderListInto(headId,bodyId,dept){
+  // dept may be passed explicitly (from deptSortListBy) or read from deptFilter
+  var _activeDept=dept!==undefined?dept:deptFilter;
   var priOrder={Critical:0,High:1,Medium:2,Low:3};
+  // Temporarily apply dept filter so getFilteredTasks scopes correctly
+  var _prevFilter=deptFilter;
+  deptFilter=_activeDept;
   var tasks=getFilteredTasks().slice();
-  var _ds=_deptSort(),sc=_ds.col,sa=_ds.asc;
+  deptFilter=_prevFilter;
+  var _ds=_deptSort(_activeDept),sc=_ds.col,sa=_ds.asc;
   tasks.sort(function(a,b){
     var va,vb;
     if(sc==='priority'){va=priOrder[a.priority]??2;vb=priOrder[b.priority]??2;return sa?va-vb:vb-va;}
@@ -4948,9 +4954,10 @@ function renderListInto(headId,bodyId){
   var headEl=document.getElementById(headId);
   var bodyEl=document.getElementById(bodyId);
   if(!headEl||!bodyEl)return;
+  var deptArg=_activeDept?'\''+_activeDept+'\'':'null';
   headEl.innerHTML=cols.map(function(c,i){
     var arrow=sc===c?(sa?' ▲':' ▼'):'';
-    return'<th style="cursor:pointer;user-select:none" onclick="deptSortListBy(\''+c+'\',\''+headId+'\',\''+bodyId+'\')">'+names[i]+arrow+'</th>';
+    return'<th style="cursor:pointer;user-select:none" onclick="deptSortListBy(\''+c+'\',\''+headId+'\',\''+bodyId+'\','+deptArg+')">'+names[i]+arrow+'</th>';
   }).join('');
   bodyEl.innerHTML=tasks.map(function(t){
     var od=isOverdue(t);

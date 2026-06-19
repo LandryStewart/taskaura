@@ -2131,21 +2131,28 @@ function getPersonalTasks(){
 
 // Navigate to a task in its workspace and open it
 function jumpToTask(wsId,taskId){
+  function openModal(){
+    // For team workspaces go to dashboard (shows dept tabs); personal stays on board
+    if(currentTeamWorkspaceId){
+      if(currentView!=='dashboard')setView('dashboard');
+    }else{
+      if(currentView!=='board')setView('board');
+    }
+    setTimeout(function(){openEditTask(taskId);},80);
+  }
   if(wsId){
     if(currentTeamWorkspaceId===wsId){
-      setView('board');
-      setTimeout(()=>{openEditTask(taskId);},50);
+      openModal();
     }else{
       switchToTeamWorkspace(wsId);
-      setTimeout(()=>{setView('board');openEditTask(taskId);},650);
+      setTimeout(openModal,750);
     }
   }else{
     if(!currentTeamWorkspaceId&&currentWorkspace==='work'){
-      setView('board');
-      setTimeout(()=>{openEditTask(taskId);},50);
+      openModal();
     }else{
       switchWorkspace('work');
-      setTimeout(()=>{setView('board');openEditTask(taskId);},450);
+      setTimeout(openModal,500);
     }
   }
 }

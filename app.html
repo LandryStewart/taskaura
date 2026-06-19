@@ -1056,6 +1056,53 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .summary-due-section{padding:0 14px 14px;}
 .summary-due-section h3{font-size:14px;font-weight:700;margin-bottom:10px;}
 .summary-due-item{padding:8px 10px;border-left:4px solid var(--high);background:var(--card);border-radius:4px;margin-bottom:6px;font-size:12px;}
+/* ── New Summary Redesign ─────────────────────────────────────────── */
+.smry-wrap{display:flex;flex-direction:column;height:100%;overflow:hidden;}
+.smry-hero{padding:22px 24px 18px;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--card);}
+.smry-hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.smry-ws-name{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.4px;}
+.smry-date{font-size:12px;color:var(--muted);margin-top:3px;font-weight:500;}
+.smry-kpis{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.smry-kpi{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 18px;border-radius:10px;min-width:80px;gap:2px;}
+.smry-kpi-num{font-size:22px;font-weight:800;line-height:1;}
+.smry-kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;opacity:.75;margin-top:1px;}
+.smry-kpi.red{background:#fef2f2;color:#dc2626;}
+.smry-kpi.amber{background:#fffbeb;color:#d97706;}
+.smry-kpi.green{background:#f0fdf4;color:#16a34a;}
+.smry-kpi.blue{background:#eff6ff;color:#2563eb;}
+[data-theme=dark] .smry-kpi.red{background:#3b0f0f;color:#f87171;}
+[data-theme=dark] .smry-kpi.amber{background:#3b2800;color:#fbbf24;}
+[data-theme=dark] .smry-kpi.green{background:#0d2b15;color:#4ade80;}
+[data-theme=dark] .smry-kpi.blue{background:#0f1f3b;color:#60a5fa;}
+.smry-body{flex:1;overflow-y:auto;padding:18px 24px;display:flex;flex-direction:column;gap:12px;}
+.smry-dept-card{border-radius:12px;border:1px solid var(--border);background:var(--card);overflow:hidden;transition:box-shadow .2s;}
+.smry-dept-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08);}
+.smry-dept-hdr{display:flex;align-items:center;gap:10px;padding:14px 18px;cursor:pointer;user-select:none;border-left:4px solid transparent;transition:background .15s;}
+.smry-dept-hdr:hover{background:var(--pri-l);}
+.smry-dept-accent{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.smry-dept-title{font-size:14px;font-weight:700;color:var(--text);flex:1;}
+.smry-dept-chips{display:flex;gap:6px;align-items:center;}
+.smry-chip{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+.smry-chip.red{background:#fef2f2;color:#dc2626;}
+.smry-chip.amber{background:#fffbeb;color:#d97706;}
+.smry-chip.slate{background:var(--bg);color:var(--text2);}
+[data-theme=dark] .smry-chip.red{background:#3b0f0f;color:#f87171;}
+[data-theme=dark] .smry-chip.amber{background:#3b2800;color:#fbbf24;}
+.smry-dept-chevron{font-size:12px;color:var(--muted);transition:transform .25s;flex-shrink:0;}
+.smry-dept-chevron.open{transform:rotate(180deg);}
+.smry-dept-body{border-top:1px solid var(--border);overflow:hidden;max-height:0;transition:max-height .3s cubic-bezier(.4,0,.2,1);}
+.smry-dept-body.open{max-height:2000px;}
+.smry-dept-inner{padding:0 18px 14px;}
+.smry-group-lbl{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:12px 0 6px;border-bottom:1px solid var(--border);margin-bottom:2px;}
+.smry-task-row{display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:7px;cursor:pointer;transition:background .12s;font-size:12px;}
+.smry-task-row:hover{background:var(--pri-l);}
+.smry-task-name{flex:1;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.smry-task-proj{font-size:10px;background:var(--bg);color:var(--text2);border:1px solid var(--border);padding:1px 7px;border-radius:10px;white-space:nowrap;flex-shrink:0;}
+.smry-task-due{font-size:11px;font-weight:600;flex-shrink:0;}
+.smry-task-due.overdue{color:#dc2626;}
+.smry-task-due.today{color:var(--pri);}
+.smry-task-due.week{color:var(--muted);}
+.smry-empty{font-size:12px;color:var(--muted);padding:14px 6px;font-style:italic;}
 .dept-sub-nav{display:flex;gap:6px;padding:8px 14px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0;}
 .dept-sub-btn{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;transition:all .15s;}
 .dept-sub-btn:hover{background:var(--pri-l);border-color:var(--pri);color:var(--pri);}
@@ -5296,71 +5343,114 @@ function renderSummaryTab(el){
   var todayStr2=todayDate.toISOString().split('T')[0];
   var weekLater=new Date(todayDate);weekLater.setDate(weekLater.getDate()+7);
   var weekLaterStr=weekLater.toISOString().split('T')[0];
+  var allOpen=(state.tasks||[]).filter(function(t){return(t.pct||0)<100&&filter(t);});
+  var totalOverdue=allOpen.filter(function(t){return t.due&&t.due<todayStr2;}).length;
+  var totalToday=allOpen.filter(function(t){return t.due===todayStr2;}).length;
+  var totalWeek=allOpen.filter(function(t){return t.due&&t.due>todayStr2&&t.due<=weekLaterStr;}).length;
+  var tw=teamWorkspaces.find(function(w){return w.id===currentTeamWorkspaceId;});
+  var wsName=tw?tw.name:'Team';
+  var greeting=(function(){var h=new Date().getHours();return h<12?'Good morning':'Good afternoon';})();
 
   var depts=[
-    {key:'Acquisition',   icon:'🏡', match:function(t){return t.department==='Acquisition';}},
-    {key:'Entitlements',  icon:'📋', match:function(t){return t.department==='Entitlements'||t.department==='Entitlement';}},
-    {key:'Development',   icon:'🏗',  match:function(t){return t.department==='Development';}},
-    {key:'Legal',         icon:'⚖️',  match:function(t){return t.department==='Legal';}}
+    {key:'Acquisition',  id:'acq', icon:'🏡', color:'#0ea5e9', bg:'#e0f2fe', darkBg:'#0c2a3b', match:function(t){return t.department==='Acquisition';}, tab:'acquisition'},
+    {key:'Entitlements', id:'ent', icon:'📋', color:'#8b5cf6', bg:'#ede9fe', darkBg:'#1e1240', match:function(t){return t.department==='Entitlements'||t.department==='Entitlement';}, tab:'entitlement'},
+    {key:'Development',  id:'dev', icon:'🏗',  color:'#f59e0b', bg:'#fef3c7', darkBg:'#2d1f00', match:function(t){return t.department==='Development';}, tab:'development'},
+    {key:'Legal',        id:'leg', icon:'⚖️',  color:'#10b981', bg:'#d1fae5', darkBg:'#0a2e1e', match:function(t){return t.department==='Legal';}, tab:'legal'}
   ];
 
-  function taskRow(t, urgency){
-    var proj2=t.project?'<span style="font-size:10px;background:var(--border);color:var(--text2);padding:1px 6px;border-radius:10px;margin-left:6px;white-space:nowrap">'+esc(t.project)+'</span>':'';
-    var dueLabel=t.due?'<span style="margin-left:auto;font-size:11px;color:'+(urgency==='overdue'?'#dc2626':urgency==='today'?'var(--pri)':'var(--muted)')+'">'+fmtDate(t.due)+'</span>':'';
-    return'<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;cursor:pointer" onclick="selectTeamProject(\''+escAttr(t.project||'')+'\');switchTeamDeptTab(\''+((t.department||'').toLowerCase()==='entitlement'||((t.department||'').toLowerCase()==='entitlements')?'entitlement':(t.department||'').toLowerCase())+'\')">'+
-      '<span style="flex:1;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(t.title||t.text||'')+'</span>'+proj2+dueLabel+'</div>';
+  // Collapse state persisted in sessionStorage
+  var colKey='smry_collapsed_'+currentTeamWorkspaceId;
+  var collapsed={};try{collapsed=JSON.parse(sessionStorage.getItem(colKey)||'{}');}catch(e){}
+  // Default: all expanded
+  depts.forEach(function(d){if(collapsed[d.id]===undefined)collapsed[d.id]=false;});
+
+  function deptTab(t){return t.department==='Entitlements'||t.department==='Entitlement'?'entitlement':(t.department||'').toLowerCase();}
+
+  function taskRow(t,urgency){
+    var proj2=t.project?'<span class="smry-task-proj">'+esc(t.project)+'</span>':'';
+    var dc=urgency==='overdue'?'overdue':urgency==='today'?'today':'week';
+    var dueLabel=t.due?'<span class="smry-task-due '+dc+'">'+fmtDate(t.due)+'</span>':'';
+    return'<div class="smry-task-row" onclick="selectTeamProject(\''+escAttr(t.project||'')+'\');switchTeamDeptTab(\''+deptTab(t)+'\')">'+
+      '<span class="smry-task-name">'+esc(t.title||t.text||'')+'</span>'+proj2+dueLabel+'</div>';
   }
 
-  function deptSection(dept){
-    var tasks=(state.tasks||[]).filter(function(t){return dept.match(t)&&filter(t)&&(t.pct||0)<100;});
+  function deptCard(dept){
+    var tasks=allOpen.filter(function(t){return dept.match(t);});
     var overdue=tasks.filter(function(t){return t.due&&t.due<todayStr2;}).sort(function(a,b){return a.due>b.due?1:-1;});
     var dueToday=tasks.filter(function(t){return t.due===todayStr2;});
     var dueWeek=tasks.filter(function(t){return t.due&&t.due>todayStr2&&t.due<=weekLaterStr;}).sort(function(a,b){return a.due>b.due?1:-1;});
+    var isOpen=!collapsed[dept.id];
 
-    var html='<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:0;min-width:240px;flex:1;">'+
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'+
-        '<span style="font-size:18px">'+dept.icon+'</span>'+
-        '<h3 style="font-size:15px;font-weight:700;color:var(--text);margin:0">'+dept.key+'</h3>'+
-        '<span style="margin-left:auto;font-size:11px;color:var(--muted)">'+tasks.length+' open</span>'+
-      '</div>';
+    var chips='';
+    if(overdue.length)chips+='<span class="smry-chip red">'+overdue.length+' overdue</span>';
+    if(dueToday.length)chips+='<span class="smry-chip amber">'+dueToday.length+' today</span>';
+    if(!overdue.length&&!dueToday.length)chips+='<span class="smry-chip slate">'+tasks.length+' open</span>';
 
+    var body='';
     if(overdue.length){
-      html+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#dc2626;letter-spacing:.5px;margin-bottom:4px">⚠ Overdue ('+overdue.length+')</div>';
-      html+=overdue.map(function(t){return taskRow(t,'overdue');}).join('');
-      html+='<div style="margin-top:8px"></div>';
+      body+='<div class="smry-group-lbl" style="color:#dc2626">'+
+        '<span style="width:8px;height:8px;border-radius:50%;background:#dc2626;display:inline-block"></span>Overdue&nbsp;<span style="opacity:.5">('+overdue.length+')</span></div>'+
+        overdue.map(function(t){return taskRow(t,'overdue');}).join('');
     }
     if(dueToday.length){
-      html+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--pri);letter-spacing:.5px;margin-bottom:4px">Due Today ('+dueToday.length+')</div>';
-      html+=dueToday.map(function(t){return taskRow(t,'today');}).join('');
-      html+='<div style="margin-top:8px"></div>';
+      body+='<div class="smry-group-lbl" style="color:var(--pri)">'+
+        '<span style="width:8px;height:8px;border-radius:50%;background:var(--pri);display:inline-block"></span>Due Today&nbsp;<span style="opacity:.5">('+dueToday.length+')</span></div>'+
+        dueToday.map(function(t){return taskRow(t,'today');}).join('');
     }
     if(dueWeek.length){
-      html+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text2);letter-spacing:.5px;margin-bottom:4px">Due This Week ('+dueWeek.length+')</div>';
-      html+=dueWeek.map(function(t){return taskRow(t,'week');}).join('');
+      body+='<div class="smry-group-lbl" style="color:var(--text2)">'+
+        '<span style="width:8px;height:8px;border-radius:50%;background:var(--border);display:inline-block"></span>This Week&nbsp;<span style="opacity:.5">('+dueWeek.length+')</span></div>'+
+        dueWeek.map(function(t){return taskRow(t,'week');}).join('');
     }
     if(!overdue.length&&!dueToday.length&&!dueWeek.length){
-      html+='<div style="font-size:12px;color:var(--muted);padding:8px 0">Nothing due this week ✓</div>';
+      body='<div class="smry-empty">All clear — nothing due this week ✓</div>';
     }
 
-    html+='</div>';
-    return html;
+    return'<div class="smry-dept-card" id="smry-card-'+dept.id+'">'+
+      '<div class="smry-dept-hdr" style="border-left-color:'+dept.color+'" onclick="smryToggle(\''+dept.id+'\')">'+
+        '<div class="smry-dept-accent" style="background:'+dept.bg+'">'+dept.icon+'</div>'+
+        '<span class="smry-dept-title">'+dept.key+'</span>'+
+        '<div class="smry-dept-chips">'+chips+'</div>'+
+        '<span class="smry-dept-chevron'+(isOpen?' open':'')+'" id="smry-chev-'+dept.id+'">▼</span>'+
+      '</div>'+
+      '<div class="smry-dept-body'+(isOpen?' open':'')+'" id="smry-body-'+dept.id+'">'+
+        '<div class="smry-dept-inner">'+body+'</div>'+
+      '</div>'+
+    '</div>';
   }
 
-  var tw=teamWorkspaces.find(function(w){return w.id===currentTeamWorkspaceId;});
-  var wsName=tw?tw.name:'Team';
-
-  var html='<div style="padding:18px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px;">'+
-    '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0">'+
-      '<h2 style="font-size:18px;font-weight:800;color:var(--text);margin:0">'+esc(wsName)+' — Summary</h2>'+
-      '<span style="font-size:12px;color:var(--muted);margin-left:4px">'+new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+'</span>'+
+  var html='<div class="smry-wrap">'+
+    '<div class="smry-hero">'+
+      '<div class="smry-hero-top">'+
+        '<div>'+
+          '<div class="smry-ws-name">'+esc(greeting)+', '+esc(wsName)+'</div>'+
+          '<div class="smry-date">'+new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="smry-kpis">'+
+        '<div class="smry-kpi red"><span class="smry-kpi-num">'+totalOverdue+'</span><span class="smry-kpi-lbl">Overdue</span></div>'+
+        '<div class="smry-kpi amber"><span class="smry-kpi-num">'+totalToday+'</span><span class="smry-kpi-lbl">Due Today</span></div>'+
+        '<div class="smry-kpi blue"><span class="smry-kpi-num">'+totalWeek+'</span><span class="smry-kpi-lbl">This Week</span></div>'+
+        '<div class="smry-kpi green"><span class="smry-kpi-num">'+allOpen.length+'</span><span class="smry-kpi-lbl">Total Open</span></div>'+
+      '</div>'+
     '</div>'+
-    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;align-items:start;">'+
-      depts.map(deptSection).join('')+
+    '<div class="smry-body">'+
+      depts.map(deptCard).join('')+
     '</div>'+
   '</div>';
 
   el.innerHTML=html;
   el.style.display='flex';el.style.flexDirection='column';el.style.flex='1';el.style.minHeight='0';el.style.overflow='hidden';
+
+  // Attach collapse toggle (no re-render needed, just DOM toggle)
+  window.smryToggle=function(id){
+    collapsed[id]=!collapsed[id];
+    try{sessionStorage.setItem(colKey,JSON.stringify(collapsed));}catch(e){}
+    var body=document.getElementById('smry-body-'+id);
+    var chev=document.getElementById('smry-chev-'+id);
+    if(body)body.classList.toggle('open',!collapsed[id]);
+    if(chev)chev.classList.toggle('open',!collapsed[id]);
+  };
 }
 
 function generatePDFSummary(){

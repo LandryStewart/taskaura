@@ -2641,6 +2641,8 @@ let selectedTeamProject=null;
 let acqSubView='board';
 let entSubView='board';
 let legSubView='board';
+let deptListSort={col:'priority',asc:true};
+function deptSortListBy(c,headId,bodyId){if(deptListSort.col===c)deptListSort.asc=!deptListSort.asc;else{deptListSort.col=c;deptListSort.asc=true;}renderListInto(headId,bodyId);}
 let deptFilter=null;
 function normalizeTeamProjectName(v){var s=(v==null?'':String(v)).trim();if(/^all\s+projects$/i.test(s))return'';return s;}
 function getActiveTeamProject(){var p=normalizeTeamProjectName(selectedTeamProject);return p||null;}
@@ -4780,13 +4782,25 @@ function renderBoardInto(el){
 }
 
 function renderListInto(headId,bodyId){
-  var tasks=getFilteredTasks();
+  var priOrder={Critical:0,High:1,Medium:2,Low:3};
+  var tasks=getFilteredTasks().slice();
+  var sc=deptListSort.col,sa=deptListSort.asc;
+  tasks.sort(function(a,b){
+    var va,vb;
+    if(sc==='priority'){va=priOrder[a.priority]||2;vb=priOrder[b.priority]||2;return sa?va-vb:vb-va;}
+    if(sc==='pct'){va=a.pct||0;vb=b.pct||0;return sa?va-vb:vb-va;}
+    va=a[sc]||'';vb=b[sc]||'';
+    return sa?String(va).localeCompare(String(vb)):String(vb).localeCompare(String(va));
+  });
   var cols=['title','bucket','assignee','due','priority','pct'];
   var names=['Task','Bucket','Assignee','Due Date','Priority','%'];
   var headEl=document.getElementById(headId);
   var bodyEl=document.getElementById(bodyId);
   if(!headEl||!bodyEl)return;
-  headEl.innerHTML=cols.map(function(c,i){return'<th>'+names[i]+'</th>';}).join('');
+  headEl.innerHTML=cols.map(function(c,i){
+    var arrow=sc===c?(sa?' ▲':' ▼'):'';
+    return'<th style="cursor:pointer;user-select:none" onclick="deptSortListBy(\''+c+'\',\''+headId+'\',\''+bodyId+'\')">'+names[i]+arrow+'</th>';
+  }).join('');
   bodyEl.innerHTML=tasks.map(function(t){
     var od=isOverdue(t);
     return'<tr class="'+(od?'overdue':'')+'" style="cursor:pointer" onclick="openEditTask('+t.id+')">'+
@@ -4794,7 +4808,7 @@ function renderListInto(headId,bodyId){
       '<td>'+esc(t.bucket||'')+'</td>'+
       '<td>'+(t.assignee?'<span style="display:flex;align-items:center;gap:5px"><span class="card-avatar" style="background:'+avatarColor(t.assignee)+'">'+initials(t.assignee)+'</span>'+esc(t.assignee)+'</span>':'')+'</td>'+
       '<td class="'+(od?'overdue-text':'')+'">'+fmtDate(t.due)+'</td>'+
-      '<td>'+priBadge(t.priority)+'</td>'+
+      '<td><span class="card-pri '+priBadge(t.priority)+'">'+(t.priority||'Medium')+'</span></td>'+
       '<td><div style="display:flex;align-items:center;gap:6px"><div class="card-prog-bg"><div class="card-prog-fill" style="width:'+(t.pct||0)+'%"></div></div><span style="font-size:12px;font-weight:600">'+(t.pct||0)+'%</span></div></td>'+
     '</tr>';
   }).join('');
@@ -5164,103 +5178,108 @@ function generatePDFSummary(){
   var today=new Date();
   var todayStr2=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
   var priOrder={Critical:0,High:1,Medium:2,Low:3};
+  var GREEN=[34,139,34]; // forest green — single color for all dept headers
 
-  doc.setFontSize(18);doc.setFont(undefined,'bold');
-  doc.text(proj,14,18);
-  doc.setFontSize(10);doc.setFont(undefined,'normal');
-  doc.text('Generated: '+todayStr2,14,25);
-
-  // Collect dev tab items with priority from devData (load from state if not in Dev tab)
+  // Helper: collect tasks per dept
   var devPriorityRows=[];
   var _pdfDevData=(typeof devData!=='undefined'&&devData)?devData:(state.developmentData||null);
   if(_pdfDevData){
-    // Project schedule items with priority
     (_pdfDevData.projects||[]).forEach(function(p){
       if(selectedTeamProject&&p.name!==selectedTeamProject)return;
       (p.schedule||[]).forEach(function(s){
-        if(!s.priority&&s.status==='not-started')return; // skip unprioritized not-started
-        devPriorityRows.push({
-          project:p.name,title:s.task,due:s.projectedFinish,actualDate:s.status==='completed'?s.projectedFinish:'',
-          notes:s.notes||'',priority:s.status==='completed'?'Low':s.status==='in-progress'?'High':'Medium',_devStatus:s.status,percentComplete:s.percentComplete||0
-        });
+        if(!s.priority&&s.status==='not-started')return;
+        devPriorityRows.push({project:p.name,title:s.task,due:s.projectedFinish,actualDate:s.status==='completed'?s.projectedFinish:'',notes:s.notes||'',priority:s.status==='completed'?'Low':s.status==='in-progress'?'High':'Medium',_devStatus:s.status,percentComplete:s.percentComplete||0});
       });
-      // Notes/tasks with priority
       (p.notes||[]).forEach(function(n){
         if(!n.priority||n.priority==='low')return;
-        devPriorityRows.push({
-          project:p.name,title:n.task,due:n.dueDate||'',actualDate:'',
-          notes:n.noteText||'',priority:n.priority==='urgent'?'Critical':n.priority==='high'?'High':n.priority==='medium'?'Medium':'Low',_devStatus:n.completed?'completed':'in-progress',percentComplete:n.percentComplete||0
-        });
+        devPriorityRows.push({project:p.name,title:n.task,due:n.dueDate||'',actualDate:'',notes:n.noteText||'',priority:n.priority==='urgent'?'Critical':n.priority==='high'?'High':n.priority==='medium'?'Medium':'Low',_devStatus:n.completed?'completed':'in-progress',percentComplete:n.percentComplete||0});
       });
     });
-    // NonProject sections with priority
     Object.keys(_pdfDevData.nonProject||{}).forEach(function(key){
       (_pdfDevData.nonProject[key]||[]).forEach(function(item){
         if(!item.priority||item.priority==='low')return;
-        devPriorityRows.push({
-          project:key.replace(/([A-Z])/g,' $1').replace(/^./,function(s){return s.toUpperCase();}),
-          title:item.task,due:item.dueDate||'',actualDate:'',
-          notes:item.noteText||'',priority:item.priority==='urgent'?'Critical':item.priority==='high'?'High':'Medium',
-          _devStatus:item.completed?'completed':'in-progress',percentComplete:item.percentComplete||0
-        });
+        devPriorityRows.push({project:key.replace(/([A-Z])/g,' $1').replace(/^./,function(s){return s.toUpperCase();}),title:item.task,due:item.dueDate||'',actualDate:'',notes:item.noteText||'',priority:item.priority==='urgent'?'Critical':item.priority==='high'?'High':'Medium',_devStatus:item.completed?'completed':'in-progress',percentComplete:item.percentComplete||0});
       });
     });
-    devPriorityRows.sort(function(a,b){return(priOrder[a.priority]||2)-(priOrder[b.priority]||2);});
   }
 
   var depts=[
-    {name:'Acquisition',color:[249,115,22],dept:'Acquisition'},
-    {name:'Entitlements',color:[124,58,237],dept:'Entitlements'},
-    {name:'Development',color:[22,163,74],dept:'Development',_devRows:devPriorityRows},
-    {name:'Legal',color:[37,99,235],dept:'Legal'}
+    {name:'Acquisition',dept:'Acquisition'},
+    {name:'Entitlements',dept:'Entitlements'},
+    {name:'Development',dept:'Development',_devRows:devPriorityRows},
+    {name:'Legal',dept:'Legal'}
   ];
 
-  var yStart=35;
-  depts.forEach(function(d){
-    var tasks=(state.tasks||[]).filter(function(t){return t.department===d.dept&&(!selectedTeamProject||t.project===selectedTeamProject);});
-    // For Development, merge in devData priority rows
-    if(d._devRows&&d._devRows.length){
-      d._devRows.forEach(function(r){tasks.push({title:r.title,project:r.project,due:r.due,actualDate:r.actualDate,notes:r.notes,priority:r.priority});});
-    }
-    tasks.sort(function(a,b){return(priOrder[a.priority]||2)-(priOrder[b.priority]||2);});
+  function buildTaskRow(t){
+    var dueDate=t.due?new Date(t.due+'T00:00:00'):null;
+    var daysUntil='';
+    if(dueDate){var diff=Math.round((dueDate-today)/86400000);daysUntil=String(diff);}
+    return[t.project||'—',t.title||t.text||'',t.due?new Date(t.due+'T00:00:00').toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'—',t.actualDate?new Date(t.actualDate+'T00:00:00').toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'—',(t.notes||'').substring(0,80),daysUntil,t.priority||'Medium'];
+  }
 
-    var rows=tasks.map(function(t){
-      var dueDate=t.due?new Date(t.due+'T00:00:00'):null;
-      var daysUntil='';
-      if(dueDate){var diff=Math.round((dueDate-today)/86400000);daysUntil=String(diff);}
-      return[
-        t.project||'—',
-        t.title||t.text||'',
-        t.due?new Date(t.due+'T00:00:00').toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'—',
-        t.actualDate?new Date(t.actualDate+'T00:00:00').toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'—',
-        (t.notes||'').substring(0,80),
-        daysUntil,
-        t.priority||'Medium'
-      ];
-    });
-
-    doc.autoTable({
-      startY:yStart,
-      head:[[d.name,'Task','Expected Date','Actual Date','Notes','Days Until Due','Priority']],
-      body:rows,
-      headStyles:{fillColor:d.color,fontSize:10,fontStyle:'bold'},
-      columnStyles:{0:{cellWidth:30},1:{cellWidth:50},2:{cellWidth:28},3:{cellWidth:28},4:{cellWidth:60},5:{cellWidth:22},6:{cellWidth:20}},
+  function tableStyles(doc,todayStr2){
+    return{
+      headStyles:{fillColor:GREEN,fontSize:10,fontStyle:'bold'},
+      columnStyles:{0:{cellWidth:28},1:{cellWidth:52},2:{cellWidth:26},3:{cellWidth:26},4:{cellWidth:62},5:{cellWidth:20},6:{cellWidth:20}},
       bodyStyles:{fontSize:9},
       didParseCell:function(data){
-        if(data.section==='body'&&data.column.index===5){
-          var v=parseInt(data.cell.raw,10);
-          if(!isNaN(v)&&v<0)data.cell.styles.textColor=[220,38,38];
-        }
+        if(data.section==='body'&&data.column.index===5){var v=parseInt(data.cell.raw,10);if(!isNaN(v)&&v<0)data.cell.styles.textColor=[180,30,30];}
+        if(data.section==='body'&&data.column.index===6){var p=data.cell.raw;if(p==='Critical')data.cell.styles.textColor=[180,30,30];else if(p==='High')data.cell.styles.textColor=[150,80,0];}
       },
-      didDrawPage:function(data){
-        doc.setFontSize(8);doc.setTextColor(150);
-        doc.text('Generated: '+todayStr2,14,doc.internal.pageSize.height-8);
-        doc.setTextColor(0);
-      },
-      margin:{top:10,bottom:14}
-    });
+      didDrawPage:function(data){doc.setFontSize(8);doc.setTextColor(150);doc.text('Generated: '+todayStr2,14,doc.internal.pageSize.height-8);doc.setTextColor(0);}
+    };
+  }
+
+  // ── PAGE 1+: CRITICAL ITEMS SUMMARY ────────────────────────────────────────
+  doc.setFontSize(20);doc.setFont(undefined,'bold');doc.setTextColor(34,139,34);
+  doc.text(proj,14,16);
+  doc.setTextColor(0);
+  doc.setFontSize(13);doc.setFont(undefined,'bold');
+  doc.text('Critical Items Summary',14,24);
+  doc.setFontSize(9);doc.setFont(undefined,'normal');doc.setTextColor(120);
+  doc.text('Generated: '+todayStr2,14,30);doc.setTextColor(0);
+
+  var yStart=36;
+  var hasCritical=false;
+  depts.forEach(function(d){
+    var tasks=(state.tasks||[]).filter(function(t){return t.department===d.dept&&(!selectedTeamProject||t.project===selectedTeamProject);});
+    if(d._devRows&&d._devRows.length)d._devRows.forEach(function(r){tasks.push({title:r.title,project:r.project,due:r.due,actualDate:r.actualDate,notes:r.notes,priority:r.priority});});
+    var critTasks=tasks.filter(function(t){return (t.priority||'').toLowerCase()==='critical';});
+    if(!critTasks.length)return;
+    hasCritical=true;
+    var rows=critTasks.map(buildTaskRow);
+    var opts=tableStyles(doc,todayStr2);
+    opts.startY=yStart;
+    opts.margin={top:10,bottom:14};
+    doc.autoTable(Object.assign({head:[[d.name+' — CRITICAL','Task','Expected Date','Actual Date','Notes','Days Until Due','Priority']],body:rows},opts));
+    yStart=doc.lastAutoTable.finalY+8;
+    if(yStart>185){doc.addPage();yStart=14;}
+  });
+  if(!hasCritical){
+    doc.setFontSize(11);doc.setTextColor(120);doc.text('No critical items found.',14,yStart);doc.setTextColor(0);
+  }
+
+  // ── NEXT PAGES: FULL DEPT DETAIL (all priorities, Critical first) ──────────
+  doc.addPage();
+  yStart=14;
+  doc.setFontSize(16);doc.setFont(undefined,'bold');doc.setTextColor(34,139,34);
+  doc.text(proj+' — Full Task Report',14,yStart);doc.setTextColor(0);
+  doc.setFontSize(9);doc.setFont(undefined,'normal');doc.setTextColor(120);
+  doc.text('Generated: '+todayStr2,14,yStart+7);doc.setTextColor(0);
+  yStart+=14;
+
+  depts.forEach(function(d){
+    var tasks=(state.tasks||[]).filter(function(t){return t.department===d.dept&&(!selectedTeamProject||t.project===selectedTeamProject);});
+    if(d._devRows&&d._devRows.length)d._devRows.forEach(function(r){tasks.push({title:r.title,project:r.project,due:r.due,actualDate:r.actualDate,notes:r.notes,priority:r.priority});});
+    tasks.sort(function(a,b){return(priOrder[a.priority]||2)-(priOrder[b.priority]||2);});
+    if(!tasks.length)return;
+    var rows=tasks.map(buildTaskRow);
+    var opts=tableStyles(doc,todayStr2);
+    opts.startY=yStart;
+    opts.margin={top:10,bottom:14};
+    doc.autoTable(Object.assign({head:[[d.name,'Task','Expected Date','Actual Date','Notes','Days Until Due','Priority']],body:rows},opts));
     yStart=doc.lastAutoTable.finalY+10;
-    if(yStart>180){doc.addPage();yStart=14;}
+    if(yStart>185){doc.addPage();yStart=14;}
   });
 
   doc.save((proj.replace(/[^a-z0-9]/gi,'_')||'report')+'_'+today.toISOString().split('T')[0]+'.pdf');

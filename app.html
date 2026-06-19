@@ -2838,12 +2838,11 @@ function extractMovedTeamNameFromTask(t){if(!t||!Array.isArray(t.history))return
 function inferTaskWorkspaceLabel(t,fallbackLabel){var label=(t&&t._teamWorkspaceName)||extractMovedTeamNameFromTask(t)||fallbackLabel||'Personal';if((!label||/^Personal$/i.test(label))&&t){var proj=getTaskProjectName(t);if(proj&&Array.isArray(teamWorkspaces)){for(var i=0;i<teamWorkspaces.length;i++){var tw=teamWorkspaces[i]||{};var td=tw.data||{};var names=[].concat(td.projects||[],td.scheduleProjects||[]).concat((td.tasks||[]).map(function(x){return getTaskProjectName(x);}).filter(Boolean));for(var j=0;j<names.length;j++){if(normalizeTeamProjectName(names[j])===proj){label=tw.name||label;break;}}if(label&&label!=='Personal')break;}}}return label||'Personal';}
 function dedupeMasterCalendarTasks(tasks){var map={};(tasks||[]).forEach(function(t){var key=getTaskDedupeKey(t);var existing=map[key];if(!existing){map[key]=t;return;}var curScore=((t._wsSource==='team')?20:0)+((t._wsLabel&&t._wsLabel!=='Personal')?10:0);var oldScore=((existing._wsSource==='team')?20:0)+((existing._wsLabel&&existing._wsLabel!=='Personal')?10:0);if(curScore>=oldScore)map[key]=t;});return Object.keys(map).map(function(k){return map[k];});}
 function setView(v){if(v==='schedules'&&!hasTeamPlan()){showToast('🔒 Schedules is a Team plan feature.');return;}
-// If leaving dashboard view, restore sidebar — but keep team sidebar intact for mastercal
-var _keepTeamSidebar=(v==='mastercal'&&currentTeamWorkspaceId);
+// If leaving dashboard view, restore sidebar
 if(v!=='mastercal')masterCalDeptFilter=null;
-if(v!=='dashboard'&&!_keepTeamSidebar){var sidebarEl2=document.getElementById('sidebar');if(sidebarEl2)sidebarEl2.classList.remove('team-dashboard-mode');var teamProjSection2=document.getElementById('teamProjSidebarSection');if(teamProjSection2)teamProjSection2.remove();}
-// Restore all sidebar-sections visibility only when truly leaving team dashboard (not for mastercal in team)
-if((v !== 'dashboard' || !currentTeamWorkspaceId)&&!_keepTeamSidebar){
+if(v!=='dashboard'){var sidebarEl2=document.getElementById('sidebar');if(sidebarEl2)sidebarEl2.classList.remove('team-dashboard-mode');var teamProjSection2=document.getElementById('teamProjSidebarSection');if(teamProjSection2)teamProjSection2.remove();}
+// Restore all sidebar-sections visibility only when truly leaving team dashboard
+if(v !== 'dashboard' || !currentTeamWorkspaceId){
 document.querySelectorAll('.sidebar .sidebar-section').forEach(function(s){s.style.display='';});
 var fcb2=document.getElementById('filterChipsBar');if(fcb2)fcb2.style.display='';
 var sb2=document.getElementById('statsBar');if(sb2)sb2.style.display='';}

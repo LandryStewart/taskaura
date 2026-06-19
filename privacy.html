@@ -12,14 +12,14 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #09090b; --bg2: #0e0e11; --surface: #131316; --surface2: #1a1a1f;
-      --orange: #f97316; --orange-lt: #fb923c; --orange-dk: #c2410c;
+      --green: #228b22; --green-lt: #2ea82e; --green-dk: #1a6b1a;
       --text: #fafafa; --text2: #d4d4d8; --muted: #a1a1aa; --faint: #71717a;
       --border: rgba(255,255,255,.08); --border-lt: rgba(255,255,255,.14);
       --success: #4ade80;
     }
     html { scroll-behavior: smooth; }
     body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
-    ::selection { background: rgba(249,115,22,.35); }
+    ::selection { background: rgba(34,139,34,.35); }
     h1,h2,h3 { font-weight: 800; letter-spacing: -0.035em; line-height: 1.08; color: var(--text); }
     a { color: var(--orange-lt); text-decoration: none; }
     a:hover { text-decoration: underline; }
@@ -28,9 +28,9 @@
     .nav-wrap { position: sticky; top: 0; z-index: 100; background: rgba(9,9,11,.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
     nav { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 64px; }
     .nav-logo { display: flex; align-items: center; gap: .55rem; text-decoration: none; }
-    .logo-mark { width: 26px; height: 26px; border-radius: 7px; background: linear-gradient(135deg, var(--orange-dk), var(--orange-lt)); display: flex; align-items: center; justify-content: center; font-family: 'General Sans', 'Inter', sans-serif; font-weight: 600; font-size: .95rem; color: #fff; box-shadow: 0 2px 10px rgba(249,115,22,.4); }
+    .logo-mark { width: 26px; height: 26px; border-radius: 7px; background: linear-gradient(135deg, var(--green-dk), var(--green-lt)); display: flex; align-items: center; justify-content: center; font-family: 'General Sans', 'Inter', sans-serif; font-weight: 600; font-size: .95rem; color: #fff; box-shadow: 0 2px 10px rgba(34,139,34,.4); }
     .nav-logo-text { font-family: 'General Sans', 'Inter', sans-serif; font-weight: 700; font-size: 1.1rem; letter-spacing: -0.035em; color: var(--text); }
-    .nav-logo-text span { color: var(--orange); font-weight: 600; letter-spacing: -0.12em; margin: 0 .05em; }
+    .nav-logo-text span { color: var(--green); font-weight: 600; letter-spacing: -0.12em; margin: 0 .05em; }
     .nav-links { display: flex; gap: 1.75rem; align-items: center; }
     .nav-links a { font-size: .875rem; font-weight: 500; color: var(--muted); text-decoration: none; transition: color .15s; }
     .nav-links a:hover { color: var(--text); }
@@ -146,10 +146,30 @@
   <h2>8. International Data Transfers</h2>
   <p>Your information may be transferred to and processed in the United States, where our infrastructure providers are located. By using the Service, you consent to this transfer.</p>
 
-  <h2>9. Changes to This Policy</h2>
+  <h2>9. California Privacy Rights (CCPA)</h2>
+  <p>If you are a California resident, you have the following rights under the California Consumer Privacy Act (CCPA):</p>
+  <ul>
+    <li><strong>Right to Know:</strong> You may request disclosure of the categories and specific pieces of personal information we have collected about you.</li>
+    <li><strong>Right to Delete:</strong> You may request that we delete your personal information, subject to certain exceptions.</li>
+    <li><strong>Right to Opt-Out of Sale:</strong> We do not sell, rent, or share your personal information with third parties for their direct marketing or commercial purposes. There is nothing to opt out of.</li>
+    <li><strong>Right to Non-Discrimination:</strong> We will not discriminate against you for exercising any of your CCPA rights.</li>
+  </ul>
+  <p>To exercise your California privacy rights, contact us at <a href="mailto:privacy@taskaura.org">privacy@taskaura.org</a> with the subject line "California Privacy Request."</p>
+
+  <h2>10. Data Retention</h2>
+  <p>We retain your personal information for as long as your account is active or as needed to provide the Service. Specifically:</p>
+  <ul>
+    <li><strong>Account data</strong> (name, email) is retained until you request deletion or your account is terminated.</li>
+    <li><strong>Workspace and task data</strong> is retained for the duration of your account and deleted within 30 days of an account deletion request.</li>
+    <li><strong>Server logs and usage data</strong> are retained for up to 90 days for security and diagnostic purposes.</li>
+    <li><strong>Backups</strong> may retain copies of deleted data for up to 30 additional days before being purged from backup systems.</li>
+  </ul>
+  <p>To request deletion of your data, email <a href="mailto:privacy@taskaura.org">privacy@taskaura.org</a>. We will confirm and complete the deletion within 30 days.</p>
+
+  <h2>11. Changes to This Policy</h2>
   <p>We may update this Privacy Policy from time to time. We will notify you of material changes by posting the updated policy on this page with a new "Last updated" date.</p>
 
-  <h2>10. Contact Us</h2>
+  <h2>12. Contact Us</h2>
   <p>If you have questions about this Privacy Policy, contact us at <a href="mailto:privacy@taskaura.org">privacy@taskaura.org</a>.</p>
 </div>
 

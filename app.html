@@ -2399,42 +2399,48 @@ function renderPersonalDashboard(el){
   }).join('');
 
   el.innerHTML=
-    // Hover styles for KPI cards
-    '<style>.pd-kpi{cursor:pointer;transition:box-shadow .15s,transform .15s;}.pd-kpi:hover{box-shadow:0 6px 20px rgba(0,0,0,.13);transform:translateY(-2px);}</style>'+
+    '<style>'+
+      '.pd-kpi{cursor:pointer;transition:box-shadow .15s,transform .15s;}'+
+      '.pd-kpi:hover{box-shadow:0 6px 20px rgba(0,0,0,.13);transform:translateY(-2px);}'+
+      '.pd-stat-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--card);border:1px solid var(--border);border-radius:999px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:box-shadow .12s,transform .12s;white-space:nowrap;}'+
+      '.pd-stat-pill:hover{box-shadow:0 4px 14px rgba(0,0,0,.1);transform:translateY(-1px);}'+
+      '.pd-stat-pill .pill-num{font-size:17px;font-weight:800;line-height:1;}'+
+      '.pd-stat-pill .pill-scope{font-size:10px;color:var(--muted);font-weight:400;margin-left:2px;}'+
+    '</style>'+
     invitesHTML+joinReqHTML+myReqHTML+
 
-    // Slim greeting bar (single row)
-    '<div style="display:flex;align-items:center;gap:16px;padding:12px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:16px;flex-wrap:wrap;">'+
-      '<div style="display:flex;align-items:baseline;gap:8px;flex:1;min-width:200px">'+
-        '<span style="font-size:16px;font-weight:800;color:var(--text)">'+greeting+(myName?', '+esc(myName.split(' ')[0]):'')+'</span>'+
-        '<span style="font-size:13px;color:var(--text2);font-weight:400">'+esc(tagline)+'</span>'+
+    // Morning card — two columns: greeting left, live widgets right
+    '<div style="display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start;padding:22px 24px;background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:20px;">'+
+      // Left: greeting + clock + stat pills
+      '<div>'+
+        '<div style="font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.3px;line-height:1.2">'+greeting+(myName?', '+esc(myName.split(' ')[0])+'!':'!')+'</div>'+
+        '<div style="font-size:13px;color:var(--text2);margin-top:4px;margin-bottom:16px">'+esc(tagline)+'</div>'+
+        // Stat pills row
+        '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">'+
+          '<div class="pd-stat-pill" onclick="showPersonalDetail(\'all\')" title="All open tasks">'+
+            '<span class="pill-num">'+total+'</span>'+
+            '<span>open<span class="pill-scope"> · all workspaces</span></span>'+
+          '</div>'+
+          (overdueCount?
+            '<div class="pd-stat-pill" onclick="showPersonalDetail(\'overdue\')" title="Overdue tasks" style="border-color:'+(overdueCount?'#fca5a5':'var(--border)')+'">'+
+              '<span class="pill-num" style="color:#dc2626">'+overdueCount+'</span>'+
+              '<span>overdue<span class="pill-scope"> · all workspaces</span></span>'+
+            '</div>':'<div class="pd-stat-pill" style="opacity:.5;cursor:default"><span>✓ nothing overdue</span></div>')+
+          '<div class="pd-stat-pill" onclick="showPersonalDetail(\'today\')" title="Due today" style="border-color:'+(dueToday?'#fde68a':'var(--border)')+'">'+
+            '<span class="pill-num" style="'+(dueToday?'color:#d97706':'')+'">'+dueToday+'</span>'+
+            '<span>due today<span class="pill-scope"> · all workspaces</span></span>'+
+          '</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-left:4px;display:flex;align-items:center;gap:5px;padding-left:4px">'+
+            '<span class="pd-clock-dot"></span><span id="pdClockText"></span>'+
+          '</div>'+
+        '</div>'+
       '</div>'+
-      '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex-shrink:0">'+
-        '<span class="pd-clock-dot"></span><span id="pdClockText"></span>'+
-      '</div>'+
+      // Right: weather + stock
+      liveWidgetHTML+
     '</div>'+
 
     // Detail panel (collapsible)
     '<div id="dashDetailPanel" style="display:none" class="dash-detail-panel"></div>'+
-
-    // KPI cards — scoped to All Workspaces
-    '<div class="pd-kpi-row">'+
-      '<div class="pd-kpi pd-kpi-blue" onclick="showPersonalDetail(\'all\')" title="View all open tasks">'+
-        '<div class="pd-kpi-num">'+total+'</div>'+
-        '<div class="pd-kpi-title">Open Tasks</div>'+
-        '<div class="pd-kpi-hint" style="color:var(--muted);font-size:10px;margin-top:2px">All Workspaces</div>'+
-      '</div>'+
-      '<div class="pd-kpi pd-kpi-red" onclick="showPersonalDetail(\'overdue\')" title="View overdue">'+
-        '<div class="pd-kpi-num" style="'+(overdueCount?'color:#dc2626':'')+'">'+overdueCount+'</div>'+
-        '<div class="pd-kpi-title">Overdue</div>'+
-        '<div class="pd-kpi-hint" style="color:var(--muted);font-size:10px;margin-top:2px">All Workspaces</div>'+
-      '</div>'+
-      '<div class="pd-kpi pd-kpi-amber" onclick="showPersonalDetail(\'today\')" title="Due today">'+
-        '<div class="pd-kpi-num" style="'+(dueToday?'color:#d97706':'')+'">'+dueToday+'</div>'+
-        '<div class="pd-kpi-title">Due Today</div>'+
-        '<div class="pd-kpi-hint" style="color:var(--muted);font-size:10px;margin-top:2px">All Workspaces</div>'+
-      '</div>'+
-    '</div>'+
 
     // My Priorities — above workspaces
     '<div style="margin-top:28px;margin-bottom:4px;border-top:1px solid var(--border);padding-top:20px">'+
@@ -2552,6 +2558,7 @@ function renderPersonalDashboard(el){
       '</div>':'');
   animateKpiNums(el);
   startPdClock();
+  loadPdLiveWidgets();
   if(currentUser&&currentUser.email==='landrystewart@live.com')loadPendingUsers();
 }
 

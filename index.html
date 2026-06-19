@@ -72,7 +72,7 @@
       --success:   #4ade80;
     }
     html { scroll-behavior: smooth; }
-    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; isolation: auto; }
     ::selection { background: rgba(34,139,34,.35); }
 
     h1,h2,h3 { font-weight: 800; letter-spacing: -0.035em; line-height: 1.08; color: var(--text); }
@@ -314,7 +314,7 @@
 <body>
 
 <!-- TOPO BACKGROUND -->
-<canvas id="topo-bg" style="position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.055;" aria-hidden="true"></canvas>
+<canvas id="topo-bg" style="position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:.12;" aria-hidden="true"></canvas>
 
 <!-- AUTH MODALS -->
 <div class="modal-overlay" id="modal-signin">
@@ -742,7 +742,7 @@ document.getElementById('signup-password').addEventListener('keydown', e => { if
 
     var scale = 3.5;
     var levels = 18;
-    var lineColor = 'rgba(34,139,34,1)';
+    var lineColor = 'rgba(255,255,255,1)';
 
     // March each row of pixels and draw iso-contour lines
     // Use a scanline approach: for each contour level, trace horizontal crossings

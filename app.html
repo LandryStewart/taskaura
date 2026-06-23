@@ -5205,7 +5205,9 @@ function fixCorruptedBuckets(){
     Acquisition:(deptBuckets.acquisition||['To Do','In Progress','Under Review','Complete']),
     Entitlements:(deptBuckets.entitlement||['To Do','In Progress','Under Review','Complete']),
     Development:(deptBuckets.development||['To Do','In Progress','Under Review','Complete']),
-    Legal:(deptBuckets.legal||['Internal Counsel','External Counsel','Completed'])
+    Legal:(deptBuckets.legal||['Internal Counsel','External Counsel','Completed']),
+    HOA:(deptBuckets.hoa||['To Do','In Progress','Under Review','Complete']),
+    Engineering:(deptBuckets.engineering||['To Do','In Progress','Under Review','Complete'])
   };
   var personalBuckets=state.buckets||['To Do','In Progress','Under Review','Complete'];
   var allKnownBuckets=new Set([...personalBuckets]);
@@ -5526,7 +5528,9 @@ function renderSummaryTab(el){
     {key:'Acquisition',  id:'acq', icon:'🏡', match:function(t){return t.department==='Acquisition';},          tab:'acquisition'},
     {key:'Entitlements', id:'ent', icon:'📋', match:function(t){return t.department==='Entitlements'||t.department==='Entitlement';}, tab:'entitlement'},
     {key:'Development',  id:'dev', icon:'🏗',  match:function(t){return t.department==='Development';},           tab:'development'},
-    {key:'Legal',        id:'leg', icon:'⚖️',  match:function(t){return t.department==='Legal';},                 tab:'legal'}
+    {key:'Legal',        id:'leg', icon:'⚖️',  match:function(t){return t.department==='Legal';},                 tab:'legal'},
+    {key:'HOA',          id:'hoa', icon:'🏘️', match:function(t){return t.department==='HOA';},                   tab:'hoa'},
+    {key:'Engineering',  id:'eng', icon:'⚙️',  match:function(t){return t.department==='Engineering';},           tab:'engineering'}
   ];
 
   function deptTabName(t){
@@ -5616,7 +5620,7 @@ function renderSummaryTab(el){
 function generatePDFSummary(){
   var jsPDF2=window.jspdf?window.jspdf.jsPDF:(typeof jsPDF!=='undefined'?jsPDF:null);
   if(!jsPDF2){alert('PDF not available - jsPDF not loaded');return;}
-  var doc=new jsPDF2({orientation:'landscape',unit:'mm',format:'letter'});
+  var doc=new jsPDF2({orientation:'portrait',unit:'mm',format:'letter'});
   var proj=(typeof getActiveTeamProject==='function'?getActiveTeamProject():null)||'All Projects';
   var isAll=(!selectedTeamProject)||proj==='All Projects';
   var today=new Date();
@@ -5643,7 +5647,7 @@ function generatePDFSummary(){
     return false;
   }
   var allTasks=[];
-  var depts=['Acquisition','Entitlements','Development','Legal'];
+  var depts=['Acquisition','Entitlements','Development','Legal','HOA','Engineering'];
   (state.tasks||[]).forEach(function(t){
     if(!isAll&&t.project!==selectedTeamProject)return;
     if(isCompletedTask(t))return;
@@ -5728,7 +5732,7 @@ function generatePDFSummary(){
   function drawBanner(name,yPos,colorArr){
     var pageW=doc.internal.pageSize.width;
     doc.setFillColor(colorArr[0],colorArr[1],colorArr[2]);
-    doc.rect(10,yPos,pageW-20,12,'F');
+    doc.rect(14,yPos,pageW-28,12,'F');
     doc.setFontSize(16);doc.setFont(undefined,'bold');doc.setTextColor(0,0,0);
     doc.text(name.toUpperCase(),pageW/2,yPos+8,{align:'center'});
     return yPos+14;
@@ -5752,13 +5756,13 @@ function generatePDFSummary(){
                       :['Department','Task','Expected Date','Actual Date','Notes','Days Until Due','Priority'];
     var critRows=critical.map(function(t){return buildRow(t,isAll,true);});
     var critWidths=isAll
-      ?{0:{cellWidth:28},1:{cellWidth:30},2:{cellWidth:50},3:{cellWidth:22},4:{cellWidth:22},5:{cellWidth:65},6:{cellWidth:20,halign:'center'},7:{cellWidth:20,halign:'center',fontStyle:'bold'}}
-      :{0:{cellWidth:32},1:{cellWidth:60},2:{cellWidth:26},3:{cellWidth:26},4:{cellWidth:85},5:{cellWidth:22,halign:'center'},6:{cellWidth:22,halign:'center',fontStyle:'bold'}};
+      ?{0:{cellWidth:22},1:{cellWidth:24},2:{cellWidth:42},3:{cellWidth:18},4:{cellWidth:18},5:{cellWidth:36},6:{cellWidth:14,halign:'center'},7:{cellWidth:14,halign:'center',fontStyle:'bold'}}
+      :{0:{cellWidth:24},1:{cellWidth:48},2:{cellWidth:20},3:{cellWidth:20},4:{cellWidth:46},5:{cellWidth:15,halign:'center'},6:{cellWidth:15,halign:'center',fontStyle:'bold'}};
     doc.autoTable({
       head:[critHead],
       body:critRows,
       startY:y,
-      margin:{top:10,bottom:14,left:10,right:10},
+      margin:{top:18,bottom:18,left:14,right:14},
       headStyles:{fillColor:RED_HEAD,fontSize:10,fontStyle:'bold',textColor:[255,255,255]},
       bodyStyles:{fontSize:9,cellPadding:2},
       alternateRowStyles:{fillColor:[252,245,245]},
@@ -5789,19 +5793,19 @@ function generatePDFSummary(){
       if(!b.due)return -1;
       return a.due.localeCompare(b.due);
     });
-    if(yStart>170){doc.addPage();drawTopHeader('Task Summary by Department');yStart=36;}
+    if(yStart>240){doc.addPage();drawTopHeader('Task Summary by Department');yStart=36;}
     yStart=drawBanner(deptName,yStart,GREEN_BANNER);
     var deptHead=isAll?['Project','Task','Expected Date','Actual Date','Notes','Days Until Due','Priority']
                       :['Task','Expected Date','Actual Date','Notes','Days Until Due','Priority'];
     var deptRows=deptTasks.map(function(t){return buildRow(t,isAll,false);});
     var deptWidths=isAll
-      ?{0:{cellWidth:35},1:{cellWidth:55},2:{cellWidth:24},3:{cellWidth:24},4:{cellWidth:75},5:{cellWidth:22,halign:'center'},6:{cellWidth:22,halign:'center',fontStyle:'bold'}}
-      :{0:{cellWidth:60},1:{cellWidth:26},2:{cellWidth:26},3:{cellWidth:90},4:{cellWidth:24,halign:'center'},5:{cellWidth:24,halign:'center',fontStyle:'bold'}};
+      ?{0:{cellWidth:26},1:{cellWidth:42},2:{cellWidth:20},3:{cellWidth:20},4:{cellWidth:46},5:{cellWidth:16,halign:'center'},6:{cellWidth:18,halign:'center',fontStyle:'bold'}}
+      :{0:{cellWidth:48},1:{cellWidth:22},2:{cellWidth:22},3:{cellWidth:60},4:{cellWidth:16,halign:'center'},5:{cellWidth:20,halign:'center',fontStyle:'bold'}};
     doc.autoTable({
       head:[deptHead],
       body:deptRows,
       startY:yStart,
-      margin:{top:10,bottom:14,left:10,right:10},
+      margin:{top:18,bottom:18,left:14,right:14},
       headStyles:{fillColor:GREEN_HEAD,fontSize:10,fontStyle:'bold',textColor:[255,255,255]},
       bodyStyles:{fontSize:9,cellPadding:2},
       alternateRowStyles:{fillColor:[248,250,248]},
@@ -5867,7 +5871,7 @@ function renderMasterCalendar(){
   var todayStr3=now.toISOString().split('T')[0];
 
   var monOff=(firstDay+6)%7;
-  var _deptLabels={acquisition:'Acquisition',entitlement:'Entitlement',development:'Development',legal:'Legal'};
+  var _deptLabels={acquisition:'Acquisition',entitlement:'Entitlement',development:'Development',legal:'Legal',hoa:'HOA',engineering:'Engineering'};
   var _filterLabel=masterCalDeptFilter?(_deptLabels[masterCalDeptFilter]||masterCalDeptFilter):(_mcActiveProj||'');
   var projLabel=_filterLabel?' — '+_filterLabel:'';
   var html='<div class="cal-header"><h2>🗓 Master Calendar'+projLabel+' — '+monthName+'</h2></div>';
@@ -7131,6 +7135,8 @@ function dev_wxEnsureSettings() {
             <option value="Entitlements" selected>Entitlements</option>
             <option value="Development">Development</option>
             <option value="Legal">Legal</option>
+            <option value="HOA">HOA</option>
+            <option value="Engineering">Engineering</option>
           </select>
         </div>
         <div class="mtt-row">
@@ -7172,7 +7178,9 @@ function dev_wxEnsureSettings() {
     'Acquisition':'acquisition',
     'Entitlements':'entitlement',
     'Development':'development',
-    'Legal':'legal'
+    'Legal':'legal',
+    'HOA':'hoa',
+    'Engineering':'engineering'
   };
   var DEFAULT_BUCKETS = ['To Do','In Progress','Under Review','Complete'];
 
@@ -7689,4 +7697,30 @@ function dev_wxEnsureSettings() {
 </script>
 
 </body>
+
+<style id="taskaura-dev-app-disable">
+/* Disable embedded Development.html app — make Development department behave like the other departments */
+.dev-app, .dev-app-body { display: none !important; }
+</style>
+<script id="taskaura-dev-app-disable-js">
+(function(){
+  // Neutralize the embedded Development.html "dev-app" rendering so the Development
+  // department uses the same kanban/board UI as Acquisition, Entitlements, Legal, etc.
+  try{
+    if (typeof window.dev_render === 'function' || typeof dev_render === 'function') {
+      window.dev_render = function(){ /* disabled — Development now uses the standard department view */ };
+    }
+    function _purgeDevApp(){
+      document.querySelectorAll('.dev-app').forEach(function(el){ try{ el.remove(); }catch(e){ el.style.display='none'; } });
+    }
+    _purgeDevApp();
+    ['renderApp','render','renderAll','refreshUI','renderTeamWorkspace','renderDashboard'].forEach(function(fn){
+      try { if (typeof window[fn] === 'function') window[fn](); } catch(e){}
+    });
+    var _mo = new MutationObserver(_purgeDevApp);
+    _mo.observe(document.body, {childList:true, subtree:true});
+  } catch(e){ console.warn('[TaskAura] dev-app disable hook failed:', e); }
+})();
+</script>
+
 </html>

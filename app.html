@@ -3121,7 +3121,7 @@ function saveTask(){const title=document.getElementById('mTitle').value.trim();i
 if((t.notes||'').trim()!==(data.notes||'').trim()&&(t.notes||'').trim()){if(!t.notesHistory)t.notesHistory=[];t.notesHistory.unshift({notes:t.notes,savedAt:new Date().toISOString()});}
 Object.assign(t,data);}}else{data.id=state.nextId++;data.created=new Date().toISOString().split('T')[0];data.history=[];logTaskChange(data,'Created','Created via modal');logActivity('Task created',data.title);state.tasks.push(data);}closeTaskModal();render();}
 function deleteTask(){const t=state.tasks.find(x=>x.id===editingId);if(!t)return;const removed=t,idx=state.tasks.indexOf(t);state.tasks=state.tasks.filter(x=>x.id!==editingId);closeTaskModal();render();showToast('Task "'+removed.title+'" deleted',function(){state.tasks.splice(idx,0,removed);render();});}
-function completeTaskConfirm(){const t=state.tasks.find(x=>x.id===editingId);if(!t)return;if(!confirm('Mark "'+t.title+'" as complete?\n\nThis will move it to the Complete bucket and clear its due date, assignee, and labels.'))return;const completeBucket=state.buckets.find(b=>b.toLowerCase().includes('complet'))||state.buckets[state.buckets.length-1];const oldData={bucket:t.bucket,due:t.due,assignee:t.assignee,assigneeId:t.assigneeId,labels:t.labels?[...t.labels]:[],pct:t.pct};logTaskChange(t,'Completed','Moved to '+completeBucket+', progress set to 100%');logActivity('Task completed',t.title);t.bucket=completeBucket;t.due='';t.assignee='';t.assigneeId=null;t.labels=[];t.pct=100;closeTaskModal();render();showToast('✅ "'+t.title+'" completed!',function(){t.bucket=oldData.bucket;t.due=oldData.due;t.assignee=oldData.assignee;t.assigneeId=oldData.assigneeId;t.labels=oldData.labels;t.pct=oldData.pct;render();});}
+function completeTaskConfirm(){const t=state.tasks.find(x=>x.id===editingId);if(!t)return;if(!confirm('Mark "'+t.title+'" as complete?\n\nThis will move it to the Complete bucket and clear its due date, assignee, and labels.'))return;const completeBucket=state.buckets.find(b=>b.toLowerCase().includes('complet'))||state.buckets[state.buckets.length-1];const oldData={bucket:t.bucket,due:t.due,assignee:t.assignee,assigneeId:t.assigneeId,labels:t.labels?[...t.labels]:[],pct:t.pct,priority:t.priority,completed:t.completed};logTaskChange(t,'Completed','Moved to '+completeBucket+', progress set to 100%');logActivity('Task completed',t.title);t.bucket=completeBucket;t.due='';t.assignee='';t.assigneeId=null;t.labels=[];t.pct=100;t.priority='';t.completed=true;closeTaskModal();render();showToast('✅ "'+t.title+'" completed!',function(){t.bucket=oldData.bucket;t.due=oldData.due;t.assignee=oldData.assignee;t.assigneeId=oldData.assigneeId;t.labels=oldData.labels;t.pct=oldData.pct;t.priority=oldData.priority;t.completed=oldData.completed;render();});}
 function openSettings(){
   document.getElementById('settBuckets').innerHTML=state.buckets.map((b,i)=>'<div class="sett-item"><input type="text" value="'+esc(b)+'" data-idx="'+i+'"><button class="sett-rm" onclick="removeBucket('+i+')">×</button></div>').join('');document.getElementById('settLabels').innerHTML=state.labels.map((l,i)=>'<div class="sett-item"><input type="color" value="'+l.color+'"><input type="text" value="'+esc(l.name)+'"><button class="sett-rm" onclick="removeLabel('+i+')">×</button></div>').join('');document.getElementById('settingsOverlay').classList.add('show');}
 function closeSettings(){const overlay=document.getElementById('settingsOverlay');if(!overlay||!overlay.classList.contains('show'))return;const bi=document.querySelectorAll('#settBuckets input[type=text]'),nb=[...bi].map(i=>i.value.trim()).filter(Boolean);bi.forEach(inp=>{const idx=parseInt(inp.dataset.idx);if(isNaN(idx))return;const old=state.buckets[idx],nw=inp.value.trim();if(old&&nw&&old!==nw)state.tasks.forEach(t=>{if(t.bucket===old)t.bucket=nw;});});state.buckets=nb.length?nb:[...DEFAULT_BUCKETS];state.tasks.forEach(t=>{if(!state.buckets.includes(t.bucket))t.bucket=state.buckets[0];});const ln=document.querySelectorAll('#settLabels input[type=text]'),lc=document.querySelectorAll('#settLabels input[type=color]');state.labels=[...ln].map((inp,i)=>({name:inp.value.trim(),color:lc[i].value})).filter(l=>l.name);document.getElementById('settingsOverlay').classList.remove('show');render();}
@@ -5627,7 +5627,7 @@ function generatePDFSummary(){
   var RED_BANNER=[244,200,200];
   var RED_HEAD=[180,30,30];
   function normPri(p){
-    if(!p)return 'Medium';
+    if(!p)return '';
     var s=String(p).toLowerCase();
     if(s==='urgent'||s==='critical')return 'Critical';
     if(s==='high')return 'High';
@@ -5635,12 +5635,20 @@ function generatePDFSummary(){
     if(s==='low')return 'Low';
     var cap=s.charAt(0).toUpperCase()+s.slice(1);
     if(priOrder[cap]!==undefined)return cap;
-    return 'Medium';
+    return '';
+  }
+  function isCompletedTask(t){
+    if(t.completed===true)return true;
+    if(t.bucket&&String(t.bucket).toLowerCase().indexOf('complet')===0)return true;
+    return false;
   }
   var allTasks=[];
   var depts=['Acquisition','Entitlements','Development','Legal'];
   (state.tasks||[]).forEach(function(t){
     if(!isAll&&t.project!==selectedTeamProject)return;
+    if(isCompletedTask(t))return;
+    var pri=normPri(t.priority);
+    if(!pri)return;
     allTasks.push({
       department:t.department||'Other',
       project:t.project||'',
@@ -5648,7 +5656,7 @@ function generatePDFSummary(){
       due:t.due||'',
       actualDate:t.actualDate||'',
       notes:t.notes||'',
-      priority:normPri(t.priority)
+      priority:pri
     });
   });
   var _pdfDevData=(typeof devData!=='undefined'&&devData)?devData:(state.developmentData||null);
@@ -5656,7 +5664,9 @@ function generatePDFSummary(){
     (_pdfDevData.projects||[]).forEach(function(p){
       if(!isAll&&p.name!==selectedTeamProject)return;
       (p.notes||[]).forEach(function(n){
-        if(!n.priority||String(n.priority).toLowerCase()==='low')return;
+        if(n.completed)return;
+        var pri=normPri(n.priority);
+        if(!pri||pri==='Low')return;
         allTasks.push({
           department:'Development',
           project:p.name,
@@ -5664,13 +5674,15 @@ function generatePDFSummary(){
           due:n.dueDate||'',
           actualDate:'',
           notes:n.noteText||'',
-          priority:normPri(n.priority)
+          priority:pri
         });
       });
     });
     Object.keys(_pdfDevData.nonProject||{}).forEach(function(key){
       (_pdfDevData.nonProject[key]||[]).forEach(function(item){
-        if(!item.priority||String(item.priority).toLowerCase()==='low')return;
+        if(item.completed)return;
+        var pri=normPri(item.priority);
+        if(!pri||pri==='Low')return;
         allTasks.push({
           department:'Development',
           project:key.replace(/([A-Z])/g,' $1').replace(/^./,function(s){return s.toUpperCase();}),
@@ -5678,7 +5690,7 @@ function generatePDFSummary(){
           due:item.dueDate||'',
           actualDate:'',
           notes:item.noteText||'',
-          priority:normPri(item.priority)
+          priority:pri
         });
       });
     });
@@ -5721,7 +5733,6 @@ function generatePDFSummary(){
     doc.text(name.toUpperCase(),pageW/2,yPos+8,{align:'center'});
     return yPos+14;
   }
-  // PAGE 1: CRITICAL ONLY
   drawTopHeader('Critical Priority Summary');
   var y=36;
   y=drawBanner('Critical Priority Items',y,RED_BANNER);
@@ -5761,7 +5772,6 @@ function generatePDFSummary(){
       didDrawPage:function(data){doc.setFontSize(8);doc.setTextColor(150);doc.text('Generated: '+todayStr2+'   |   '+proj+'   |   Critical Summary',14,doc.internal.pageSize.height-6);doc.setTextColor(0);}
     });
   }
-  // SUBSEQUENT PAGES: BY DEPARTMENT, ALL PRIORITIES
   doc.addPage();
   drawTopHeader('Task Summary by Department');
   var yStart=36;
@@ -6812,7 +6822,7 @@ function dev_openNoteModal(projId, noteId) {
 function dev_toggleNote(projId, noteId) {
   const p = devData.projects.find(x=>x.id===projId);
   const n = p.notes.find(x=>x.id===noteId);
-  n.completed = !n.completed; n.completedDate = n.completed ? todayStr() : '';
+  n.completed = !n.completed; n.completedDate = n.completed ? todayStr() : ''; if(n.completed) n.priority = '';
   if(n.completed) n.percentComplete = 100;
   dev_saveData(); dev_render();
 }
@@ -6936,7 +6946,7 @@ function dev_openNPModal(key, itemId) {
 }
 function dev_toggleNPItem(key, itemId) {
   const n = devData.nonProject[key].find(x=>x.id===itemId);
-  n.completed = !n.completed; n.completedDate = n.completed ? todayStr() : '';
+  n.completed = !n.completed; n.completedDate = n.completed ? todayStr() : ''; if(n.completed) n.priority = '';
   if(n.completed) n.percentComplete = 100;
   dev_saveData(); dev_render();
 }

@@ -1377,6 +1377,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
  <div class="spacer"></div>
  <span id="todayBadge" class="today-badge" style="display:none;" title="Tasks due today">0 today</span>
  <button class="top-btn" id="pdfExportBtn" onclick="generatePDFSummary()">📄 Export PDF</button>
+   <button class="top-btn" id="csvExportBtn" onclick="exportSummaryCSV()" title="Export summary to CSV">📊 Export CSV</button>
  <button class="top-btn accent" onclick="openNewTask()">＋ New Task</button>
  <button class="top-btn" onclick="openSettings()">⚙</button>
  <button class="top-btn" onclick="openShortcuts()" title="Keyboard shortcuts">?</button>
@@ -5910,6 +5911,99 @@ function generatePDFSummary(){
   });
   if(!anyDept){doc.setFontSize(11);doc.setTextColor(120);doc.text('No tasks found.',14,yStart);doc.setTextColor(0);}
   doc.save((proj.replace(/[^a-z0-9]/gi,'_')||'report')+'_'+today.toISOString().split('T')[0]+'.pdf');
+}
+function exportSummaryCSV(){
+  var proj=(typeof getActiveTeamProject==='function'?getActiveTeamProject():null)||'All Projects';
+  var isAll=(!selectedTeamProject)||proj==='All Projects';
+  var today=new Date();
+  var dateStamp=today.toISOString().split('T')[0];
+  var priOrder={Critical:0,High:1,Medium:2,Low:3};
+  function normPri(p){
+    if(!p)return '';
+    var s=String(p).toLowerCase();
+    if(s==='urgent'||s==='critical')return 'Critical';
+    if(s==='high')return 'High';
+    if(s==='medium'||s==='med'||s==='normal')return 'Medium';
+    if(s==='low')return 'Low';
+    var cap=s.charAt(0).toUpperCase()+s.slice(1);
+    if(priOrder[cap]!==undefined)return cap;
+    return '';
+  }
+  function isCompletedTask(t){
+    if(t.completed===true)return true;
+    if(t.bucket&&String(t.bucket).toLowerCase().indexOf('complet')===0)return true;
+    return false;
+  }
+  var rows=[];
+  (state.tasks||[]).forEach(function(t){
+    if(!isAll&&t.project!==selectedTeamProject)return;
+    if(isCompletedTask(t))return;
+    var pri=normPri(t.priority);
+    rows.push({
+      project:t.project||'',
+      department:t.department||'Other',
+      title:t.title||t.text||'',
+      priority:pri||'',
+      due:t.due||'',
+      notes:t.notes||''
+    });
+  });
+  var _csvDevData=(typeof devData!=='undefined'&&devData)?devData:(state.developmentData||null);
+  if(_csvDevData){
+    (_csvDevData.projects||[]).forEach(function(p){
+      if(!isAll&&p.name!==selectedTeamProject)return;
+      (p.notes||[]).forEach(function(n){
+        if(n.completed)return;
+        var pri=normPri(n.priority);
+        rows.push({
+          project:p.name||'',
+          department:'Development',
+          title:n.title||n.text||n.note||'',
+          priority:pri||'',
+          due:n.dueDate||n.due||'',
+          notes:n.notes||n.description||''
+        });
+      });
+    });
+  }
+  if(!rows.length){
+    if(typeof showToast==='function')showToast('No open tasks to export.');
+    else alert('No open tasks to export.');
+    return;
+  }
+  rows.sort(function(a,b){
+    var pa=(a.project||'').toLowerCase(),pb=(b.project||'').toLowerCase();
+    if(pa!==pb)return pa<pb?-1:1;
+    var da=(a.department||'').toLowerCase(),db=(b.department||'').toLowerCase();
+    if(da!==db)return da<db?-1:1;
+    var ra=priOrder[a.priority];if(ra===undefined)ra=99;
+    var rb=priOrder[b.priority];if(rb===undefined)rb=99;
+    if(ra!==rb)return ra-rb;
+    if(!a.due&&!b.due)return 0;
+    if(!a.due)return 1;
+    if(!b.due)return -1;
+    return a.due.localeCompare(b.due);
+  });
+  function csvEsc(v){
+    v=(v==null)?'':String(v);
+    if(v.indexOf(',')>=0||v.indexOf('"')>=0||v.indexOf('\n')>=0||v.indexOf('\r')>=0){
+      return '"'+v.replace(/"/g,'""')+'"';
+    }
+    return v;
+  }
+  var headers=['Project','Department','Task','Priority','Due Date','Notes'];
+  var csv=headers.join(',')+'\r\n';
+  rows.forEach(function(r){
+    csv+=[csvEsc(r.project),csvEsc(r.department),csvEsc(r.title),csvEsc(r.priority),csvEsc(r.due),csvEsc(r.notes)].join(',')+'\r\n';
+  });
+  // UTF-8 BOM for Excel
+  var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var fname=(String(proj).replace(/[^a-z0-9]/gi,'_')||'report')+'_'+dateStamp+'_summary.csv';
+  var a=document.createElement('a');
+  a.href=url;a.download=fname;document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
+  if(typeof showToast==='function')showToast('Summary CSV exported ('+rows.length+' rows).');
 }
 function generatePDFReport(){generatePDFSummary();}
 

@@ -6320,17 +6320,19 @@ function renderMasterCalendar(){
   }
 
   var now=new Date();
-  var year=now.getFullYear();var month=now.getMonth();
+  if(typeof window.masterCalMonthOffset!=='number') window.masterCalMonthOffset=0;
+  var viewDate=new Date(now.getFullYear(), now.getMonth()+window.masterCalMonthOffset, 1);
+  var year=viewDate.getFullYear();var month=viewDate.getMonth();
   var firstDay=new Date(year,month,1).getDay();
   var daysInMonth=new Date(year,month+1,0).getDate();
-  var monthName=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  var monthName=viewDate.toLocaleDateString('en-US',{month:'long',year:'numeric'});
   var todayStr3=now.toISOString().split('T')[0];
 
   var monOff=(firstDay+6)%7;
   var _deptLabels={acquisition:'Acquisition',entitlement:'Entitlement',development:'Development',legal:'Legal',hoa:'HOA',engineering:'Engineering'};
   var _filterLabel=masterCalDeptFilter?(_deptLabels[masterCalDeptFilter]||masterCalDeptFilter):(_mcActiveProj||'');
   var projLabel=_filterLabel?' — '+_filterLabel:'';
-  var html='<div class="cal-header"><h2>🗓 Master Calendar'+projLabel+' — '+monthName+'</h2></div>';
+  var html='<div class="cal-header" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px"><h2 style="margin:0">'+monthName+(projLabel?'<span style=\"font-size:14px;color:#666;font-weight:normal\">'+projLabel+'</span>':'')+'</h2><div style="display:flex;align-items:center;gap:6px"><button onclick="changeMasterCalMonth(-1)" title="Previous month" style="background:var(--pri);color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:16px;font-weight:bold;line-height:1">‹</button><button onclick="changeMasterCalMonth(0)" title="Jump to current month" style="background:transparent;color:var(--pri);border:1px solid var(--pri);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">Today</button><button onclick="changeMasterCalMonth(1)" title="Next month" style="background:var(--pri);color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:16px;font-weight:bold;line-height:1">›</button></div></div>';
   html+='<div class="cal-grid" style="grid-template-columns:repeat(5,1fr)">';
   ['Mon','Tue','Wed','Thu','Fri'].forEach(function(d){html+='<div class="cal-day-hdr">'+d+'</div>';});
   for(var i=0;i<Math.min(monOff,5);i++)html+='<div class="cal-cell outside"></div>';
@@ -6359,6 +6361,11 @@ function renderMasterCalendar(){
   el.innerHTML=html;
 }
 
+function changeMasterCalMonth(dir){
+  if(typeof window.masterCalMonthOffset!=='number') window.masterCalMonthOffset=0;
+  if(dir===0){ window.masterCalMonthOffset=0; } else { window.masterCalMonthOffset += dir; }
+  renderMasterCalendar();
+}
 
 </script>
 

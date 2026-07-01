@@ -5,7 +5,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=5.0,user-scalable=yes">
-<title>TaskAura</title>
+<title>Forestar Task Manager</title>
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@600,700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <style>
@@ -3706,7 +3706,7 @@ function exportSchedulesPDF(){
     doc.setPage(i);const ph=doc.internal.pageSize.getHeight();
     doc.setFillColor(248,250,252);doc.rect(0,ph-8,pageW,8,'F');
     doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(100,116,139);
-    doc.text('TaskAura · '+wsName+' Schedules',margin,ph-2.5);
+    doc.text('FORESTAR · '+wsName+' Schedules',margin,ph-2.5);
     doc.text('Page '+i+' of '+totalPages,pageW-margin,ph-2.5,'right');
   }
   doc.save('taskaura-schedules-'+today+'.pdf');
@@ -3722,7 +3722,7 @@ function importTasksFromJSON(input){
     try{raw=JSON.parse(e.target.result);}
     catch(err){showToast('Invalid JSON file.');return;}
 
-    // ── TaskAura full workspace export ──
+    // ── FORESTAR full workspace export ──
     // Format: { workspaces: { work: { tasks, buckets, labels, notes, folders, ... } } }
     const wsData=raw.workspaces&&(raw.workspaces.work||raw.workspaces[Object.keys(raw.workspaces)[0]]);
     if(wsData&&wsData.tasks){
@@ -3731,7 +3731,7 @@ function importTasksFromJSON(input){
       const prev=document.getElementById('importPreview');
       if(prev){
         prev.innerHTML=
-          '<strong style="color:var(--low)">TaskAura export detected — ready to restore</strong>'+
+          '<strong style="color:var(--low)">FORESTAR export detected — ready to restore</strong>'+
           '<br><span style="color:var(--muted)">'+taskCount+' tasks · '+(wsData.buckets||[]).length+' buckets · '+
           (wsData.labels||[]).length+' labels · '+noteCount+' notes · '+(wsData.folders||[]).length+' folders</span>'+
           '<br><span style="color:var(--crit);font-size:10px">This will replace your current Work workspace data.</span>'+
@@ -4139,39 +4139,59 @@ function generatePDFReport(){
     });
   });
 
-  // ── Brand: landing-page logo (orange tile with "/" + Task//Aura wordmark) ──
+  // ── Brand: Forestar logo (pine-green tile with white 5-point star + FORESTAR wordmark) ──
   function drawLogo(x,baseY,tile,fontSz){
-    doc.setFillColor(...accentRGB);
+    const forestGreen=[54,91,66];
+    doc.setFillColor(forestGreen[0],forestGreen[1],forestGreen[2]);
     doc.roundedRect(x,baseY-tile*0.78,tile,tile,tile*0.28,tile*0.28,'F');
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(tile*2.2);
-    doc.setTextColor(255,255,255);
-    doc.text('/',x+tile/2,baseY-tile*0.78+tile*0.74,'center');
+    const cx=x+tile/2, cy=baseY-tile*0.78+tile/2;
+    const rOuter=tile*0.36, rInner=tile*0.15;
+    const starPts=[];
+    for(let i=0;i<10;i++){
+      const r=(i%2===0)?rOuter:rInner;
+      const ang=-Math.PI/2 + i*Math.PI/5;
+      starPts.push([cx+r*Math.cos(ang), cy+r*Math.sin(ang)]);
+    }
+    doc.setFillColor(255,255,255);
+    doc.setDrawColor(255,255,255);
+    const deltas=[];
+    for(let j=1;j<10;j++){deltas.push([starPts[j][0]-starPts[j-1][0], starPts[j][1]-starPts[j-1][1]]);}
+    deltas.push([starPts[0][0]-starPts[9][0], starPts[0][1]-starPts[9][1]]);
+    doc.lines(deltas, starPts[0][0], starPts[0][1], [1,1], 'F', true);
     let lx=x+tile+tile*0.4;
+    doc.setFont('helvetica','bold');
     doc.setFontSize(fontSz);
-    doc.setTextColor(...inkRGB);doc.text('Task',lx,baseY);lx+=doc.getTextWidth('Task');
-    doc.setTextColor(...accentRGB);doc.text('//',lx,baseY);lx+=doc.getTextWidth('//');
-    doc.setTextColor(...inkRGB);doc.text('Aura',lx,baseY);
+    doc.setTextColor(...inkRGB);
+    doc.text('FORESTAR',lx,baseY);
   }
 
-  // ── Centered watermark on every page ──
+  // ── Centered Forestar watermark on every page ──
   function drawWatermark(){
     if(!doc.GState||!doc.setGState)return;
     doc.setGState(new doc.GState({opacity:0.045}));
+    const forestGreen=[54,91,66];
     const cx=pageW/2,cy=pageH/2;
-    const tile=32;
-    doc.setFillColor(...accentRGB);
+    const tile=48;
+    doc.setFillColor(forestGreen[0],forestGreen[1],forestGreen[2]);
     doc.roundedRect(cx-tile/2,cy-40,tile,tile,tile*0.28,tile*0.28,'F');
+    const scx=cx, scy=cy-40+tile/2;
+    const rOuter=tile*0.36, rInner=tile*0.15;
+    const starPts=[];
+    for(let i=0;i<10;i++){
+      const r=(i%2===0)?rOuter:rInner;
+      const ang=-Math.PI/2 + i*Math.PI/5;
+      starPts.push([scx+r*Math.cos(ang), scy+r*Math.sin(ang)]);
+    }
+    doc.setFillColor(255,255,255);
+    doc.setDrawColor(255,255,255);
+    const deltas=[];
+    for(let j=1;j<10;j++){deltas.push([starPts[j][0]-starPts[j-1][0], starPts[j][1]-starPts[j-1][1]]);}
+    deltas.push([starPts[0][0]-starPts[9][0], starPts[0][1]-starPts[9][1]]);
+    doc.lines(deltas, starPts[0][0], starPts[0][1], [1,1], 'F', true);
     doc.setFont('helvetica','bold');
-    doc.setFontSize(tile*2.2);
-    doc.setTextColor(255,255,255);
-    doc.text('/',cx,cy-40+tile*0.74,'center');
-    doc.setFontSize(44);
-    const total=doc.getTextWidth('Task')+doc.getTextWidth('//')+doc.getTextWidth('Aura');
-    let x=cx-total/2;const y=cy+18;
-    doc.setTextColor(...inkRGB);doc.text('Task',x,y);x+=doc.getTextWidth('Task');
-    doc.setTextColor(...accentRGB);doc.text('//',x,y);x+=doc.getTextWidth('//');
-    doc.setTextColor(...inkRGB);doc.text('Aura',x,y);
+    doc.setFontSize(52);
+    doc.setTextColor(...inkRGB);
+    doc.text('FORESTAR',cx,cy+30,{align:'center'});
     doc.setGState(new doc.GState({opacity:1}));
   }
 
@@ -4286,7 +4306,7 @@ function generatePDFReport(){
     doc.setFont('helvetica','normal');
     doc.setFontSize(7.5);
     doc.setTextColor(...mutedRGB);
-    doc.text('TaskAura  ·  '+reportTitle,margin,pageH-7);
+    doc.text('FORESTAR  ·  '+reportTitle,margin,pageH-7);
     doc.text(generatedDate,pageW/2,pageH-7,{align:'center'});
     doc.text('Page '+i+' of '+totalPages,pageW-margin,pageH-7,'right');
   }
@@ -5724,7 +5744,7 @@ function generatePDFSummary(){
   var today=new Date();
   var todayStr2=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
   var priOrder={Critical:0,High:1,Medium:2,Low:3};
-  // ── Muted executive palette (matches TaskAura brand green, used sparingly) ──
+  // ── Muted executive palette (matches FORESTAR brand green, used sparingly) ──
   var INK=[17,24,39];        // near-black text
   var MUTED=[100,116,139];   // slate grey
   var FAINT=[226,232,240];   // hairlines / subtle fills
@@ -5822,19 +5842,29 @@ function generatePDFSummary(){
     if(p==='Low')return BRAND_DK;
     return null;
   }
-  // ── Brand mark: small green tile with "/" + Task//Aura wordmark ──
+  // ── Brand mark: Forestar pine-green tile with white star + FORESTAR wordmark ──
   function drawLogo(x,baseY,tile,fontSz){
-    doc.setFillColor(BRAND[0],BRAND[1],BRAND[2]);
+    var forestGreen=[54,91,66];
+    doc.setFillColor(forestGreen[0],forestGreen[1],forestGreen[2]);
     doc.roundedRect(x,baseY-tile*0.78,tile,tile,tile*0.28,tile*0.28,'F');
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(tile*2.2);
-    doc.setTextColor(255,255,255);
-    doc.text('/',x+tile/2,baseY-tile*0.78+tile*0.74,'center');
+    var cx=x+tile/2, cy=baseY-tile*0.78+tile/2;
+    var rOuter=tile*0.36, rInner=tile*0.15;
+    var starPts=[];
+    for(var i=0;i<10;i++){
+      var r=(i%2===0)?rOuter:rInner;
+      var ang=-Math.PI/2 + i*Math.PI/5;
+      starPts.push([cx+r*Math.cos(ang), cy+r*Math.sin(ang)]);
+    }
+    doc.setFillColor(255,255,255);
+    doc.setDrawColor(255,255,255);
+    var deltas=[];
+    for(var j=1;j<10;j++){deltas.push([starPts[j][0]-starPts[j-1][0], starPts[j][1]-starPts[j-1][1]]);}
+    deltas.push([starPts[0][0]-starPts[9][0], starPts[0][1]-starPts[9][1]]);
+    doc.lines(deltas, starPts[0][0], starPts[0][1], [1,1], 'F', true);
     var lx=x+tile+tile*0.4;
     doc.setFont('helvetica','bold');doc.setFontSize(fontSz);
-    doc.setTextColor(INK[0],INK[1],INK[2]);doc.text('Task',lx,baseY);lx+=doc.getTextWidth('Task');
-    doc.setTextColor(BRAND[0],BRAND[1],BRAND[2]);doc.text('//',lx,baseY);lx+=doc.getTextWidth('//');
-    doc.setTextColor(INK[0],INK[1],INK[2]);doc.text('Aura',lx,baseY);
+    doc.setTextColor(INK[0],INK[1],INK[2]);
+    doc.text('FORESTAR',lx,baseY);
   }
   function drawTopHeader(label){
     drawLogo(14,13,4.6,9.5);
@@ -5964,7 +5994,7 @@ function generatePDFSummary(){
     doc.setDrawColor(FAINT[0],FAINT[1],FAINT[2]);doc.setLineWidth(0.3);
     doc.line(14,pageHFinal-12,pageWFinal-14,pageHFinal-12);
     doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(MUTED[0],MUTED[1],MUTED[2]);
-    doc.text('TaskAura  ·  '+proj,14,pageHFinal-7);
+    doc.text('FORESTAR  ·  '+proj,14,pageHFinal-7);
     doc.text(todayStr2,pageWFinal/2,pageHFinal-7,{align:'center'});
     doc.text('Page '+pg+' of '+totalPagesFinal,pageWFinal-14,pageHFinal-7,'right');
   }
@@ -6074,7 +6104,7 @@ function exportSummaryCSV(){
       var ws=wb.addWorksheet(sheetName,{views:[{state:'frozen',ySplit:5}],pageSetup:{orientation:'landscape',fitToPage:true}});
       ws.mergeCells(1,1,1,headers.length);
       var titleCell=ws.getCell(1,1);
-      titleCell.value='TaskAura \u2014 Executive Task Summary';
+      titleCell.value='FORESTAR \u2014 Executive Task Summary';
       titleCell.font={bold:true,size:14,color:{argb:INK_ARGB}};
       ws.mergeCells(2,1,2,headers.length);
       var subCell=ws.getCell(2,1);
@@ -6111,11 +6141,11 @@ function exportSummaryCSV(){
       ws.getColumn(1).width=20;ws.getColumn(2).width=14;ws.getColumn(3).width=40;
       ws.getColumn(4).width=10;ws.getColumn(5).width=13;ws.getColumn(6).width=42;
       ws.autoFilter={from:{row:5,column:1},to:{row:5,column:headers.length}};
-      ws.headerFooter.oddFooter='&L&8TaskAura&C&8'+todayStrLong+'&R&8Page &P of &N';
+      ws.headerFooter.oddFooter='&L&8FORESTAR&C&8'+todayStrLong+'&R&8Page &P of &N';
       return ws;
     }
     var workbook=new ExcelJS.Workbook();
-    workbook.creator='TaskAura';
+    workbook.creator='FORESTAR';
     workbook.created=today;
     buildSheet(workbook,'All Projects',rows,'All Projects');
     var projNames=Object.keys(byProject).sort(function(a,b){return a.toLowerCase()<b.toLowerCase()?-1:1;});
@@ -6144,7 +6174,7 @@ function exportSummaryCSV(){
     return;
   }
 
-  // \u2500\u2500 Plain CSV export (single project selected): clean, presentable, still valid CSV \u2500\u2500
+  // \u2500\u2500 Single-project export: styled XLSX matching All Projects look (falls back to CSV if ExcelJS unavailable) \u2500\u2500
   function csvEsc(v){
     v=(v==null)?'':String(v);
     if(v.indexOf(',')>=0||v.indexOf('"')>=0||v.indexOf('\n')>=0||v.indexOf('\r')>=0){
@@ -6157,9 +6187,85 @@ function exportSummaryCSV(){
     var dt=new Date(d+'T00:00:00');
     return isNaN(dt)?d:dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   }
+  // If ExcelJS is loaded, produce the same styled workbook as the All Projects export (one tab)
+  if(typeof ExcelJS!=='undefined'){
+    var _BRAND_ARGB='FF365B42',_BRAND_DK_ARGB='FF1A6B1A',_INK_ARGB='FF111827',_MUTED_ARGB='FF64748B',
+        _FAINT_ARGB='FFE2E8F0',_ZEBRA_ARGB='FFF8FAFC',_CRIT_ARGB='FFB91C1C',_HIGH_ARGB='FF92400E',_WHITE_ARGB='FFFFFFFF';
+    function _excelDate(d){
+      if(!d)return null;
+      var dt=new Date(d+'T00:00:00');
+      return isNaN(dt)?null:dt;
+    }
+    function _priorityFont(p){
+      if(p==='Critical')return {bold:true,color:{argb:_CRIT_ARGB}};
+      if(p==='High')return {color:{argb:_HIGH_ARGB}};
+      if(p==='Low')return {color:{argb:_BRAND_DK_ARGB}};
+      return {color:{argb:_INK_ARGB}};
+    }
+    var _wb=new ExcelJS.Workbook();
+    _wb.creator='FORESTAR';
+    _wb.created=today;
+    var _safeName=String(proj).replace(/[:\\\/\?\*\[\]]/g,'-').slice(0,31)||'Project';
+    var _ws=_wb.addWorksheet(_safeName,{views:[{state:'frozen',ySplit:5}],pageSetup:{orientation:'landscape',fitToPage:true}});
+    _ws.mergeCells(1,1,1,headers.length);
+    var _titleCell=_ws.getCell(1,1);
+    _titleCell.value='FORESTAR \u2014 Executive Task Summary';
+    _titleCell.font={bold:true,size:14,color:{argb:_INK_ARGB}};
+    _ws.mergeCells(2,1,2,headers.length);
+    var _subCell=_ws.getCell(2,1);
+    _subCell.value=proj;
+    _subCell.font={bold:true,size:10.5,color:{argb:_MUTED_ARGB}};
+    _ws.mergeCells(3,1,3,headers.length);
+    var _genCell=_ws.getCell(3,1);
+    _genCell.value='Generated '+todayStrLong+'  \u00b7  '+rows.length+' open task'+(rows.length!==1?'s':'');
+    _genCell.font={size:9,italic:true,color:{argb:_MUTED_ARGB}};
+    var _headerRow=_ws.getRow(5);
+    headers.forEach(function(h,i){
+      var c=_headerRow.getCell(i+1);
+      c.value=h;
+      c.font={bold:true,size:9.5,color:{argb:_WHITE_ARGB}};
+      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:_BRAND_ARGB}};
+      c.alignment={vertical:'middle'};
+      c.border={bottom:{style:'thin',color:{argb:_BRAND_DK_ARGB}}};
+    });
+    rows.forEach(function(r,idx){
+      var _excelDue=_excelDate(r.due);
+      var _row=_ws.addRow([r.project,r.department,r.title,r.priority,_excelDue||r.due||'',(r.notes||'').trim()]);
+      var _zebra=idx%2===1;
+      _row.eachCell({includeEmpty:true},function(cell,colNum){
+        cell.font=cell.font||{size:9.5,color:{argb:_INK_ARGB}};
+        if(_zebra)cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:_ZEBRA_ARGB}};
+        cell.border={bottom:{style:'thin',color:{argb:_FAINT_ARGB}}};
+        cell.alignment=cell.alignment||{vertical:'middle',wrapText:colNum===6};
+      });
+      var _priCell=_row.getCell(4);
+      _priCell.font=Object.assign({size:9.5},_priorityFont(r.priority));
+      var _dueCell=_row.getCell(5);
+      if(_excelDue){_dueCell.numFmt='mmm d, yyyy';}
+    });
+    _ws.getColumn(1).width=20;_ws.getColumn(2).width=14;_ws.getColumn(3).width=40;
+    _ws.getColumn(4).width=10;_ws.getColumn(5).width=13;_ws.getColumn(6).width=42;
+    _ws.autoFilter={from:{row:5,column:1},to:{row:5,column:headers.length}};
+    _ws.headerFooter.oddFooter='&L&8FORESTAR&C&8'+todayStrLong+'&R&8Page &P of &N';
+    var _xlsxFname=(String(proj).replace(/[^a-z0-9]/gi,'_')||'report')+'_'+dateStamp+'_summary.xlsx';
+    _wb.xlsx.writeBuffer().then(function(buffer){
+      var _blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+      var _url=URL.createObjectURL(_blob);
+      var _a=document.createElement('a');
+      _a.href=_url;_a.download=_xlsxFname;document.body.appendChild(_a);_a.click();
+      setTimeout(function(){document.body.removeChild(_a);URL.revokeObjectURL(_url);},100);
+      if(typeof showToast==='function')showToast('Summary Excel exported ('+rows.length+' rows).');
+    }).catch(function(err){
+      console.error('Excel export failed',err);
+      if(typeof showToast==='function')showToast('Excel export failed \u2014 see console.');
+      else alert('Excel export failed.');
+    });
+    return;
+  }
+  // Fallback: plain CSV if ExcelJS is not available
   var singleHeaders=['Department','Task','Priority','Due Date','Notes'];
   var csvLines=[];
-  csvLines.push(csvEsc('TaskAura \u2014 Task Summary: '+proj));
+  csvLines.push(csvEsc('FORESTAR \u2014 Task Summary: '+proj));
   csvLines.push(csvEsc('Generated '+todayStrLong+'  \u00b7  '+rows.length+' open task'+(rows.length!==1?'s':'')));
   csvLines.push('');
   csvLines.push(singleHeaders.map(csvEsc).join(','));

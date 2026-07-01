@@ -978,6 +978,12 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .lt-filters input,.lt-filters select{padding:6px 10px;border-radius:10px;font-size:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);}
 .lt-badge{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:3px 9px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;}
 .lt-task-card{border:1px solid var(--border);border-radius:10px;margin-bottom:6px;background:var(--card);transition:box-shadow .2s,border-color .2s;cursor:pointer;overflow:hidden;}
+.task-age-ribbon{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:#f1f5f9;color:#475569;letter-spacing:.02em;margin:0 6px 4px 0;border:1px solid #e2e8f0;white-space:nowrap;}
+.task-age-ribbon.new{background:#dcfce7;color:#166534;border-color:#bbf7d0;}
+.card .task-age-ribbon{margin:6px 8px 0 8px;font-size:9px;padding:1px 6px;}
+.mc-cal-nav{display:inline-flex;gap:6px;align-items:center;margin-left:12px;}
+.mc-cal-nav button{background:var(--card);border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;}
+.mc-cal-nav button:hover{background:var(--pri);color:#fff;border-color:var(--pri);}
 .lt-task-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.07);border-color:#16a34a;}
 .lt-task-card-header{display:flex;align-items:center;gap:8px;padding:10px 12px;flex-wrap:wrap;}
 .lt-task-card-body{max-height:0;overflow:hidden;transition:max-height .35s ease,padding .35s ease;padding:0 12px;}
@@ -1378,6 +1384,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
  <span id="todayBadge" class="today-badge" style="display:none;" title="Tasks due today">0 today</span>
  <button class="top-btn" id="pdfExportBtn" onclick="generatePDFSummary()">📄 Export PDF</button>
    <button class="top-btn" id="csvExportBtn" onclick="exportSummaryCSV()" title="Export summary to CSV">📊 Export CSV</button>
+   <button class="top-btn" id="xlsxExportBtn" onclick="exportSummaryExcel()" title="Export summary to Excel">📈 Export Excel</button>
  <button class="top-btn accent" onclick="openNewTask()">＋ New Task</button>
  <button class="top-btn" onclick="openSettings()">⚙</button>
  <button class="top-btn" onclick="openShortcuts()" title="Keyboard shortcuts">?</button>
@@ -2942,7 +2949,8 @@ function renderBoard(){const board=document.getElementById('boardView');board.in
 function expandBucket(bucketName){var overlay=document.getElementById('bucketOverlay');var panel=document.getElementById('bucketExpanded');var tasks=(state.tasks||[]).filter(function(t){return t.bucket===bucketName;});panel.innerHTML='<div class="bucket-exp-hdr"><span class="bucket-exp-title">'+esc(bucketName)+'</span><span class="bucket-exp-count">'+tasks.length+'</span><button class="bucket-exp-close" onclick="closeBucketExpand()" title="Close">&#x2715;</button></div><div class="bucket-exp-cards">'+(tasks.length?tasks.map(function(t){return cardHTML(t);}).join(''):'<div style="text-align:center;color:var(--muted);padding:40px;font-size:14px">No tasks in this bucket</div>')+'</div><div class="bucket-exp-add"><input placeholder="+ Add a task to '+esc(bucketName)+'..." onkeydown="if(event.key===\'Enter\'){quickAdd(\''+escAttr(bucketName)+'\',this);expandBucket(\''+escAttr(bucketName)+'\');}"></div>';overlay.classList.add('show');document.body.style.overflow='hidden';}
 function closeBucketExpand(){document.getElementById('bucketOverlay').classList.remove('show');document.body.style.overflow='';}
 function toggleBucketCollapse(bucket){if(!state.collapsedBuckets)state.collapsedBuckets=[];const idx=state.collapsedBuckets.indexOf(bucket);if(idx>=0)state.collapsedBuckets.splice(idx,1);else state.collapsedBuckets.push(bucket);save();renderBoard();}
-function cardHTML(t){const od=isOverdue(t),cl=(t.checklist||[]),cd=cl.filter(c=>c.done).length,ct=cl.length,sel=selectedTaskIds.has(t.id);let ringHTML='';if(ct>0){const pct=ct?Math.round(cd/ct*100):0,r=9,circ=2*Math.PI*r,offset=circ-(pct/100)*circ,col2=pct>=100?'var(--low)':'var(--pri)';ringHTML='<div class="card-cl-ring"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="'+r+'" fill="none" stroke="var(--border)" stroke-width="2.5"/><circle cx="12" cy="12" r="'+r+'" fill="none" stroke="'+col2+'" stroke-width="2.5" stroke-dasharray="'+circ.toFixed(1)+'" stroke-dashoffset="'+offset.toFixed(1)+'" transform="rotate(-90 12 12)" stroke-linecap="round"/></svg><span>'+cd+'/'+ct+'</span></div>';}return'<div class="card '+priClass(t.priority)+(od?' overdue':'')+(sel?' selected':'')+'" draggable="true" ondragstart="dragStart(event,'+t.id+')" ondragend="dragEnd(event)" onclick="openEditTask('+t.id+')"><input type="checkbox" class="card-select" '+(sel?'checked':'')+' onclick="event.stopPropagation();toggleCardSelect('+t.id+',this)"><div class="card-quick-edit"><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'assignee\',event)" title="Edit assignee">👤</button><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'due\',event)" title="Edit due">📅</button><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'priority\',event)" title="Edit priority">⚡</button></div><div class="card-title">'+esc(t.title)+'</div><div class="card-meta">'+(t.assignee?'<span class="card-avatar" style="background:'+avatarColor(t.assignee)+'" title="'+esc(t.assignee)+'">'+initials(t.assignee)+'</span>':'')+(t.due?'<span class="card-due '+(od?'overdue-text':'')+'">📅 '+fmtDate(t.due)+'</span>':'')+'<span class="card-pri '+priBadge(t.priority)+'">'+(t.priority||'Medium')+'</span></div>'+((t.labels||[]).length?'<div class="card-labels">'+(t.labels||[]).map(l=>{const lb=state.labels.find(x=>x.name===l);return'<span class="card-label" style="background:'+(lb?lb.color:'#888')+'">'+esc(l)+'</span>';}).join('')+'</div>':'')+(t.pct>0?'<div class="card-progress"><div class="card-prog-bg"><div class="card-prog-fill" style="width:'+t.pct+'%"></div></div><span class="card-prog-pct">'+t.pct+'%</span></div>':'')+(t.filePath?'<div class="card-filepath" title="'+esc(t.filePath)+'">📂 <span>'+esc(t.filePath.length>35?t.filePath.slice(-35):t.filePath)+'</span></div>':'')+ringHTML+(function(){var lnks=state.notes.filter(function(n){return n.linkedTaskId===t.id;});if(!lnks.length)return'';return lnks.map(function(n){return'<div class="card-linked-note" onclick="event.stopPropagation();jumpToLinkedNote('+n.id+')" title="Open: '+esc(n.title||'Untitled')+'">📝 '+(esc(n.title||'Linked Note'))+'</div>';}).join('');}())+'</div>';}
+function taskAgeLabel(t){if(!t||!t.created)return '';var c=new Date(t.created+'T00:00:00');if(isNaN(c))return '';var now=new Date();var ms=now-c;if(ms<0)ms=0;var days=Math.floor(ms/86400000);var lbl;if(days<1)lbl='Created today';else if(days===1)lbl='Created 1d ago';else if(days<14)lbl='Created '+days+'d ago';else if(days<60)lbl='Created '+Math.floor(days/7)+'w ago';else if(days<730)lbl='Created '+Math.floor(days/30)+'mo ago';else lbl='Created '+Math.floor(days/365)+'y ago';var cls=days<=3?'task-age-ribbon new':'task-age-ribbon';return '<div class="'+cls+'" title="Created '+t.created+'">🕒 '+lbl+'</div>';}
+function cardHTML(t){const od=isOverdue(t),cl=(t.checklist||[]),cd=cl.filter(c=>c.done).length,ct=cl.length,sel=selectedTaskIds.has(t.id);let ringHTML='';if(ct>0){const pct=ct?Math.round(cd/ct*100):0,r=9,circ=2*Math.PI*r,offset=circ-(pct/100)*circ,col2=pct>=100?'var(--low)':'var(--pri)';ringHTML='<div class="card-cl-ring"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="'+r+'" fill="none" stroke="var(--border)" stroke-width="2.5"/><circle cx="12" cy="12" r="'+r+'" fill="none" stroke="'+col2+'" stroke-width="2.5" stroke-dasharray="'+circ.toFixed(1)+'" stroke-dashoffset="'+offset.toFixed(1)+'" transform="rotate(-90 12 12)" stroke-linecap="round"/></svg><span>'+cd+'/'+ct+'</span></div>';}return'<div class="card '+priClass(t.priority)+(od?' overdue':'')+(sel?' selected':'')+'" draggable="true" ondragstart="dragStart(event,'+t.id+')" ondragend="dragEnd(event)" onclick="openEditTask('+t.id+')"><input type="checkbox" class="card-select" '+(sel?'checked':'')+' onclick="event.stopPropagation();toggleCardSelect('+t.id+',this)">'+taskAgeLabel(t)+'<div class="card-quick-edit"><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'assignee\',event)" title="Edit assignee">👤</button><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'due\',event)" title="Edit due">📅</button><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'priority\',event)" title="Edit priority">⚡</button></div><div class="card-title">'+esc(t.title)+'</div><div class="card-meta">'+(t.assignee?'<span class="card-avatar" style="background:'+avatarColor(t.assignee)+'" title="'+esc(t.assignee)+'">'+initials(t.assignee)+'</span>':'')+(t.due?'<span class="card-due '+(od?'overdue-text':'')+'">📅 '+fmtDate(t.due)+'</span>':'')+'<span class="card-pri '+priBadge(t.priority)+'">'+(t.priority||'Medium')+'</span></div>'+((t.labels||[]).length?'<div class="card-labels">'+(t.labels||[]).map(l=>{const lb=state.labels.find(x=>x.name===l);return'<span class="card-label" style="background:'+(lb?lb.color:'#888')+'">'+esc(l)+'</span>';}).join('')+'</div>':'')+(t.pct>0?'<div class="card-progress"><div class="card-prog-bg"><div class="card-prog-fill" style="width:'+t.pct+'%"></div></div><span class="card-prog-pct">'+t.pct+'%</span></div>':'')+(t.filePath?'<div class="card-filepath" title="'+esc(t.filePath)+'">📂 <span>'+esc(t.filePath.length>35?t.filePath.slice(-35):t.filePath)+'</span></div>':'')+ringHTML+(function(){var lnks=state.notes.filter(function(n){return n.linkedTaskId===t.id;});if(!lnks.length)return'';return lnks.map(function(n){return'<div class="card-linked-note" onclick="event.stopPropagation();jumpToLinkedNote('+n.id+')" title="Open: '+esc(n.title||'Untitled')+'">📝 '+(esc(n.title||'Linked Note'))+'</div>';}).join('');}())+'</div>';}
 function quickAdd(bucket,el){const title=el.value.trim();if(!title)return;const newTask={id:state.nextId++,title:title,bucket:bucket,priority:'Medium',pct:0,labels:[],checklist:[],filePath:'',created:new Date().toISOString().split('T')[0],history:[],department:teamDeptTab==='acquisition'?'Acquisition':teamDeptTab==='entitlement'?'Entitlements':teamDeptTab==='development'?'Development':teamDeptTab==='legal'?'Legal':teamDeptTab==='hoa'?'HOA':teamDeptTab==='engineering'?'Engineering':'General',project:currentTeamWorkspaceId&&getActiveTeamProject()?getActiveTeamProject():''};logTaskChange(newTask,'Created','Quick-added to '+bucket);logActivity('Task created',title);state.tasks.push(newTask);el.value='';if(currentTeamWorkspaceId&&currentView==='dashboard'){renderDashboard();}else{render();}}
 function addBucketFromBoard(){const name=prompt('New bucket name:');if(name&&name.trim()){state.buckets.push(name.trim());save();render();}}
 function moveBucket(idx,dir){var ni=idx+dir;if(ni<0||ni>=state.buckets.length)return;var t=state.buckets[idx];state.buckets[idx]=state.buckets[ni];state.buckets[ni]=t;save();render();}
@@ -4663,6 +4671,7 @@ function lt_buildCard(t,priColors,showProject){
   if(isDark){cBg=(t.counsel||'Internal Counsel')==='External Counsel'?'rgba(245,158,11,.12)':(t.counsel||'Internal Counsel')==='DFW West'?'rgba(59,130,246,.12)':'rgba(22,163,74,.12)';}
   var h='<div class="lt-task-card'+(isExpanded?' expanded':'')+'" id="lt-card-'+t.id+'" onclick="lt_toggleCard('+t.id+',event)"'+(showProject?' style="margin-left:0"':' style="margin-left:10px"')+'>';
   h+='<div class="lt-task-card-header">';
+  h+=taskAgeLabel(t);
   h+='<input class="lt-cb" type="checkbox"'+(t.selected?' checked':'')+' onchange="lt_toggleSelect('+t.id+');lt_render()" onclick="event.stopPropagation()">';
   h+='<strong style="flex:1;font-size:13px">'+lt_esc(t.name)+'</strong>';
   if(showProject)h+='<span class="lt-badge" style="background:#e0e7ff;color:#3730a3;font-size:10px">'+lt_esc(t.project||'General')+'</span>';
@@ -5060,7 +5069,7 @@ function renderCalendarInto(el){
   var now=new Date();
   var year=now.getFullYear();var month=now.getMonth();
   var daysInMonth=new Date(year,month+1,0).getDate();
-  var monthName=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  var monthName=new Date(year,month,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
   var todayS=todayStr();
   var activeProj=getActiveTeamProject();
   var maxVisible=5;
@@ -5826,9 +5835,39 @@ function generatePDFSummary(){
     doc.text(name.toUpperCase(),pageW/2,yPos+8,{align:'center'});
     return yPos+14;
   }
-  drawTopHeader('Critical Priority Summary');
-  var y=36;
-  y=drawBanner('Critical Priority Items',y,RED_BANNER);
+  var SALMON_BANNER=[251,224,224];
+  function drawForestarHeader(subtitle){
+    doc.setFillColor(34,139,34);doc.circle(20,15,5,'F');
+    doc.setFontSize(11);doc.setFont(undefined,'bold');doc.setTextColor(255,255,255);
+    doc.text('F',20,16.8,{align:'center'});
+    doc.setTextColor(34,139,34);doc.setFontSize(12);doc.text('FORESTAR',28,17);
+    doc.setTextColor(0);doc.setFontSize(22);doc.setFont(undefined,'bold');
+    doc.text(proj,14,32);
+    doc.setFontSize(11);doc.setFont(undefined,'normal');doc.setTextColor(200,60,60);
+    doc.text(subtitle,14,38);
+    doc.setTextColor(120);doc.setFontSize(9);
+    doc.text('Generated '+todayStr2,14,43);
+    doc.setTextColor(0);doc.setDrawColor(220);doc.line(14,46,doc.internal.pageSize.width-14,46);
+  }
+  function drawSalmonBanner(name,yPos){
+    var pageW=doc.internal.pageSize.width;
+    doc.setFillColor(SALMON_BANNER[0],SALMON_BANNER[1],SALMON_BANNER[2]);
+    doc.rect(14,yPos,pageW-28,8,'F');
+    doc.setFontSize(11);doc.setFont(undefined,'bold');doc.setTextColor(80,20,20);
+    doc.text(name.toUpperCase(),18,yPos+5.5);
+    doc.setTextColor(0);
+    return yPos+10;
+  }
+  function fmtFooter(pageNo,pageCount){
+    doc.setFontSize(8);doc.setTextColor(140);
+    var h=doc.internal.pageSize.height,w=doc.internal.pageSize.width;
+    doc.text('FORESTAR — '+proj,14,h-8);
+    doc.text(todayStr2,w/2,h-8,{align:'center'});
+    doc.text('Page '+pageNo+' of '+pageCount,w-14,h-8,{align:'right'});
+    doc.setTextColor(0);
+  }
+  drawForestarHeader('Critical Priority Summary');
+  var y=52;
   var critical=allTasks.filter(function(t){return t.priority==='Critical';});
   if(critical.length===0){
     doc.setFontSize(11);doc.setTextColor(120);
@@ -5836,12 +5875,27 @@ function generatePDFSummary(){
     doc.setTextColor(0);
   } else {
     critical.sort(function(a,b){
+      var da=depts.indexOf(a.department);if(da<0)da=99;
+      var db=depts.indexOf(b.department);if(db<0)db=99;
+      if(da!==db)return da-db;
       if(!a.due&&!b.due)return 0;
       if(!a.due)return 1;
       if(!b.due)return -1;
       return a.due.localeCompare(b.due);
     });
-    var critHead=isAll?['Department','Project','Task','Expected Date','Actual Date','Notes','Days Until Due','Priority']
+    var _critByDept={};critical.forEach(function(t){var d=t.department||'Other';(_critByDept[d]=_critByDept[d]||[]).push(t);});
+    var _critDeptOrder=depts.filter(function(d){return _critByDept[d];}).concat(Object.keys(_critByDept).filter(function(d){return depts.indexOf(d)<0;}));
+    _critDeptOrder.forEach(function(deptName){
+      var rows=_critByDept[deptName];
+      if(y>230){doc.addPage();drawForestarHeader('Critical Priority Summary');y=52;}
+      y=drawSalmonBanner(deptName,y);
+      var critHead2=isAll?['Project','Task','Start Date','Expected Date','Actual Date','Notes','Days Until Due','Priority']:['Task','Start Date','Expected Date','Actual Date','Notes','Days Until Due','Priority'];
+      var critRows2=rows.map(function(t){var r=[];if(isAll)r.push(t.project);r.push(t.title);r.push(fmtDate(t.startDate||t.created));r.push(fmtDate(t.due));r.push(fmtDate(t.actualDate));r.push((t.notes||'').substring(0,120));r.push(daysUntil(t.due));r.push(t.priority);return r;});
+      var critWidths2=isAll?{0:{cellWidth:22},1:{cellWidth:38},2:{cellWidth:20},3:{cellWidth:20},4:{cellWidth:20},5:{cellWidth:38},6:{cellWidth:14,halign:'center'},7:{cellWidth:16,halign:'center',fontStyle:'bold'}}:{0:{cellWidth:46},1:{cellWidth:22},2:{cellWidth:22},3:{cellWidth:22},4:{cellWidth:44},5:{cellWidth:16,halign:'center'},6:{cellWidth:16,halign:'center',fontStyle:'bold'}};
+      doc.autoTable({head:[critHead2],body:critRows2,startY:y,margin:{top:52,bottom:18,left:14,right:14},headStyles:{fillColor:[240,240,240],fontSize:9,fontStyle:'bold',textColor:[60,60,60],lineColor:[200,200,200],lineWidth:.1},bodyStyles:{fontSize:9,cellPadding:2,lineColor:[230,230,230],lineWidth:.1},alternateRowStyles:{fillColor:[252,252,252]},columnStyles:critWidths2,didParseCell:function(data){var lastIdx=critHead2.length-1;var daysIdx=lastIdx-1;if(data.section==='body'&&data.column.index===daysIdx){var v=parseInt(data.cell.raw,10);if(!isNaN(v)&&v<0){data.cell.styles.textColor=[180,30,30];data.cell.styles.fontStyle='bold';}}if(data.section==='body'&&data.column.index===lastIdx){data.cell.styles.textColor=[180,30,30];data.cell.styles.fontStyle='bold';}},didDrawPage:function(){}});
+      y=doc.lastAutoTable.finalY+6;
+    });
+    if(false){var critHead=isAll?['Department','Project','Task','Expected Date','Actual Date','Notes','Days Until Due','Priority']
                       :['Department','Task','Expected Date','Actual Date','Notes','Days Until Due','Priority'];
     var critRows=critical.map(function(t){return buildRow(t,isAll,true);});
     var critWidths=isAll
@@ -5862,11 +5916,11 @@ function generatePDFSummary(){
         if(data.section==='body'&&data.column.index===daysIdx){var v=parseInt(data.cell.raw,10);if(!isNaN(v)&&v<0)data.cell.styles.textColor=[180,30,30];}
         if(data.section==='body'&&data.column.index===lastIdx){var c=priCellColor(data.cell.raw);if(c)data.cell.styles.textColor=c;}
       },
-      didDrawPage:function(data){doc.setFontSize(8);doc.setTextColor(150);doc.text('Generated: '+todayStr2+'   |   '+proj+'   |   Critical Summary',14,doc.internal.pageSize.height-6);doc.setTextColor(0);}
-    });
+      didDrawPage:function(){}
+    });}
   }
   doc.addPage();
-  drawTopHeader('Task Summary by Department');
+  drawForestarHeader('Task Summary by Department');
   var yStart=36;
   var anyDept=false;
   depts.forEach(function(deptName){
@@ -5882,8 +5936,8 @@ function generatePDFSummary(){
       if(!b.due)return -1;
       return a.due.localeCompare(b.due);
     });
-    if(yStart>240){doc.addPage();drawTopHeader('Task Summary by Department');yStart=36;}
-    yStart=drawBanner(deptName,yStart,GREEN_BANNER);
+    if(yStart>230){doc.addPage();drawForestarHeader('Task Summary by Department');yStart=52;}
+    yStart=drawSalmonBanner(deptName,yStart);
     var deptHead=isAll?['Project','Task','Expected Date','Actual Date','Notes','Days Until Due','Priority']
                       :['Task','Expected Date','Actual Date','Notes','Days Until Due','Priority'];
     var deptRows=deptTasks.map(function(t){return buildRow(t,isAll,false);});
@@ -5895,7 +5949,7 @@ function generatePDFSummary(){
       body:deptRows,
       startY:yStart,
       margin:{top:18,bottom:18,left:14,right:14},
-      headStyles:{fillColor:GREEN_HEAD,fontSize:10,fontStyle:'bold',textColor:[255,255,255]},
+      headStyles:{fillColor:[240,240,240],fontSize:9,fontStyle:'bold',textColor:[60,60,60],lineColor:[200,200,200],lineWidth:.1},
       bodyStyles:{fontSize:9,cellPadding:2},
       alternateRowStyles:{fillColor:[248,250,248]},
       columnStyles:deptWidths,
@@ -5905,11 +5959,12 @@ function generatePDFSummary(){
         if(data.section==='body'&&data.column.index===daysIdx){var v=parseInt(data.cell.raw,10);if(!isNaN(v)&&v<0)data.cell.styles.textColor=[180,30,30];}
         if(data.section==='body'&&data.column.index===lastIdx){var c=priCellColor(data.cell.raw);if(c)data.cell.styles.textColor=c;}
       },
-      didDrawPage:function(data){doc.setFontSize(8);doc.setTextColor(150);doc.text('Generated: '+todayStr2+'   |   '+proj,14,doc.internal.pageSize.height-6);doc.setTextColor(0);}
+      didDrawPage:function(){}
     });
     yStart=doc.lastAutoTable.finalY+8;
   });
   if(!anyDept){doc.setFontSize(11);doc.setTextColor(120);doc.text('No tasks found.',14,yStart);doc.setTextColor(0);}
+  var _pgCount=doc.internal.getNumberOfPages();for(var _pi=1;_pi<=_pgCount;_pi++){doc.setPage(_pi);fmtFooter(_pi,_pgCount);}
   doc.save((proj.replace(/[^a-z0-9]/gi,'_')||'report')+'_'+today.toISOString().split('T')[0]+'.pdf');
 }
 function exportSummaryCSV(){
@@ -6006,7 +6061,12 @@ function exportSummaryCSV(){
   if(typeof showToast==='function')showToast('Summary CSV exported ('+rows.length+' rows).');
 }
 function generatePDFReport(){generatePDFSummary();}
+function exportSummaryExcel(){var proj=(typeof getActiveTeamProject==='function'?getActiveTeamProject():null)||'All Projects';var isAll=(!selectedTeamProject)||proj==='All Projects';var today=new Date();var dateStamp=today.toISOString().split('T')[0];var todayStr2=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});var priOrder={Critical:0,High:1,Medium:2,Low:3};function normPri(p){if(!p)return '';var s=String(p).toLowerCase();if(s==='urgent'||s==='critical')return 'Critical';if(s==='high')return 'High';if(s==='medium'||s==='med'||s==='normal')return 'Medium';if(s==='low')return 'Low';var cap=s.charAt(0).toUpperCase()+s.slice(1);if(priOrder[cap]!==undefined)return cap;return '';}function isCompletedTask(t){if(t.completed===true)return true;if(t.bucket&&String(t.bucket).toLowerCase().indexOf('complet')===0)return true;return false;}function fmtDate(d){return d?new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'';}function daysUntil(d){if(!d)return '';var dd=new Date(d+'T00:00:00');return String(Math.round((dd-today)/86400000));}function esc2(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}var allTasks=[];var depts=['Acquisition','Entitlements','Development','Legal','HOA','Engineering'];(state.tasks||[]).forEach(function(t){if(!isAll&&t.project!==selectedTeamProject)return;if(isCompletedTask(t))return;var pri=normPri(t.priority);if(!pri)return;allTasks.push({department:t.department||'Other',project:t.project||'',title:t.title||t.text||'',startDate:t.startDate||t.created||'',due:t.due||'',actualDate:t.actualDate||'',notes:t.notes||'',priority:pri});});var byProject={};allTasks.forEach(function(t){var p=t.project||'General';(byProject[p]=byProject[p]||[]).push(t);});var projNames=Object.keys(byProject).sort();var priColor={Critical:'#c8102e',High:'#b45309',Medium:'#0369a1',Low:'#166534'};function sheetHtml(name,tasks){tasks.sort(function(a,b){var da=depts.indexOf(a.department);if(da<0)da=99;var db=depts.indexOf(b.department);if(db<0)db=99;if(da!==db)return da-db;var pa=priOrder[a.priority];var pb=priOrder[b.priority];if(pa!==pb)return pa-pb;if(!a.due&&!b.due)return 0;if(!a.due)return 1;if(!b.due)return -1;return a.due.localeCompare(b.due);});var byDept={};tasks.forEach(function(t){(byDept[t.department]=byDept[t.department]||[]).push(t);});var order=depts.filter(function(d){return byDept[d];}).concat(Object.keys(byDept).filter(function(d){return depts.indexOf(d)<0;}));var h='<table border="0" cellspacing="0" cellpadding="6" style="font-family:Calibri,Arial;font-size:11px;border-collapse:collapse;">';h+='<tr><td colspan="8" style="font-size:20px;font-weight:bold;color:#228B22;padding:8px 4px 0">FORESTAR</td></tr>';h+='<tr><td colspan="8" style="font-size:16px;font-weight:bold;padding:2px 4px 0">'+esc2(name)+'</td></tr>';h+='<tr><td colspan="8" style="font-size:11px;color:#c8102e;padding:0 4px">Critical Priority Summary</td></tr>';h+='<tr><td colspan="8" style="font-size:10px;color:#777;padding:0 4px 8px">Generated '+esc2(todayStr2)+'</td></tr>';order.forEach(function(deptName){var rows=byDept[deptName];h+='<tr><td colspan="8" style="background:#fbe0e0;color:#5a1414;font-weight:bold;padding:6px 8px;border:1px solid #f2c7c7">'+esc2(deptName.toUpperCase())+'</td></tr>';h+='<tr style="background:#f0f0f0;font-weight:bold;color:#333">';['Project','Task','Start Date','Expected Date','Actual Date','Notes','Days Until Due','Priority'].forEach(function(c){h+='<td style="border:1px solid #ccc;padding:4px 6px">'+c+'</td>';});h+='</tr>';rows.forEach(function(t,i){var bg=i%2?'#ffffff':'#fafafa';var du=daysUntil(t.due);var duCol=(parseInt(du,10)<0)?'#c8102e':'#333';h+='<tr style="background:'+bg+'">';h+='<td style="border:1px solid #e5e5e5;padding:4px 6px">'+esc2(t.project)+'</td>';h+='<td style="border:1px solid #e5e5e5;padding:4px 6px">'+esc2(t.title)+'</td>';h+='<td style="border:1px solid #e5e5e5;padding:4px 6px">'+esc2(fmtDate(t.startDate))+'</td>';h+='<td style="border:1px solid #e5e5e5;padding:4px 6px">'+esc2(fmtDate(t.due))+'</td>';h+='<td style="border:1px solid #e5e5e5;padding:4px 6px">'+esc2(fmtDate(t.actualDate))+'</td>';h+='<td style="border:1px solid #e5e5e5;padding:4px 6px">'+esc2(t.notes)+'</td>';h+='<td style="border:1px solid #e5e5e5;padding:4px 6px;color:'+duCol+';font-weight:bold;text-align:center">'+esc2(du)+'</td>';h+='<td style="border:1px solid #e5e5e5;padding:4px 6px;color:'+(priColor[t.priority]||'#333')+';font-weight:bold">'+esc2(t.priority)+'</td>';h+='</tr>';});h+='<tr><td colspan="8" style="padding:8px"></td></tr>';});h+='</table>';return h;}var sheets=[{name:'All Projects',html:sheetHtml('All Projects',allTasks.slice())}];projNames.forEach(function(pn){sheets.push({name:pn.substring(0,31).replace(/[\\/*?:\[\]]/g,'_'),html:sheetHtml(pn,byProject[pn].slice())});});var xml='<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"/><xml><x:ExcelWorkbook><x:ExcelWorksheets>';sheets.forEach(function(s){xml+='<x:ExcelWorksheet><x:Name>'+esc2(s.name)+'</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>';});xml+='</x:ExcelWorksheets></x:ExcelWorkbook></xml></head><body>';sheets.forEach(function(s,i){xml+='<div id="sheet'+i+'">'+s.html+'</div>';});xml+='</body></html>';var blob=new Blob([xml],{type:'application/vnd.ms-excel;charset=utf-8'});var url=URL.createObjectURL(blob);var fname=(String(proj).replace(/[^a-z0-9]/gi,'_')||'report')+'_'+dateStamp+'_summary.xls';var a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);if(typeof showToast==='function')showToast('Excel summary exported ('+allTasks.length+' tasks).');}
 
+var masterCalMonth=null,masterCalYear=null;
+function masterCalPrev(){if(masterCalMonth===null){var n=new Date();masterCalMonth=n.getMonth();masterCalYear=n.getFullYear();}masterCalMonth--;if(masterCalMonth<0){masterCalMonth=11;masterCalYear--;}renderMasterCalendar();}
+function masterCalNext(){if(masterCalMonth===null){var n=new Date();masterCalMonth=n.getMonth();masterCalYear=n.getFullYear();}masterCalMonth++;if(masterCalMonth>11){masterCalMonth=0;masterCalYear++;}renderMasterCalendar();}
+function masterCalToday(){var n=new Date();masterCalMonth=n.getMonth();masterCalYear=n.getFullYear();renderMasterCalendar();}
 function renderMasterCalendar(){
   // In team workspaces, show the project sidebar (same as dashboard) instead of generic nav items
   if(currentTeamWorkspaceId){renderTeamSidebarProjects();}
@@ -6046,7 +6106,8 @@ function renderMasterCalendar(){
   }
 
   var now=new Date();
-  var year=now.getFullYear();var month=now.getMonth();
+  if(masterCalMonth===null){masterCalMonth=now.getMonth();masterCalYear=now.getFullYear();}
+  var year=masterCalYear;var month=masterCalMonth;
   var firstDay=new Date(year,month,1).getDay();
   var daysInMonth=new Date(year,month+1,0).getDate();
   var monthName=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
@@ -6056,7 +6117,7 @@ function renderMasterCalendar(){
   var _deptLabels={acquisition:'Acquisition',entitlement:'Entitlement',development:'Development',legal:'Legal',hoa:'HOA',engineering:'Engineering'};
   var _filterLabel=masterCalDeptFilter?(_deptLabels[masterCalDeptFilter]||masterCalDeptFilter):(_mcActiveProj||'');
   var projLabel=_filterLabel?' — '+_filterLabel:'';
-  var html='<div class="cal-header"><h2>🗓 Master Calendar'+projLabel+' — '+monthName+'</h2></div>';
+  var html='<div class="cal-header" style="display:flex;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">🗓 Master Calendar'+projLabel+' — '+monthName+'</h2><div class="mc-cal-nav"><button onclick="masterCalPrev()" title="Previous month">◀ Prev</button><button onclick="masterCalToday()" title="Jump to today">Today</button><button onclick="masterCalNext()" title="Next month">Next ▶</button></div></div>';
   html+='<div class="cal-grid" style="grid-template-columns:repeat(5,1fr)">';
   ['Mon','Tue','Wed','Thu','Fri'].forEach(function(d){html+='<div class="cal-day-hdr">'+d+'</div>';});
   for(var i=0;i<Math.min(monOff,5);i++)html+='<div class="cal-cell outside"></div>';

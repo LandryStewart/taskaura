@@ -1331,6 +1331,10 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 <script src="/vendor/supabase.js"></script>
 <script src="/vendor/jspdf.umd.min.js"></script>
 <script src="/vendor/jspdf.plugin.autotable.min.js"></script>
+<script>
+const FORESTAR_LOGO_PNG = "data:image/png;base64,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";
+const FORESTAR_LOGO_ASPECT = 3.787878787878788;
+</script>
 </head>
 <body>
 <!-- TOPO BACKGROUND -->
@@ -3651,23 +3655,22 @@ function exportSchedulesPDF(){
   const today=todayStr();
   const wsName=currentTeamWorkspaceId?(teamWorkspaces.find(w=>w.id===currentTeamWorkspaceId)||{}).name||'Team':(state.projectName||'Work');
 
-  // Cover header
-  doc.setFillColor(15,23,42);
-  doc.rect(0,0,pageW,28,'F');
-  doc.setFillColor(249,115,22);
-  doc.circle(margin+4,14,4,'F');
-  doc.setTextColor(255,255,255);
+  // Cover header (Forestar logo image + title)
+  var _fLogoW=28, _fLogoH=28/FORESTAR_LOGO_ASPECT;
+  doc.addImage(FORESTAR_LOGO_PNG,'PNG',margin,4,_fLogoW,_fLogoH);
+  doc.setTextColor(15,23,42);
   doc.setFont('helvetica','bold');
-  doc.setFontSize(18);
-  doc.text(wsName+' — Project Schedules',margin+12,16);
+  doc.setFontSize(16);
+  doc.text(wsName+' — Project Schedules',margin+_fLogoW+6,16);
   doc.setFont('helvetica','normal');
   doc.setFontSize(9);
-  doc.setTextColor(148,163,184);
-  doc.text('Generated: '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),margin+12,23);
+  doc.setTextColor(100,116,139);
+  doc.text('Generated: '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),margin+_fLogoW+6,22);
+  doc.setDrawColor(226,232,240);doc.setLineWidth(0.3);doc.line(margin,30,pageW-margin,30);
 
   let y=36;
   projects.forEach(function(proj,pi){
-    if(pi>0){doc.addPage();y=36;doc.setFillColor(15,23,42);doc.rect(0,0,pageW,28,'F');doc.setFillColor(249,115,22);doc.circle(margin+4,14,4,'F');doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text(wsName+' — Project Schedules',margin+12,16);doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(148,163,184);doc.text('Generated: '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),margin+12,23);}
+    if(pi>0){doc.addPage();y=36;var _fLW=28,_fLH=28/FORESTAR_LOGO_ASPECT;doc.addImage(FORESTAR_LOGO_PNG,'PNG',margin,4,_fLW,_fLH);doc.setTextColor(15,23,42);doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text(wsName+' — Project Schedules',margin+_fLW+6,16);doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(100,116,139);doc.text('Generated: '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),margin+_fLW+6,22);doc.setDrawColor(226,232,240);doc.setLineWidth(0.3);doc.line(margin,30,pageW-margin,30);}
     // Project heading
     const hexColor=proj.color||'#1a6b5a';
     const r=parseInt(hexColor.slice(1,3),16)||26;
@@ -4167,32 +4170,19 @@ function generatePDFReport(){
     }
   }
   function drawLogo(x,baseY,tile,fontSz){
-    const forestGreen=[54,91,66];
-    doc.setFillColor(forestGreen[0],forestGreen[1],forestGreen[2]);
-    doc.roundedRect(x,baseY-tile*0.78,tile,tile,tile*0.28,tile*0.28,'F');
-    const cx=x+tile/2, cy=baseY-tile*0.78+tile/2;
-    drawLeafRosette(cx,cy,tile,[255,255,255]);
-    let lx=x+tile+tile*0.4;
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(fontSz);
-    doc.setTextColor(...inkRGB);
-    doc.text('FORESTAR',lx,baseY);
+    // Use official Forestar PNG. Height ~= tile*1.6; width per aspect ratio.
+    const _h=tile*1.6;
+    const _w=_h*FORESTAR_LOGO_ASPECT;
+    doc.addImage(FORESTAR_LOGO_PNG,'PNG',x,baseY-_h+1,_w,_h);
   }
 
   // ── Centered Forestar watermark on every page ──
   function drawWatermark(){
     if(!doc.GState||!doc.setGState)return;
-    doc.setGState(new doc.GState({opacity:0.045}));
-    const forestGreen=[54,91,66];
-    const cx=pageW/2,cy=pageH/2;
-    const tile=52;
-    doc.setFillColor(forestGreen[0],forestGreen[1],forestGreen[2]);
-    doc.roundedRect(cx-tile/2,cy-40,tile,tile,tile*0.28,tile*0.28,'F');
-    drawLeafRosette(cx,cy-40+tile/2,tile,[255,255,255]);
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(52);
-    doc.setTextColor(...inkRGB);
-    doc.text('FORESTAR',cx,cy+34,{align:'center'});
+    doc.setGState(new doc.GState({opacity:0.06}));
+    const _wmW=130;
+    const _wmH=_wmW/FORESTAR_LOGO_ASPECT;
+    doc.addImage(FORESTAR_LOGO_PNG,'PNG',(pageW-_wmW)/2,(pageH-_wmH)/2,_wmW,_wmH);
     doc.setGState(new doc.GState({opacity:1}));
   }
 
@@ -5871,15 +5861,10 @@ function generatePDFSummary(){
     }
   }
   function drawLogo(x,baseY,tile,fontSz){
-    var forestGreen=[54,91,66];
-    doc.setFillColor(forestGreen[0],forestGreen[1],forestGreen[2]);
-    doc.roundedRect(x,baseY-tile*0.78,tile,tile,tile*0.28,tile*0.28,'F');
-    var cx=x+tile/2, cy=baseY-tile*0.78+tile/2;
-    drawLeafRosette(cx,cy,tile,[255,255,255]);
-    var lx=x+tile+tile*0.4;
-    doc.setFont('helvetica','bold');doc.setFontSize(fontSz);
-    doc.setTextColor(INK[0],INK[1],INK[2]);
-    doc.text('FORESTAR',lx,baseY);
+    // Use official Forestar PNG. Height ~= tile*1.6; width per aspect ratio.
+    var _h=tile*1.6;
+    var _w=_h*FORESTAR_LOGO_ASPECT;
+    doc.addImage(FORESTAR_LOGO_PNG,'PNG',x,baseY-_h+1,_w,_h);
   }
   function drawTopHeader(label){
     drawLogo(14,13,4.6,9.5);

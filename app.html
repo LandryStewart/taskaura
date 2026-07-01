@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=5.0,user-scalable=yes">
 <title>TaskAura</title>
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@600,700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <style>
 :root{
  --pri:#228b22;--pri-d:#1a6b1a;--pri-l:#f0fdf4;
@@ -5724,10 +5724,15 @@ function generatePDFSummary(){
   var today=new Date();
   var todayStr2=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
   var priOrder={Critical:0,High:1,Medium:2,Low:3};
-  var GREEN_BANNER=[197,224,180];
-  var GREEN_HEAD=[34,139,34];
-  var RED_BANNER=[244,200,200];
-  var RED_HEAD=[180,30,30];
+  // ── Muted executive palette (matches TaskAura brand green, used sparingly) ──
+  var INK=[17,24,39];        // near-black text
+  var MUTED=[100,116,139];   // slate grey
+  var FAINT=[226,232,240];   // hairlines / subtle fills
+  var BRAND=[34,139,34];     // brand green accent
+  var BRAND_DK=[26,107,26];
+  var GREEN_BANNER=[240,247,240];   // pale tint, department section band
+  var RED_BANNER=[253,242,242];      // pale red tint, critical section band
+  var RED_HEAD=[153,27,27];          // muted dark red
   function normPri(p){
     if(!p)return '';
     var s=String(p).toLowerCase();
@@ -5812,37 +5817,56 @@ function generatePDFSummary(){
     return row;
   }
   function priCellColor(p){
-    if(p==='Critical')return [180,30,30];
-    if(p==='High')return [150,80,0];
-    if(p==='Low')return [80,140,80];
+    if(p==='Critical')return RED_HEAD;
+    if(p==='High')return [146,64,14];
+    if(p==='Low')return BRAND_DK;
     return null;
   }
+  // ── Brand mark: small green tile with "/" + Task//Aura wordmark ──
+  function drawLogo(x,baseY,tile,fontSz){
+    doc.setFillColor(BRAND[0],BRAND[1],BRAND[2]);
+    doc.roundedRect(x,baseY-tile*0.78,tile,tile,tile*0.28,tile*0.28,'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(tile*2.2);
+    doc.setTextColor(255,255,255);
+    doc.text('/',x+tile/2,baseY-tile*0.78+tile*0.74,'center');
+    var lx=x+tile+tile*0.4;
+    doc.setFont('helvetica','bold');doc.setFontSize(fontSz);
+    doc.setTextColor(INK[0],INK[1],INK[2]);doc.text('Task',lx,baseY);lx+=doc.getTextWidth('Task');
+    doc.setTextColor(BRAND[0],BRAND[1],BRAND[2]);doc.text('//',lx,baseY);lx+=doc.getTextWidth('//');
+    doc.setTextColor(INK[0],INK[1],INK[2]);doc.text('Aura',lx,baseY);
+  }
   function drawTopHeader(label){
-    doc.setFontSize(20);doc.setFont(undefined,'bold');doc.setTextColor(34,139,34);
-    doc.text(proj,14,16);
-    doc.setTextColor(0);
-    doc.setFontSize(11);doc.setFont(undefined,'normal');
-    doc.text(label,14,23);
-    doc.setFontSize(9);doc.setTextColor(120);
-    doc.text('Generated: '+todayStr2,14,29);
-    doc.setTextColor(0);
+    drawLogo(14,13,4.6,9.5);
+    doc.setDrawColor(FAINT[0],FAINT[1],FAINT[2]);doc.setLineWidth(0.3);
+    doc.line(14,17.5,doc.internal.pageSize.width-14,17.5);
+    doc.setFont('helvetica','bold');doc.setFontSize(15);doc.setTextColor(INK[0],INK[1],INK[2]);
+    doc.text(proj,14,27);
+    doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(MUTED[0],MUTED[1],MUTED[2]);
+    doc.text(label,14,33.5);
+    doc.setFontSize(8.5);
+    doc.text('Generated '+todayStr2,14,39);
+    doc.setDrawColor(BRAND[0],BRAND[1],BRAND[2]);doc.setLineWidth(0.9);
+    doc.line(14,43,26,43);
   }
   function drawBanner(name,yPos,colorArr){
     var pageW=doc.internal.pageSize.width;
     doc.setFillColor(colorArr[0],colorArr[1],colorArr[2]);
-    doc.rect(14,yPos,pageW-28,12,'F');
-    doc.setFontSize(16);doc.setFont(undefined,'bold');doc.setTextColor(0,0,0);
-    doc.text(name.toUpperCase(),pageW/2,yPos+8,{align:'center'});
-    return yPos+14;
+    doc.rect(14,yPos,pageW-28,10,'F');
+    doc.setDrawColor(FAINT[0],FAINT[1],FAINT[2]);doc.setLineWidth(0.2);
+    doc.rect(14,yPos,pageW-28,10);
+    doc.setFont('helvetica','bold');doc.setFontSize(10.5);doc.setTextColor(INK[0],INK[1],INK[2]);
+    doc.text(name.toUpperCase(),18,yPos+6.8);
+    return yPos+13;
   }
   drawTopHeader('Critical Priority Summary');
-  var y=36;
+  var y=48;
   y=drawBanner('Critical Priority Items',y,RED_BANNER);
   var critical=allTasks.filter(function(t){return t.priority==='Critical';});
   if(critical.length===0){
-    doc.setFontSize(11);doc.setTextColor(120);
+    doc.setFontSize(10.5);doc.setTextColor(MUTED[0],MUTED[1],MUTED[2]);
     doc.text('No critical priority items at this time.',14,y+6);
-    doc.setTextColor(0);
+    doc.setTextColor(INK[0],INK[1],INK[2]);
   } else {
     critical.sort(function(a,b){
       if(!a.due&&!b.due)return 0;
@@ -5861,22 +5885,28 @@ function generatePDFSummary(){
       body:critRows,
       startY:y,
       margin:{top:18,bottom:18,left:14,right:14},
-      headStyles:{fillColor:RED_HEAD,fontSize:10,fontStyle:'bold',textColor:[255,255,255]},
-      bodyStyles:{fontSize:9,cellPadding:2},
-      alternateRowStyles:{fillColor:[252,245,245]},
+      theme:'plain',
+      headStyles:{fontSize:7.5,fontStyle:'bold',textColor:MUTED,cellPadding:{top:2,bottom:2.5,left:2,right:2}},
+      bodyStyles:{fontSize:8.5,cellPadding:{top:2.6,bottom:2.6,left:2,right:2},textColor:INK},
+      alternateRowStyles:{fillColor:[253,249,249]},
       columnStyles:critWidths,
       didParseCell:function(data){
         var lastIdx=critHead.length-1;
         var daysIdx=lastIdx-1;
-        if(data.section==='body'&&data.column.index===daysIdx){var v=parseInt(data.cell.raw,10);if(!isNaN(v)&&v<0)data.cell.styles.textColor=[180,30,30];}
+        if(data.section==='body'&&data.column.index===daysIdx){var v=parseInt(data.cell.raw,10);if(!isNaN(v)&&v<0)data.cell.styles.textColor=RED_HEAD;}
         if(data.section==='body'&&data.column.index===lastIdx){var c=priCellColor(data.cell.raw);if(c)data.cell.styles.textColor=c;}
       },
-      didDrawPage:function(data){doc.setFontSize(8);doc.setTextColor(150);doc.text('Generated: '+todayStr2+'   |   '+proj+'   |   Critical Summary',14,doc.internal.pageSize.height-6);doc.setTextColor(0);}
+      didDrawCell:function(data){
+        var yB=data.cell.y+data.cell.height;
+        if(data.section==='head'){doc.setDrawColor(INK[0],INK[1],INK[2]);doc.setLineWidth(0.4);}
+        else{doc.setDrawColor(FAINT[0],FAINT[1],FAINT[2]);doc.setLineWidth(0.15);}
+        doc.line(data.cell.x,yB,data.cell.x+data.cell.width,yB);
+      }
     });
   }
   doc.addPage();
   drawTopHeader('Task Summary by Department');
-  var yStart=36;
+  var yStart=48;
   var anyDept=false;
   depts.forEach(function(deptName){
     var deptTasks=allTasks.filter(function(t){return t.department===deptName;});
@@ -5891,7 +5921,7 @@ function generatePDFSummary(){
       if(!b.due)return -1;
       return a.due.localeCompare(b.due);
     });
-    if(yStart>240){doc.addPage();drawTopHeader('Task Summary by Department');yStart=36;}
+    if(yStart>230){doc.addPage();drawTopHeader('Task Summary by Department');yStart=48;}
     yStart=drawBanner(deptName,yStart,GREEN_BANNER);
     var deptHead=isAll?['Project','Task','Expected Date','Actual Date','Notes','Days Until Due','Priority']
                       :['Task','Expected Date','Actual Date','Notes','Days Until Due','Priority'];
@@ -5904,21 +5934,41 @@ function generatePDFSummary(){
       body:deptRows,
       startY:yStart,
       margin:{top:18,bottom:18,left:14,right:14},
-      headStyles:{fillColor:GREEN_HEAD,fontSize:10,fontStyle:'bold',textColor:[255,255,255]},
-      bodyStyles:{fontSize:9,cellPadding:2},
-      alternateRowStyles:{fillColor:[248,250,248]},
+      theme:'plain',
+      headStyles:{fontSize:7.5,fontStyle:'bold',textColor:MUTED,cellPadding:{top:2,bottom:2.5,left:2,right:2}},
+      bodyStyles:{fontSize:8.5,cellPadding:{top:2.6,bottom:2.6,left:2,right:2},textColor:INK},
+      alternateRowStyles:{fillColor:[249,250,251]},
       columnStyles:deptWidths,
       didParseCell:function(data){
         var lastIdx=deptHead.length-1;
         var daysIdx=lastIdx-1;
-        if(data.section==='body'&&data.column.index===daysIdx){var v=parseInt(data.cell.raw,10);if(!isNaN(v)&&v<0)data.cell.styles.textColor=[180,30,30];}
+        if(data.section==='body'&&data.column.index===daysIdx){var v=parseInt(data.cell.raw,10);if(!isNaN(v)&&v<0)data.cell.styles.textColor=RED_HEAD;}
         if(data.section==='body'&&data.column.index===lastIdx){var c=priCellColor(data.cell.raw);if(c)data.cell.styles.textColor=c;}
       },
-      didDrawPage:function(data){doc.setFontSize(8);doc.setTextColor(150);doc.text('Generated: '+todayStr2+'   |   '+proj,14,doc.internal.pageSize.height-6);doc.setTextColor(0);}
+      didDrawCell:function(data){
+        var yB=data.cell.y+data.cell.height;
+        if(data.section==='head'){doc.setDrawColor(INK[0],INK[1],INK[2]);doc.setLineWidth(0.4);}
+        else{doc.setDrawColor(FAINT[0],FAINT[1],FAINT[2]);doc.setLineWidth(0.15);}
+        doc.line(data.cell.x,yB,data.cell.x+data.cell.width,yB);
+      }
     });
     yStart=doc.lastAutoTable.finalY+8;
   });
-  if(!anyDept){doc.setFontSize(11);doc.setTextColor(120);doc.text('No tasks found.',14,yStart);doc.setTextColor(0);}
+  if(!anyDept){doc.setFontSize(10.5);doc.setTextColor(MUTED[0],MUTED[1],MUTED[2]);doc.text('No tasks found.',14,yStart);doc.setTextColor(INK[0],INK[1],INK[2]);}
+
+  // ── Consistent footer across every page: hairline + brand + generated date + page numbers ──
+  var pageWFinal=doc.internal.pageSize.width, pageHFinal=doc.internal.pageSize.height;
+  var totalPagesFinal=doc.internal.getNumberOfPages();
+  for(var pg=1;pg<=totalPagesFinal;pg++){
+    doc.setPage(pg);
+    doc.setDrawColor(FAINT[0],FAINT[1],FAINT[2]);doc.setLineWidth(0.3);
+    doc.line(14,pageHFinal-12,pageWFinal-14,pageHFinal-12);
+    doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(MUTED[0],MUTED[1],MUTED[2]);
+    doc.text('TaskAura  ·  '+proj,14,pageHFinal-7);
+    doc.text(todayStr2,pageWFinal/2,pageHFinal-7,{align:'center'});
+    doc.text('Page '+pg+' of '+totalPagesFinal,pageWFinal-14,pageHFinal-7,'right');
+  }
+
   doc.save((proj.replace(/[^a-z0-9]/gi,'_')||'report')+'_'+today.toISOString().split('T')[0]+'.pdf');
 }
 function exportSummaryCSV(){
@@ -5997,40 +6047,104 @@ function exportSummaryCSV(){
   }
   rows.sort(sortByDeptPriProj);
   var headers=['Project','Department','Task','Priority','Due Date','Notes'];
-  if(isAll && typeof XLSX!=='undefined'){
+  var todayStrLong=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+
+  // \u2500\u2500 Executive Excel export (All Projects): real styling via ExcelJS \u2500\u2500
+  if(isAll && typeof ExcelJS!=='undefined'){
     var byProject={};
     rows.forEach(function(r){
       var key=r.project||'(No Project)';
       if(!byProject[key])byProject[key]=[];
       byProject[key].push(r);
     });
-    var wb=XLSX.utils.book_new();
-    var allAOA=[headers].concat(rows.map(function(r){
-      return [r.project,r.department,r.title,r.priority,r.due,r.notes];
-    }));
-    var wsAll=XLSX.utils.aoa_to_sheet(allAOA);
-    wsAll['!cols']=[{wch:22},{wch:14},{wch:42},{wch:10},{wch:12},{wch:40}];
-    XLSX.utils.book_append_sheet(wb,wsAll,'All Projects');
+    var BRAND_ARGB='FF228B22',BRAND_DK_ARGB='FF1A6B1A',INK_ARGB='FF111827',MUTED_ARGB='FF64748B',
+        FAINT_ARGB='FFE2E8F0',ZEBRA_ARGB='FFF8FAFC',CRIT_ARGB='FFB91C1C',HIGH_ARGB='FF92400E',WHITE_ARGB='FFFFFFFF';
+    function excelDate(d){
+      if(!d)return null;
+      var dt=new Date(d+'T00:00:00');
+      return isNaN(dt)?null:dt;
+    }
+    function priorityFont(p){
+      if(p==='Critical')return {bold:true,color:{argb:CRIT_ARGB}};
+      if(p==='High')return {color:{argb:HIGH_ARGB}};
+      if(p==='Low')return {color:{argb:BRAND_DK_ARGB}};
+      return {color:{argb:INK_ARGB}};
+    }
+    function buildSheet(wb,sheetName,sheetRows,subtitle){
+      var ws=wb.addWorksheet(sheetName,{views:[{state:'frozen',ySplit:5}],pageSetup:{orientation:'landscape',fitToPage:true}});
+      ws.mergeCells(1,1,1,headers.length);
+      var titleCell=ws.getCell(1,1);
+      titleCell.value='TaskAura \u2014 Executive Task Summary';
+      titleCell.font={bold:true,size:14,color:{argb:INK_ARGB}};
+      ws.mergeCells(2,1,2,headers.length);
+      var subCell=ws.getCell(2,1);
+      subCell.value=subtitle;
+      subCell.font={bold:true,size:10.5,color:{argb:MUTED_ARGB}};
+      ws.mergeCells(3,1,3,headers.length);
+      var genCell=ws.getCell(3,1);
+      genCell.value='Generated '+todayStrLong+'  \u00b7  '+sheetRows.length+' open task'+(sheetRows.length!==1?'s':'');
+      genCell.font={size:9,italic:true,color:{argb:MUTED_ARGB}};
+      var headerRow=ws.getRow(5);
+      headers.forEach(function(h,i){
+        var c=headerRow.getCell(i+1);
+        c.value=h;
+        c.font={bold:true,size:9.5,color:{argb:WHITE_ARGB}};
+        c.fill={type:'pattern',pattern:'solid',fgColor:{argb:BRAND_ARGB}};
+        c.alignment={vertical:'middle'};
+        c.border={bottom:{style:'thin',color:{argb:BRAND_DK_ARGB}}};
+      });
+      sheetRows.forEach(function(r,idx){
+        var excelDue=excelDate(r.due);
+        var row=ws.addRow([r.project,r.department,r.title,r.priority,excelDue||r.due||'',(r.notes||'').trim()]);
+        var zebra=idx%2===1;
+        row.eachCell({includeEmpty:true},function(cell,colNum){
+          cell.font=cell.font||{size:9.5,color:{argb:INK_ARGB}};
+          if(zebra)cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:ZEBRA_ARGB}};
+          cell.border={bottom:{style:'thin',color:{argb:FAINT_ARGB}}};
+          cell.alignment=cell.alignment||{vertical:'middle',wrapText:colNum===6};
+        });
+        var priCell=row.getCell(4);
+        priCell.font=Object.assign({size:9.5},priorityFont(r.priority));
+        var dueCell=row.getCell(5);
+        if(excelDue){dueCell.numFmt='mmm d, yyyy';}
+      });
+      ws.getColumn(1).width=20;ws.getColumn(2).width=14;ws.getColumn(3).width=40;
+      ws.getColumn(4).width=10;ws.getColumn(5).width=13;ws.getColumn(6).width=42;
+      ws.autoFilter={from:{row:5,column:1},to:{row:5,column:headers.length}};
+      ws.headerFooter.oddFooter='&L&8TaskAura&C&8'+todayStrLong+'&R&8Page &P of &N';
+      return ws;
+    }
+    var workbook=new ExcelJS.Workbook();
+    workbook.creator='TaskAura';
+    workbook.created=today;
+    buildSheet(workbook,'All Projects',rows,'All Projects');
     var projNames=Object.keys(byProject).sort(function(a,b){return a.toLowerCase()<b.toLowerCase()?-1:1;});
     var usedNames={};
     projNames.forEach(function(pn){
       var projRows=byProject[pn].slice().sort(sortByDeptPriProj);
-      var aoa=[headers].concat(projRows.map(function(r){
-        return [r.project,r.department,r.title,r.priority,r.due,r.notes];
-      }));
-      var ws=XLSX.utils.aoa_to_sheet(aoa);
-      ws['!cols']=[{wch:22},{wch:14},{wch:42},{wch:10},{wch:12},{wch:40}];
       var safe=String(pn).replace(/[:\\\/\?\*\[\]]/g,'-').slice(0,31)||'Project';
       var base=safe,i=2;
       while(usedNames[safe.toLowerCase()]){safe=(base.slice(0,28)+'_'+i).slice(0,31);i++;}
       usedNames[safe.toLowerCase()]=true;
-      XLSX.utils.book_append_sheet(wb,ws,safe);
+      buildSheet(workbook,safe,projRows,pn);
     });
     var fname=(String(proj).replace(/[^a-z0-9]/gi,'_')||'report')+'_'+dateStamp+'_summary.xlsx';
-    XLSX.writeFile(wb,fname);
-    if(typeof showToast==='function')showToast('Summary XLSX exported ('+rows.length+' rows, '+projNames.length+' project tab'+(projNames.length===1?'':'s')+').');
+    workbook.xlsx.writeBuffer().then(function(buffer){
+      var blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a');
+      a.href=url;a.download=fname;document.body.appendChild(a);a.click();
+      setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
+      if(typeof showToast==='function')showToast('Summary Excel exported ('+rows.length+' rows, '+(projNames.length+1)+' tabs).');
+    }).catch(function(err){
+      console.error('Excel export failed',err);
+      if(typeof showToast==='function')showToast('Excel export failed \u2014 see console.');
+      else alert('Excel export failed.');
+    });
     return;
   }
+
+  // \u2500\u2500 Plain CSV export (single project selected): clean, presentable, still valid CSV \u2500\u2500
   function csvEsc(v){
     v=(v==null)?'':String(v);
     if(v.indexOf(',')>=0||v.indexOf('"')>=0||v.indexOf('\n')>=0||v.indexOf('\r')>=0){
@@ -6038,10 +6152,21 @@ function exportSummaryCSV(){
     }
     return v;
   }
-  var csv=headers.join(',')+'\r\n';
+  function fmtDueHuman(d){
+    if(!d)return '';
+    var dt=new Date(d+'T00:00:00');
+    return isNaN(dt)?d:dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  }
+  var singleHeaders=['Department','Task','Priority','Due Date','Notes'];
+  var csvLines=[];
+  csvLines.push(csvEsc('TaskAura \u2014 Task Summary: '+proj));
+  csvLines.push(csvEsc('Generated '+todayStrLong+'  \u00b7  '+rows.length+' open task'+(rows.length!==1?'s':'')));
+  csvLines.push('');
+  csvLines.push(singleHeaders.map(csvEsc).join(','));
   rows.forEach(function(r){
-    csv+=[csvEsc(r.project),csvEsc(r.department),csvEsc(r.title),csvEsc(r.priority),csvEsc(r.due),csvEsc(r.notes)].join(',')+'\r\n';
+    csvLines.push([csvEsc(r.department),csvEsc(r.title),csvEsc(r.priority),csvEsc(fmtDueHuman(r.due)),csvEsc(r.notes.trim())].join(','));
   });
+  var csv=csvLines.join('\r\n')+'\r\n';
   var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
   var url=URL.createObjectURL(blob);
   var fname=(String(proj).replace(/[^a-z0-9]/gi,'_')||'report')+'_'+dateStamp+'_summary.csv';

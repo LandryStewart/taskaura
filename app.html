@@ -7,13 +7,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=5.0,user-scalable=yes">
 <title>TaskAura</title>
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
  --pri:#228b22;--pri-d:#1a6b1a;--pri-l:#f0fdf4;
- --bg:#f8fafc;--card:#fff;--text:#0f172a;--text2:#475569;--border:#e2e8f0;
- --shadow:0 2px 8px rgba(0,0,0,.08);
+ --bg:#f7f8fa;--card:#fff;--text:#0f172a;--text2:#475569;--border:#eaedf1;
+ --shadow:0 1px 2px rgba(15,23,42,.04),0 4px 14px rgba(15,23,42,.06);
  --crit:#dc2626;--high:#d97706;--med:#7c3aed;--low:#16a34a;
- --hdr:48px;--radius:8px;
+ --hdr:52px;--radius:12px;
  --accent:#228b22;--muted:#94a3b8;
  --sidebar-w:230px;--sidebar-coll:50px;
 }
@@ -23,7 +24,7 @@
  --accent:#4ade80;--muted:#484f58;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;display:flex;flex-direction:column;}
+body{font-family:'Inter','Segoe UI',system-ui,sans-serif;-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;display:flex;flex-direction:column;}
 #appContainer{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
 button{cursor:pointer;font-family:inherit;}
 input,select,textarea{font-family:inherit;color:var(--text);}
@@ -31,35 +32,33 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .auth-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none;}
 .auth-card{background:#fff;border-radius:16px;padding:40px 36px;width:400px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center;}
 .auth-card .auth-icon{font-size:48px;margin-bottom:12px;}
-.auth-card h1{font-size:22px;color:#1e40af;margin-bottom:4px;}
+.auth-card h1{font-size:22px;color:#0f172a;letter-spacing:-.02em;margin-bottom:4px;}
 .auth-card .auth-sub{font-size:13px;color:#777;margin-bottom:24px;}
 .auth-card input[type=password],.auth-card input[type=email],.auth-card input[type=text]{width:100%;padding:11px 14px;border:1px solid #d0d5dd;border-radius:8px;font-size:14px;margin-bottom:12px;background:#f9fafb;transition:border .2s;}
-.auth-card input[type=password]:focus,.auth-card input[type=email]:focus,.auth-card input[type=text]:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.15);}
-.auth-card .auth-btn{width:100%;padding:11px;background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:.3px;transition:transform .15s,box-shadow .15s;margin-top:4px;}
-.auth-card .auth-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(37,99,235,.3);}
+.auth-card input[type=password]:focus,.auth-card input[type=email]:focus,.auth-card input[type=text]:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(34,139,34,.15);}
+.auth-card .auth-btn{width:100%;padding:11px;background:var(--pri);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:600;letter-spacing:.2px;transition:transform .15s,box-shadow .15s,background .15s;margin-top:4px;}
+.auth-card .auth-btn:hover{transform:translateY(-1px);background:var(--pri-d);box-shadow:0 4px 16px rgba(34,139,34,.25);}
 .auth-remember{display:flex;align-items:center;gap:8px;font-size:12px;color:#555;margin-bottom:14px;justify-content:center;}
-.auth-remember input{accent-color:#2563eb;width:15px;height:15px;}
+.auth-remember input{accent-color:var(--pri);width:15px;height:15px;}
 .auth-error{color:#dc2626;font-size:12px;font-weight:600;margin-bottom:8px;min-height:18px;}
 .topbar{background:var(--card);color:var(--text);display:flex;align-items:center;padding:0 14px;height:var(--hdr);gap:8px;flex-shrink:0;z-index:100;border-bottom:1px solid var(--border);}
-.topbar .logo{display:flex;align-items:center;gap:7px;font-family:'General Sans',sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.035em;white-space:nowrap;color:var(--text);}
-.topbar .logo .logo-accent{color:#228b22;font-weight:600;letter-spacing:-0.12em;margin:0 .05em;}
-.logo-tile{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,#1a6b1a,#4ade80);display:inline-flex;align-items:center;justify-content:center;font-family:'General Sans',sans-serif;font-weight:600;font-size:14px;color:#fff;box-shadow:0 2px 10px rgba(34,139,34,.4);flex-shrink:0;}
+.topbar .logo{display:flex;align-items:center;font-weight:700;font-size:16px;letter-spacing:-0.02em;white-space:nowrap;color:var(--text);}
 .proj-name{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:6px;font-size:14px;width:150px;}
 .proj-name::placeholder{color:var(--muted);}
 .proj-name:focus{outline:none;border-color:var(--pri);}
 .topbar .spacer{flex:1;}
-.top-btn{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 12px;border-radius:6px;font-size:12px;display:flex;align-items:center;gap:5px;transition:background .2s,border-color .2s;white-space:nowrap;}
-.top-btn:hover{background:var(--pri-l);border-color:rgba(34,139,34,.4);}
-.top-btn.accent{background:linear-gradient(135deg,#1a6b1a,#228b22);color:#fff;border:none;font-weight:700;box-shadow:0 2px 8px rgba(34,139,34,.3);}
-.top-btn.accent:hover{box-shadow:0 4px 12px rgba(34,139,34,.45);}
-.top-btn.logout{background:transparent;border-color:rgba(220,38,38,.4);color:#dc2626;}
-.top-btn.logout:hover{background:rgba(220,38,38,.1);}
+.top-btn{background:transparent;border:1px solid transparent;color:var(--text2);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:5px;transition:background .15s,color .15s;white-space:nowrap;}
+.top-btn:hover{background:var(--bg);color:var(--text);}
+.top-btn.accent{background:var(--pri);color:#fff;border:none;font-weight:600;box-shadow:0 1px 3px rgba(34,139,34,.35);transition:background .15s,box-shadow .15s,transform .15s;}
+.top-btn.accent:hover{background:var(--pri-d);box-shadow:0 3px 10px rgba(34,139,34,.35);transform:translateY(-1px);}
+.top-btn.logout{background:transparent;color:#dc2626;}
+.top-btn.logout:hover{background:rgba(220,38,38,.08);}
 .sync-status{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px;}
-.topbar-search{display:flex;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:0 8px;gap:4px;transition:border-color .2s;}
-.topbar-search:focus-within{border-color:var(--pri);}
-.topbar-search input{background:none;border:none;color:var(--text);padding:5px 4px;font-size:13px;width:170px;outline:none;}
+.topbar-search{display:flex;align-items:center;background:var(--bg);border:1px solid transparent;border-radius:9px;padding:0 10px;gap:5px;transition:border-color .2s,background .2s,box-shadow .2s;}
+.topbar-search:focus-within{border-color:var(--pri);background:var(--card);box-shadow:0 0 0 3px rgba(34,139,34,.08);}
+.topbar-search input{background:none;border:none;color:var(--text);padding:6px 4px;font-size:13px;width:170px;outline:none;}
 .topbar-search input::placeholder{color:var(--muted);}
-.today-badge{background:linear-gradient(135deg,#1a6b1a,#228b22);color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;}
+.today-badge{background:var(--pri-l);color:var(--pri-d);font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;border:1px solid rgba(34,139,34,.25);}
 .dark-toggle{background:none;border:none;color:var(--text);font-size:18px;cursor:pointer;padding:4px;transition:transform .3s;}
 .dark-toggle:hover{transform:rotate(30deg);}
 .app-body{display:flex;flex:1;min-height:0;overflow:hidden;}
@@ -75,9 +74,10 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .sidebar-section{padding:10px 12px;border-bottom:1px solid var(--border);}
 .sidebar.collapsed .sidebar-section{padding:10px 6px;}
 .sidebar-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap;overflow:hidden;}
-.nav-item:hover{background:var(--pri-l);color:var(--text);}
-.nav-item.active{background:var(--pri);color:#fff;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap;overflow:hidden;}
+.nav-item:hover{background:var(--bg);color:var(--text);}
+.nav-item.active{background:var(--pri-l);color:var(--pri-d);font-weight:600;}
+[data-theme="dark"] .nav-item.active{color:var(--accent);}
 .nav-item .nav-icon{font-size:16px;flex-shrink:0;width:20px;text-align:center;}
 .sidebar-filter{display:flex;flex-direction:column;gap:6px;}
 .sidebar-filter label{font-size:10px;font-weight:600;text-transform:uppercase;color:var(--muted);letter-spacing:.4px;}
@@ -102,11 +102,11 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .stat-bar-bg{width:100px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
 .stat-bar-fill{height:100%;background:var(--pri);border-radius:3px;transition:width .3s;}
 .board{display:flex;flex:1;overflow-x:auto;overflow-y:hidden;padding:14px;gap:14px;}
-.bucket{min-width:290px;max-width:320px;width:290px;background:var(--bg);border-radius:var(--radius);display:flex;flex-direction:column;flex-shrink:0;border:1px solid var(--border);}
-[data-theme="dark"] .bucket{background:#0f1f3d;}
-.bucket-hdr{display:flex;align-items:center;padding:10px 12px;gap:8px;border-bottom:1px solid var(--border);flex-shrink:0;position:sticky;top:0;z-index:10;background:inherit;border-radius:var(--radius) var(--radius) 0 0;}
-.bucket-title{font-weight:700;font-size:13px;flex:1;text-transform:uppercase;letter-spacing:.5px;}
-.bucket-count{background:var(--pri);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;}
+.bucket{min-width:290px;max-width:320px;width:290px;background:rgba(15,23,42,.028);border-radius:var(--radius);display:flex;flex-direction:column;flex-shrink:0;border:none;}
+[data-theme="dark"] .bucket{background:rgba(255,255,255,.03);}
+.bucket-hdr{display:flex;align-items:center;padding:12px 14px 8px;gap:8px;border-bottom:none;flex-shrink:0;position:sticky;top:0;z-index:10;background:inherit;border-radius:var(--radius) var(--radius) 0 0;}
+.bucket-title{font-weight:600;font-size:12px;flex:1;text-transform:uppercase;letter-spacing:.7px;color:var(--text2);}
+.bucket-count{background:transparent;color:var(--muted);font-size:11px;font-weight:600;padding:2px 7px;border-radius:99px;border:1px solid var(--border);}
 .bucket-hdr-actions{display:flex;gap:2px;margin-left:auto;opacity:0;transition:opacity .15s;}
 .bucket-hdr:hover .bucket-hdr-actions{opacity:1;}
 .bucket-move-btn{background:none;border:1px solid transparent;color:var(--text2);font-size:11px;padding:2px 5px;border-radius:4px;cursor:pointer;transition:all .12s;line-height:1;}
@@ -120,8 +120,8 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .quick-add-input::placeholder{color:var(--muted);}
 .quick-add-hint{font-size:10px;color:var(--muted);margin-top:3px;text-align:center;opacity:0;transition:opacity .15s;}
 .quick-add-input:focus ~ .quick-add-hint{opacity:1;}
-.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px 12px;cursor:grab;transition:transform .15s,box-shadow .15s;border-left:4px solid var(--border);position:relative;}
-.card:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.12);}
+.card{background:var(--card);border-radius:10px;box-shadow:var(--shadow);padding:11px 13px;cursor:grab;transition:transform .15s ease,box-shadow .15s ease;border-left:3px solid var(--border);position:relative;}
+.card:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(15,23,42,.05),0 10px 24px rgba(15,23,42,.09);}
 .card.dragging{opacity:.5;transform:rotate(2deg);}
 .card.overdue{box-shadow:0 0 0 2px var(--crit),var(--shadow);}
 .card.pri-critical{border-left-color:var(--crit);}
@@ -530,7 +530,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 
 
 /* ── Drag Indicator for Card Reordering ── */
-.drag-indicator{height:2px;background:var(--accent,#2563eb);border-radius:2px;margin:4px 0;transition:opacity .15s;box-shadow:0 0 4px rgba(37,99,235,.4);}
+.drag-indicator{height:2px;background:var(--pri);border-radius:2px;margin:4px 0;transition:opacity .15s;box-shadow:0 0 4px rgba(34,139,34,.4);}
 .card.dragging{opacity:0.4;transform:rotate(1deg);}
 /* ── Legal Tracker Button ── */
 .legal-tracker-btn{color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:6px;transition:opacity .2s,background .2s;text-decoration:none;font-size:11px;opacity:0.6;padding:4px 8px;display:flex;align-items:center;gap:4px;white-space:nowrap;}
@@ -1134,14 +1134,14 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 
 <div class="auth-overlay" id="authOverlay">
  <div class="auth-card">
-  <h1 style="font-family:'General Sans',sans-serif;font-weight:700;letter-spacing:-0.035em;">Task<span style="color:#228b22;font-weight:600;letter-spacing:-0.12em;margin:0 .05em">//</span>Aura</h1>
+  <h1 style="font-weight:700;letter-spacing:-0.02em;">TaskAura</h1>
   <p class="auth-sub" id="authSub">Sign in to your account</p>
   <div class="auth-error" id="loginError"></div>
   <div id="authFormSignIn">
    <input type="email" id="loginEmail" placeholder="Email address" onkeydown="if(event.key==='Enter')doLogin()">
    <input type="password" id="loginPw" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
    <button class="auth-btn" onclick="doLogin()">Sign In</button>
-   <p style="font-size:12px;color:#777;margin-top:14px">Don't have an account? <a href="#" style="color:#2563eb;font-weight:600" onclick="event.preventDefault();showSignUp()">Sign up</a></p>
+   <p style="font-size:12px;color:#777;margin-top:14px">Don't have an account? <a href="#" style="color:var(--pri);font-weight:600" onclick="event.preventDefault();showSignUp()">Sign up</a></p>
   </div>
   <div id="authFormSignUp" style="display:none">
    <input type="text" id="signupName" placeholder="Full name" onkeydown="if(event.key==='Enter')doSignUp()">
@@ -1149,7 +1149,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
    <input type="password" id="signupPw" placeholder="Password (min 6 characters)" onkeydown="if(event.key==='Enter')doSignUp()">
    <button class="auth-btn" onclick="doSignUp()">Create Account</button>
    <p style="font-size:11px;color:#888;margin-top:12px;line-height:1.6">By creating an account you agree to our <a href="/terms" target="_blank" style="color:#228b22;font-weight:600">Terms of Service</a> and acknowledge our <a href="/privacy" target="_blank" style="color:#228b22;font-weight:600">Privacy Policy</a>.</p>
-   <p style="font-size:12px;color:#777;margin-top:10px">Already have an account? <a href="#" style="color:#2563eb;font-weight:600" onclick="event.preventDefault();showSignIn()">Sign in</a></p>
+   <p style="font-size:12px;color:#777;margin-top:10px">Already have an account? <a href="#" style="color:var(--pri);font-weight:600" onclick="event.preventDefault();showSignIn()">Sign in</a></p>
   </div>
  </div>
 </div>
@@ -1167,7 +1167,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 </div>
 <div class="topbar">
  <button class="mobile-hamburger" id="mobileHamburger" onclick="toggleMobileSidebar()">☰</button>
- <div class="logo"><span class="logo-tile">/</span><span>Task<span class="logo-accent">//</span>Aura</span></div>
+ <div class="logo">TaskAura</div>
  <input type="hidden" id="projName" value="My Project">
  <div class="topbar-search"><span>🔍</span><input type="search" id="searchBox" placeholder="Search tasks..." oninput="applyFilters()"></div>
  <button class="top-btn" onclick="setView('mastercal')" title="My Calendar">📅</button>
@@ -1280,8 +1280,8 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 <div class="bucket-expanded" id="bucketExpanded"></div>
 </div>
 
-<div class="modal-overlay" id="projectModal"><div class="modal" style="width:400px"><div class="modal-hdr"><h2 id="projectModalTitle">New Project</h2><button class="modal-close" onclick="closeProjectModal()">×</button></div><div class="modal-body"><div><label>Project Name *</label><input type="text" id="pName" placeholder="e.g. Saddleside Phase 2..."></div><div><label>Color</label><input type="color" id="pColor" value="#2563eb" style="width:60px;height:34px"></div></div><div class="modal-footer"><button class="btn-delete hidden" id="btnDeleteProject" onclick="deleteProject()">Delete</button><button class="btn-cancel" onclick="closeProjectModal()">Cancel</button><button class="btn-save" onclick="saveProject()">Save</button></div></div></div>
-<div class="modal-overlay" id="scheduleModal"><div class="modal" style="width:420px"><div class="modal-hdr"><h2 id="scheduleModalTitle">Add Task</h2><button class="modal-close" onclick="closeScheduleModal()">×</button></div><div class="modal-body"><input type="hidden" id="sProjectId" value=""><div><label>Task Name *</label><input type="text" id="sName" placeholder="e.g. Site Grading..."></div><div class="modal-row"><div><label>Start Date</label><input type="date" id="sStart"></div><div><label>End Date</label><input type="date" id="sEnd"></div></div><div class="modal-row"><div><label>Color</label><input type="color" id="sColor" value="#2563eb"></div><div><label>Progress %</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="sProg" min="0" max="100" value="0" oninput="document.getElementById('sProgVal').textContent=this.value+'%'" style="flex:1"><span id="sProgVal" style="font-size:13px;font-weight:600;min-width:32px">0%</span></div></div></div></div><div class="modal-footer"><button class="btn-delete hidden" id="btnDeleteSchedule" onclick="deleteScheduleTask()">Delete</button><button class="btn-cancel" onclick="closeScheduleModal()">Cancel</button><button class="btn-save" onclick="saveScheduleTask()">Save</button></div></div></div>
+<div class="modal-overlay" id="projectModal"><div class="modal" style="width:400px"><div class="modal-hdr"><h2 id="projectModalTitle">New Project</h2><button class="modal-close" onclick="closeProjectModal()">×</button></div><div class="modal-body"><div><label>Project Name *</label><input type="text" id="pName" placeholder="e.g. Saddleside Phase 2..."></div><div><label>Color</label><input type="color" id="pColor" value="#228b22" style="width:60px;height:34px"></div></div><div class="modal-footer"><button class="btn-delete hidden" id="btnDeleteProject" onclick="deleteProject()">Delete</button><button class="btn-cancel" onclick="closeProjectModal()">Cancel</button><button class="btn-save" onclick="saveProject()">Save</button></div></div></div>
+<div class="modal-overlay" id="scheduleModal"><div class="modal" style="width:420px"><div class="modal-hdr"><h2 id="scheduleModalTitle">Add Task</h2><button class="modal-close" onclick="closeScheduleModal()">×</button></div><div class="modal-body"><input type="hidden" id="sProjectId" value=""><div><label>Task Name *</label><input type="text" id="sName" placeholder="e.g. Site Grading..."></div><div class="modal-row"><div><label>Start Date</label><input type="date" id="sStart"></div><div><label>End Date</label><input type="date" id="sEnd"></div></div><div class="modal-row"><div><label>Color</label><input type="color" id="sColor" value="#228b22"></div><div><label>Progress %</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="sProg" min="0" max="100" value="0" oninput="document.getElementById('sProgVal').textContent=this.value+'%'" style="flex:1"><span id="sProgVal" style="font-size:13px;font-weight:600;min-width:32px">0%</span></div></div></div></div><div class="modal-footer"><button class="btn-delete hidden" id="btnDeleteSchedule" onclick="deleteScheduleTask()">Delete</button><button class="btn-cancel" onclick="closeScheduleModal()">Cancel</button><button class="btn-save" onclick="saveScheduleTask()">Save</button></div></div></div>
 <div class="cal-day-modal" id="calDayModal"><div class="cal-day-panel"><div class="cal-day-panel-hdr"><h3 id="calDayTitle"></h3><button class="cal-day-panel-close" onclick="closeCalDay()">×</button></div><div class="cal-day-panel-body" id="calDayBody"></div></div></div>
 <div class="modal-overlay" id="taskModal"><div class="modal"><div class="modal-hdr"><div><h2 id="modalTitle">New Task</h2><div class="modal-breadcrumb" id="modalBreadcrumb"></div></div><button class="modal-close" onclick="closeTaskModal()">×</button></div><div class="modal-body"><div><label>Task Title *</label><input type="text" id="mTitle" placeholder="Enter task title..."></div><datalist id="assigneeList"></datalist>
 <div class="modal-row"><div><label>Assignee</label><input type="text" id="mAssignee" placeholder="Name" list="assigneeList" autocomplete="off"></div><div><label>Bucket</label><select id="mBucket"></select></div></div><div class="modal-row"><div><label>Due Date</label><input type="date" id="mDue"></div><div><label>Priority</label><select id="mPriority"><option value="Medium">Medium</option><option value="Critical">Critical</option><option value="High">High</option><option value="Low">Low</option></select></div></div><div class="modal-row"><div><label>Department</label><select id="mDepartment"><option value="General">General</option><option value="Acquisition">Acquisition</option><option value="Entitlements">Entitlements</option><option value="Development">Development</option><option value="Legal">Legal</option><option value="HOA">HOA</option><option value="Engineering">Engineering</option></select></div><div><label>Project</label><select id="mProject"><option value="">— None —</option></select></div></div><div class="modal-row"><div><label>Actual Date</label><input type="date" id="mActualDate"></div><div><label>Created Date</label><input type="date" id="mCreated" title="Task age is calculated from this date. Override if needed."></div></div><div class="modal-row"><div><label>% Complete</label><div style="display:flex;align-items:center;gap:10px"><input type="range" id="mPct" min="0" max="100" value="0" oninput="document.getElementById('mPctVal').textContent=this.value+'%'" style="flex:1"><span id="mPctVal" style="font-size:13px;font-weight:600;min-width:36px">0%</span></div></div></div><div><label>Labels</label><div class="label-chips" id="mLabels"></div></div><div><label>Description / Notes</label><textarea id="mNotes" placeholder="Add details..."></textarea><div id="mNoteHistorySection"></div></div><div><label>FILE PATH</label>
@@ -3930,19 +3930,12 @@ function generatePDFReport(){
     });
   });
 
-  // ── Brand: landing-page logo (orange tile with "/" + Task//Aura wordmark) ──
+  // ── Brand: plain wordmark ──
   function drawLogo(x,baseY,tile,fontSz){
-    doc.setFillColor(...accentRGB);
-    doc.roundedRect(x,baseY-tile*0.78,tile,tile,tile*0.28,tile*0.28,'F');
     doc.setFont('helvetica','bold');
-    doc.setFontSize(tile*2.2);
-    doc.setTextColor(255,255,255);
-    doc.text('/',x+tile/2,baseY-tile*0.78+tile*0.74,'center');
-    let lx=x+tile+tile*0.4;
     doc.setFontSize(fontSz);
-    doc.setTextColor(...inkRGB);doc.text('Task',lx,baseY);lx+=doc.getTextWidth('Task');
-    doc.setTextColor(...accentRGB);doc.text('//',lx,baseY);lx+=doc.getTextWidth('//');
-    doc.setTextColor(...inkRGB);doc.text('Aura',lx,baseY);
+    doc.setTextColor(...inkRGB);
+    doc.text('TaskAura',x,baseY);
   }
 
   // ── Centered watermark on every page ──

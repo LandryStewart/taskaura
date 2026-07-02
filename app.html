@@ -5757,6 +5757,8 @@ function generatePDFSummary(){
       department:t.department||'Other',
       project:t.project||'',
       title:t.title||t.text||'',
+      created:t.created||'',
+      startDate:t.startDate||'',
       due:t.due||'',
       actualDate:t.actualDate||'',
       notes:t.notes||'',
@@ -5775,6 +5777,8 @@ function generatePDFSummary(){
           department:'Development',
           project:p.name,
           title:n.task||'',
+          created:n.created||n.dateAdded||'',
+          startDate:'',
           due:n.dueDate||'',
           actualDate:'',
           notes:n.noteText||'',
@@ -5791,6 +5795,8 @@ function generatePDFSummary(){
           department:'Development',
           project:key.replace(/([A-Z])/g,' $1').replace(/^./,function(s){return s.toUpperCase();}),
           title:item.task||'',
+          created:item.created||item.dateAdded||'',
+          startDate:'',
           due:item.dueDate||'',
           actualDate:'',
           notes:item.noteText||'',
@@ -5799,13 +5805,14 @@ function generatePDFSummary(){
       });
     });
   }
-  function fmtDate(d){return d?new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'';}
-  function daysUntil(d){if(!d)return '';var dd=new Date(d+'T00:00:00');return String(Math.round((dd-today)/86400000));}
+  function fmtDate(d){if(!d)return '';var s=String(d);var dd=new Date(s.indexOf('T')>=0?s:s+'T00:00:00');if(isNaN(dd))return '';return dd.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'});}
+  function daysUntil(d){if(!d)return '';var dd=new Date(d+'T00:00:00');if(isNaN(dd))return '';return String(Math.round((dd-today)/86400000));}
   function buildRow(t,includeProject,includeDept){
     var row=[];
     if(includeDept)row.push(t.department);
     if(includeProject)row.push(t.project);
     row.push(t.title);
+    row.push(fmtDate(t.startDate||t.created));
     row.push(fmtDate(t.due));
     row.push(fmtDate(t.actualDate));
     row.push((t.notes||'').substring(0,120));
@@ -5898,12 +5905,12 @@ function generatePDFSummary(){
     });
     if(yStart>230){doc.addPage();drawReportHeader('Task Summary by Department');yStart=38;}
     yStart=drawSectionBanner(deptName,yStart);
-    var deptHead=isAll?['Project','Task','Expected Date','Actual Date','Notes','Days Until Due','Priority']
-                      :['Task','Expected Date','Actual Date','Notes','Days Until Due','Priority'];
+    var deptHead=isAll?['Project','Task','Start Date','Expected Date','Actual Date','Notes','Days Until Due','Priority']
+                      :['Task','Start Date','Expected Date','Actual Date','Notes','Days Until Due','Priority'];
     var deptRows=deptTasks.map(function(t){return buildRow(t,isAll,false);});
     var deptWidths=isAll
-      ?{0:{cellWidth:26},1:{cellWidth:42},2:{cellWidth:20},3:{cellWidth:20},4:{cellWidth:46},5:{cellWidth:16,halign:'center'},6:{cellWidth:18,halign:'center',fontStyle:'bold'}}
-      :{0:{cellWidth:48},1:{cellWidth:22},2:{cellWidth:22},3:{cellWidth:60},4:{cellWidth:16,halign:'center'},5:{cellWidth:20,halign:'center',fontStyle:'bold'}};
+      ?{0:{cellWidth:22},1:{cellWidth:38},2:{cellWidth:20},3:{cellWidth:20},4:{cellWidth:20},5:{cellWidth:38},6:{cellWidth:14,halign:'center'},7:{cellWidth:16,halign:'center',fontStyle:'bold'}}
+      :{0:{cellWidth:46},1:{cellWidth:22},2:{cellWidth:22},3:{cellWidth:22},4:{cellWidth:44},5:{cellWidth:16,halign:'center'},6:{cellWidth:16,halign:'center',fontStyle:'bold'}};
     doc.autoTable({
       head:[deptHead],
       body:deptRows,

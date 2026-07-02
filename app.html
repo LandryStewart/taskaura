@@ -5849,11 +5849,11 @@ function exportSummaryExcel(){
   }
   function buildExecSheet(critical){
     var ws={};
-    var COLS=8;
+    var COLS=9;
     for(var c=0;c<COLS;c++)setCell(ws,0,c,c===0?'EXECUTIVE SUMMARY — CRITICAL ITEMS':'',titleStyle());
     var subtitle=longDate+'  ·  '+critical.length+' critical item'+(critical.length===1?'':'s')+'  ·  '+(isAll?'All Projects':proj);
     for(var c=0;c<COLS;c++)setCell(ws,1,c,c===0?subtitle:'',subtitleStyle());
-    var headers=['Project','Department','Task','Priority','Assignee','Due Date','Days Left','Notes'];
+    var headers=['Project','Department','Task','Priority','Assignee','Expected Date','Actual Date','Days Until Due','Notes'];
     for(var c=0;c<COLS;c++)setCell(ws,2,c,headers[c],headStyle());
     var sorted=critical.slice();
     sorted.sort(function(a,b){var da=deptOrder.indexOf(a.department);if(da<0)da=99;var db=deptOrder.indexOf(b.department);if(db<0)db=99;if(da!==db)return da-db;if(!a.due&&!b.due)return (a.project||'').localeCompare(b.project||'');if(!a.due)return 1;if(!b.due)return -1;return a.due.localeCompare(b.due);});
@@ -5872,8 +5872,9 @@ function exportSummaryExcel(){
         setCell(ws,r,3,t.priority,priCellStyle(t.priority,alt));
         setCell(ws,r,4,t.assignee||'',bodyStyle(alt));
         setCell(ws,r,5,fmtDate(t.due),bodyStyle(alt,{alignment:{vertical:'center',horizontal:'center'}}));
-        setCell(ws,r,6,du===null?'':du,daysStyle(du,alt));
-        setCell(ws,r,7,(t.notes||'').substring(0,250),bodyStyle(alt));
+        setCell(ws,r,6,fmtDate(t.actualDate),bodyStyle(alt,{alignment:{vertical:'center',horizontal:'center'}}));
+        setCell(ws,r,7,du===null?'':du,daysStyle(du,alt));
+        setCell(ws,r,8,(t.notes||'').substring(0,250),bodyStyle(alt));
         r++;
       });
     }
@@ -5883,7 +5884,7 @@ function exportSummaryExcel(){
       {s:{r:1,c:0},e:{r:1,c:COLS-1}},
       {s:{r:r+1,c:0},e:{r:r+1,c:COLS-1}}
     ];
-    ws['!cols']=[{wch:24},{wch:16},{wch:42},{wch:11},{wch:18},{wch:12},{wch:11},{wch:55}];
+    ws['!cols']=[{wch:24},{wch:16},{wch:42},{wch:11},{wch:18},{wch:12},{wch:12},{wch:14},{wch:55}];
     ws['!rows']=[{hpt:32},{hpt:18},{hpt:22}];
     ws['!freeze']={xSplit:0,ySplit:3};
     ws['!autofilter']={ref:'A3:'+colLetter(COLS-1)+(sorted.length?(3+sorted.length):4)};
@@ -5893,19 +5894,19 @@ function exportSummaryExcel(){
   }
   function buildProjectSheet(projName,tasks){
     var ws={};
-    var COLS=10;
-    var nTot=tasks.length,nCrit=0,nHigh=0,nOver=0,pctSum=0,pctCnt=0;
-    tasks.forEach(function(t){if(t.priority==='Critical')nCrit++;if(t.priority==='High')nHigh++;var du=daysUntil(t.due);if(du!==null&&du<0)nOver++;if(typeof t.pct==='number'&&t.pct>=0){pctSum+=t.pct;pctCnt++;}});
-    var avgPct=pctCnt?Math.round(pctSum/pctCnt):0;
+    var COLS=9;
+    var nTot=tasks.length,nCrit=0,nHigh=0,nOver=0;
+    tasks.forEach(function(t){if(t.priority==='Critical')nCrit++;if(t.priority==='High')nHigh++;var du=daysUntil(t.due);if(du!==null&&du<0)nOver++;});
+    // (avgPct removed)
     for(var c=0;c<COLS;c++)setCell(ws,0,c,c===0?(projName.toUpperCase()+' — TASK REGISTER'):'',titleStyle());
-    var sub='TASK SUMMARY BY DEPARTMENT  ·  '+longDate+'  ·  '+nTot+' open item'+(nTot===1?'':'s')+'  ·  '+nCrit+' critical  ·  '+nHigh+' high  ·  '+nOver+' overdue  ·  '+avgPct+'% avg complete';
+    var sub='TASK SUMMARY BY DEPARTMENT  ·  '+longDate+'  ·  '+nTot+' open item'+(nTot===1?'':'s')+'  ·  '+nCrit+' critical  ·  '+nHigh+' high  ·  '+nOver+' overdue';
     for(var c=0;c<COLS;c++)setCell(ws,1,c,c===0?sub:'',subtitleStyle());
     var byDept={};
     tasks.forEach(function(t){var d=t.department||'Other';(byDept[d]=byDept[d]||[]).push(t);});
     var deptKeys=deptOrder.filter(function(d){return byDept[d];}).concat(Object.keys(byDept).filter(function(d){return deptOrder.indexOf(d)<0;}).sort());
     var r=2;
-    var TABLE_COLS=9;
-    var headers=['Task','Priority','Assignee','Start Date','Due Date','Days Left','% Complete','Bucket','Notes'];
+    var TABLE_COLS=8;
+    var headers=['Task','Priority','Assignee','Start Date','Expected Date','Actual Date','Days Until Due','Notes'];
     if(!ws['!merges'])ws['!merges']=[];
     deptKeys.forEach(function(dept){
       var rows=byDept[dept]||[];
@@ -5922,18 +5923,15 @@ function exportSummaryExcel(){
       rows.forEach(function(t,i){
         var alt=(i%2)===1;
         var du=daysUntil(t.due);
-        var pctVal=t.pct||0;
-        var pctTxt=pctVal+'%';
-        var pctColor=(pctVal>=100)?GREEN:BODY;
+        // (pctVal, pctTxt, pctColor removed - % Complete column removed)
         setCell(ws,r,0,t.title||'',bodyStyle(alt,{font:{name:'Calibri',sz:10,bold:true,color:{rgb:NAVY}}}));
         setCell(ws,r,1,t.priority,priCellStyle(t.priority,alt));
         setCell(ws,r,2,t.assignee||'',bodyStyle(alt));
         setCell(ws,r,3,fmtDate(t.startDate||t.created),bodyStyle(alt,{alignment:{vertical:'center',horizontal:'center'}}));
         setCell(ws,r,4,fmtDate(t.due),bodyStyle(alt,{alignment:{vertical:'center',horizontal:'center'}}));
-        setCell(ws,r,5,du===null?'':du,daysStyle(du,alt));
-        setCell(ws,r,6,pctTxt,bodyStyle(alt,{font:{name:'Calibri',sz:10,bold:(pctVal>=100),color:{rgb:pctColor}},alignment:{vertical:'center',horizontal:'center'}}));
-        setCell(ws,r,7,t.bucket||'',bodyStyle(alt));
-        setCell(ws,r,8,(t.notes||'').substring(0,250),bodyStyle(alt));
+        setCell(ws,r,5,fmtDate(t.actualDate),bodyStyle(alt,{alignment:{vertical:'center',horizontal:'center'}}));
+        setCell(ws,r,6,du===null?'':du,daysStyle(du,alt));
+        setCell(ws,r,7,(t.notes||'').substring(0,250),bodyStyle(alt));
         setCell(ws,r,TABLE_COLS,'',{fill:{fgColor:{rgb:WHITE}}});
         r++;
       });
@@ -5944,7 +5942,7 @@ function exportSummaryExcel(){
     ws['!merges'].push({s:{r:0,c:0},e:{r:0,c:COLS-1}});
     ws['!merges'].push({s:{r:1,c:0},e:{r:1,c:COLS-1}});
     ws['!merges'].push({s:{r:r,c:0},e:{r:r,c:COLS-1}});
-    ws['!cols']=[{wch:42},{wch:11},{wch:18},{wch:12},{wch:12},{wch:11},{wch:12},{wch:16},{wch:50},{wch:3}];
+    ws['!cols']=[{wch:42},{wch:11},{wch:18},{wch:12},{wch:12},{wch:12},{wch:14},{wch:50},{wch:3}];
     ws['!rows']=[{hpt:32},{hpt:18}];
     ws['!freeze']={xSplit:1,ySplit:2};
     applyPrintSetup(ws);

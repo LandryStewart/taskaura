@@ -2951,7 +2951,7 @@ function closeBucketExpand(){document.getElementById('bucketOverlay').classList.
 function toggleBucketCollapse(bucket){if(!state.collapsedBuckets)state.collapsedBuckets=[];const idx=state.collapsedBuckets.indexOf(bucket);if(idx>=0)state.collapsedBuckets.splice(idx,1);else state.collapsedBuckets.push(bucket);save();renderBoard();}
 function taskAgeLabel(t){if(!t||!t.created)return '';var c=new Date(t.created+'T00:00:00');if(isNaN(c))return '';var now=new Date();var ms=now-c;if(ms<0)ms=0;var days=Math.floor(ms/86400000);var lbl;if(days<1)lbl='Created today';else if(days===1)lbl='Created 1d ago';else if(days<14)lbl='Created '+days+'d ago';else if(days<60)lbl='Created '+Math.floor(days/7)+'w ago';else if(days<730)lbl='Created '+Math.floor(days/30)+'mo ago';else lbl='Created '+Math.floor(days/365)+'y ago';var cls=days<=3?'task-age-ribbon new':'task-age-ribbon';return '<div class="'+cls+'" title="Created '+t.created+'">🕒 '+lbl+'</div>';}
 function cardHTML(t){const od=isOverdue(t),cl=(t.checklist||[]),cd=cl.filter(c=>c.done).length,ct=cl.length,sel=selectedTaskIds.has(t.id);let ringHTML='';if(ct>0){const pct=ct?Math.round(cd/ct*100):0,r=9,circ=2*Math.PI*r,offset=circ-(pct/100)*circ,col2=pct>=100?'var(--low)':'var(--pri)';ringHTML='<div class="card-cl-ring"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="'+r+'" fill="none" stroke="var(--border)" stroke-width="2.5"/><circle cx="12" cy="12" r="'+r+'" fill="none" stroke="'+col2+'" stroke-width="2.5" stroke-dasharray="'+circ.toFixed(1)+'" stroke-dashoffset="'+offset.toFixed(1)+'" transform="rotate(-90 12 12)" stroke-linecap="round"/></svg><span>'+cd+'/'+ct+'</span></div>';}return'<div class="card '+priClass(t.priority)+(od?' overdue':'')+(sel?' selected':'')+'" draggable="true" ondragstart="dragStart(event,'+t.id+')" ondragend="dragEnd(event)" onclick="openEditTask('+t.id+')"><input type="checkbox" class="card-select" '+(sel?'checked':'')+' onclick="event.stopPropagation();toggleCardSelect('+t.id+',this)">'+taskAgeLabel(t)+'<div class="card-quick-edit"><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'assignee\',event)" title="Edit assignee">👤</button><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'due\',event)" title="Edit due">📅</button><button class="qe-btn" onclick="event.stopPropagation();showQuickEdit('+t.id+',\'priority\',event)" title="Edit priority">⚡</button></div><div class="card-title">'+esc(t.title)+'</div><div class="card-meta">'+(t.assignee?'<span class="card-avatar" style="background:'+avatarColor(t.assignee)+'" title="'+esc(t.assignee)+'">'+initials(t.assignee)+'</span>':'')+(t.due?'<span class="card-due '+(od?'overdue-text':'')+'">📅 '+fmtDate(t.due)+'</span>':'')+'<span class="card-pri '+priBadge(t.priority)+'">'+(t.priority||'Medium')+'</span></div>'+((t.labels||[]).length?'<div class="card-labels">'+(t.labels||[]).map(l=>{const lb=state.labels.find(x=>x.name===l);return'<span class="card-label" style="background:'+(lb?lb.color:'#888')+'">'+esc(l)+'</span>';}).join('')+'</div>':'')+(t.pct>0?'<div class="card-progress"><div class="card-prog-bg"><div class="card-prog-fill" style="width:'+t.pct+'%"></div></div><span class="card-prog-pct">'+t.pct+'%</span></div>':'')+(t.filePath?'<div class="card-filepath" title="'+esc(t.filePath)+'">📂 <span>'+esc(t.filePath.length>35?t.filePath.slice(-35):t.filePath)+'</span></div>':'')+ringHTML+(function(){var lnks=state.notes.filter(function(n){return n.linkedTaskId===t.id;});if(!lnks.length)return'';return lnks.map(function(n){return'<div class="card-linked-note" onclick="event.stopPropagation();jumpToLinkedNote('+n.id+')" title="Open: '+esc(n.title||'Untitled')+'">📝 '+(esc(n.title||'Linked Note'))+'</div>';}).join('');}())+'</div>';}
-function quickAdd(bucket,el){const title=el.value.trim();if(!title)return;const newTask={id:state.nextId++,title:title,bucket:bucket,priority:'Medium',pct:0,labels:[],checklist:[],filePath:'',created:new Date().toISOString().split('T')[0],history:[],department:teamDeptTab==='acquisition'?'Acquisition':teamDeptTab==='entitlement'?'Entitlements':teamDeptTab==='development'?'Development':teamDeptTab==='legal'?'Legal':teamDeptTab==='hoa'?'HOA':teamDeptTab==='engineering'?'Engineering':'General',project:currentTeamWorkspaceId&&getActiveTeamProject()?getActiveTeamProject():''};logTaskChange(newTask,'Created','Quick-added to '+bucket);logActivity('Task created',title);state.tasks.push(newTask);el.value='';if(currentTeamWorkspaceId&&currentView==='dashboard'){renderDashboard();}else{render();}}
+function quickAdd(bucket,el){const title=el.value.trim();if(!title)return;const newTask={id:state.nextId++,title:title,bucket:bucket,priority:'Medium',pct:0,labels:[],checklist:[],filePath:'',created:new Date().toISOString().split('T')[0],history:[],department:teamDeptTab==='acquisition'?'Acquisition':teamDeptTab==='entitlement'?'Entitlements':teamDeptTab==='development'?'Development':teamDeptTab==='legal'?'Legal':teamDeptTab==='hoa'?'HOA':teamDeptTab==='engineering'?'Engineering':'General',project:currentTeamWorkspaceId&&getActiveTeamProject()?getActiveTeamProject():''};logTaskChange(newTask,'Created','Quick-added to '+bucket);logActivity('Task created',title);state.tasks.push(newTask);save();el.value='';if(currentTeamWorkspaceId&&currentView==='dashboard'){renderDashboard();}else{render();}}
 function addBucketFromBoard(){const name=prompt('New bucket name:');if(name&&name.trim()){state.buckets.push(name.trim());save();render();}}
 function moveBucket(idx,dir){var ni=idx+dir;if(ni<0||ni>=state.buckets.length)return;var t=state.buckets[idx];state.buckets[idx]=state.buckets[ni];state.buckets[ni]=t;save();render();}
 function showQuickEdit(taskId,field,event){closeAllQuickEdits();const card=event.target.closest('.card');if(!card)return;const t=state.tasks.find(x=>x.id===taskId);if(!t)return;const popup=document.createElement('div');popup.className='qe-popup';popup.onclick=function(e){e.stopPropagation();};if(field==='due')popup.innerHTML='<label>Due Date</label><input type="date" id="qeVal" value="'+(t.due||'')+'"><button onclick="applyQuickEdit('+taskId+',\'due\')">Save</button>';else if(field==='assignee')popup.innerHTML='<label>Assignee</label><input type="text" id="qeVal" value="'+esc(t.assignee||'')+'"><button onclick="applyQuickEdit('+taskId+',\'assignee\')">Save</button>';else if(field==='priority')popup.innerHTML='<label>Priority</label><select id="qeVal"><option '+(t.priority==='Critical'?'selected':'')+'>Critical</option><option '+(t.priority==='High'?'selected':'')+'>High</option><option '+(t.priority==='Medium'?'selected':'')+'>Medium</option><option '+(t.priority==='Low'?'selected':'')+'>Low</option></select><button onclick="applyQuickEdit('+taskId+',\'priority\')">Save</button>';card.appendChild(popup);var inp=popup.querySelector('#qeVal');if(inp)inp.focus();}
@@ -5725,10 +5725,11 @@ function generatePDFSummary(){
   var today=new Date();
   var todayStr2=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
   var priOrder={Critical:0,High:1,Medium:2,Low:3};
-  var GREEN_BANNER=[197,224,180];
-  var GREEN_HEAD=[34,139,34];
-  var RED_BANNER=[244,200,200];
-  var RED_HEAD=[180,30,30];
+  var INK=[31,41,55];          // slate-800 — headings, banners
+  var MUTED=[107,114,128];     // gray-500 — secondary text
+  var RULE=[209,213,219];      // gray-300 — rules/lines
+  var HEAD_FILL=[243,244,246]; // gray-100 — table header fill
+  var ALT_FILL=[249,250,251];  // gray-50  — zebra rows
   function normPri(p){
     if(!p)return '';
     var s=String(p).toLowerCase();
@@ -5818,53 +5819,38 @@ function generatePDFSummary(){
     if(p==='Low')return [80,140,80];
     return null;
   }
-  function drawTopHeader(label){
-    doc.setFontSize(20);doc.setFont(undefined,'bold');doc.setTextColor(34,139,34);
-    doc.text(proj,14,16);
-    doc.setTextColor(0);
-    doc.setFontSize(11);doc.setFont(undefined,'normal');
-    doc.text(label,14,23);
-    doc.setFontSize(9);doc.setTextColor(120);
-    doc.text('Generated: '+todayStr2,14,29);
-    doc.setTextColor(0);
-  }
-  function drawBanner(name,yPos,colorArr){
+  function drawReportHeader(subtitle){
     var pageW=doc.internal.pageSize.width;
-    doc.setFillColor(colorArr[0],colorArr[1],colorArr[2]);
-    doc.rect(14,yPos,pageW-28,12,'F');
-    doc.setFontSize(16);doc.setFont(undefined,'bold');doc.setTextColor(0,0,0);
-    doc.text(name.toUpperCase(),pageW/2,yPos+8,{align:'center'});
-    return yPos+14;
+    doc.setTextColor(INK[0],INK[1],INK[2]);doc.setFontSize(21);doc.setFont(undefined,'bold');
+    doc.text(proj,14,20);
+    doc.setFontSize(9);doc.setFont(undefined,'normal');doc.setTextColor(MUTED[0],MUTED[1],MUTED[2]);
+    doc.text(subtitle.toUpperCase(),14,27);
+    doc.text(todayStr2,pageW-14,27,{align:'right'});
+    doc.setDrawColor(INK[0],INK[1],INK[2]);doc.setLineWidth(.7);
+    doc.line(14,31,pageW-14,31);
+    doc.setLineWidth(.2);doc.setTextColor(0);
   }
-  var SALMON_BANNER=[251,224,224];
-  function drawForestarHeader(subtitle){
-    doc.setTextColor(0);doc.setFontSize(22);doc.setFont(undefined,'bold');
-    doc.text(proj,14,32);
-    doc.setFontSize(11);doc.setFont(undefined,'normal');doc.setTextColor(200,60,60);
-    doc.text(subtitle,14,38);
-    doc.setTextColor(120);doc.setFontSize(9);
-    doc.text('Generated '+todayStr2,14,43);
-    doc.setTextColor(0);doc.setDrawColor(220);doc.line(14,46,doc.internal.pageSize.width-14,46);
-  }
-  function drawSalmonBanner(name,yPos){
+  function drawSectionBanner(name,yPos){
     var pageW=doc.internal.pageSize.width;
-    doc.setFillColor(SALMON_BANNER[0],SALMON_BANNER[1],SALMON_BANNER[2]);
+    doc.setFillColor(INK[0],INK[1],INK[2]);
     doc.rect(14,yPos,pageW-28,8,'F');
-    doc.setFontSize(11);doc.setFont(undefined,'bold');doc.setTextColor(80,20,20);
+    doc.setFontSize(10);doc.setFont(undefined,'bold');doc.setTextColor(255,255,255);
     doc.text(name.toUpperCase(),18,yPos+5.5);
-    doc.setTextColor(0);
+    doc.setFont(undefined,'normal');doc.setTextColor(0);
     return yPos+10;
   }
   function fmtFooter(pageNo,pageCount){
-    doc.setFontSize(8);doc.setTextColor(140);
     var h=doc.internal.pageSize.height,w=doc.internal.pageSize.width;
-    doc.text('FORESTAR — '+proj,14,h-8);
+    doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(.3);
+    doc.line(14,h-12,w-14,h-12);
+    doc.setFontSize(8);doc.setTextColor(MUTED[0],MUTED[1],MUTED[2]);
+    doc.text(proj,14,h-8);
     doc.text(todayStr2,w/2,h-8,{align:'center'});
     doc.text('Page '+pageNo+' of '+pageCount,w-14,h-8,{align:'right'});
     doc.setTextColor(0);
   }
-  drawForestarHeader('Critical Priority Summary');
-  var y=52;
+  drawReportHeader('Critical Priority Summary');
+  var y=38;
   var critical=allTasks.filter(function(t){return t.priority==='Critical';});
   if(critical.length===0){
     doc.setFontSize(11);doc.setTextColor(120);
@@ -5884,41 +5870,18 @@ function generatePDFSummary(){
     var _critDeptOrder=depts.filter(function(d){return _critByDept[d];}).concat(Object.keys(_critByDept).filter(function(d){return depts.indexOf(d)<0;}));
     _critDeptOrder.forEach(function(deptName){
       var rows=_critByDept[deptName];
-      if(y>230){doc.addPage();drawForestarHeader('Critical Priority Summary');y=52;}
-      y=drawSalmonBanner(deptName,y);
+      if(y>230){doc.addPage();drawReportHeader('Critical Priority Summary');y=38;}
+      y=drawSectionBanner(deptName,y);
       var critHead2=isAll?['Project','Task','Start Date','Expected Date','Actual Date','Notes','Days Until Due','Priority']:['Task','Start Date','Expected Date','Actual Date','Notes','Days Until Due','Priority'];
       var critRows2=rows.map(function(t){var r=[];if(isAll)r.push(t.project);r.push(t.title);r.push(fmtDate(t.startDate||t.created));r.push(fmtDate(t.due));r.push(fmtDate(t.actualDate));r.push((t.notes||'').substring(0,120));r.push(daysUntil(t.due));r.push(t.priority);return r;});
       var critWidths2=isAll?{0:{cellWidth:22},1:{cellWidth:38},2:{cellWidth:20},3:{cellWidth:20},4:{cellWidth:20},5:{cellWidth:38},6:{cellWidth:14,halign:'center'},7:{cellWidth:16,halign:'center',fontStyle:'bold'}}:{0:{cellWidth:46},1:{cellWidth:22},2:{cellWidth:22},3:{cellWidth:22},4:{cellWidth:44},5:{cellWidth:16,halign:'center'},6:{cellWidth:16,halign:'center',fontStyle:'bold'}};
-      doc.autoTable({head:[critHead2],body:critRows2,startY:y,margin:{top:52,bottom:18,left:14,right:14},headStyles:{fillColor:[240,240,240],fontSize:9,fontStyle:'bold',textColor:[60,60,60],lineColor:[200,200,200],lineWidth:.1},bodyStyles:{fontSize:9,cellPadding:2,lineColor:[230,230,230],lineWidth:.1},alternateRowStyles:{fillColor:[252,252,252]},columnStyles:critWidths2,didParseCell:function(data){var lastIdx=critHead2.length-1;var daysIdx=lastIdx-1;if(data.section==='body'&&data.column.index===daysIdx){var v=parseInt(data.cell.raw,10);if(!isNaN(v)&&v<0){data.cell.styles.textColor=[180,30,30];data.cell.styles.fontStyle='bold';}}if(data.section==='body'&&data.column.index===lastIdx){data.cell.styles.textColor=[180,30,30];data.cell.styles.fontStyle='bold';}},didDrawPage:function(){}});
+      doc.autoTable({head:[critHead2],body:critRows2,startY:y,margin:{top:38,bottom:18,left:14,right:14},headStyles:{fillColor:HEAD_FILL,fontSize:8.5,fontStyle:'bold',textColor:INK,lineColor:RULE,lineWidth:.1},bodyStyles:{fontSize:9,cellPadding:2.4,textColor:[55,65,81],lineColor:[229,231,235],lineWidth:.1},alternateRowStyles:{fillColor:ALT_FILL},columnStyles:critWidths2,didParseCell:function(data){var lastIdx=critHead2.length-1;var daysIdx=lastIdx-1;if(data.section==='body'&&data.column.index===daysIdx){var v=parseInt(data.cell.raw,10);if(!isNaN(v)&&v<0){data.cell.styles.textColor=[180,30,30];data.cell.styles.fontStyle='bold';}}if(data.section==='body'&&data.column.index===lastIdx){data.cell.styles.textColor=[180,30,30];data.cell.styles.fontStyle='bold';}},didDrawPage:function(){}});
       y=doc.lastAutoTable.finalY+6;
     });
-    if(false){var critHead=isAll?['Department','Project','Task','Expected Date','Actual Date','Notes','Days Until Due','Priority']
-                      :['Department','Task','Expected Date','Actual Date','Notes','Days Until Due','Priority'];
-    var critRows=critical.map(function(t){return buildRow(t,isAll,true);});
-    var critWidths=isAll
-      ?{0:{cellWidth:22},1:{cellWidth:24},2:{cellWidth:42},3:{cellWidth:18},4:{cellWidth:18},5:{cellWidth:36},6:{cellWidth:14,halign:'center'},7:{cellWidth:14,halign:'center',fontStyle:'bold'}}
-      :{0:{cellWidth:24},1:{cellWidth:48},2:{cellWidth:20},3:{cellWidth:20},4:{cellWidth:46},5:{cellWidth:15,halign:'center'},6:{cellWidth:15,halign:'center',fontStyle:'bold'}};
-    doc.autoTable({
-      head:[critHead],
-      body:critRows,
-      startY:y,
-      margin:{top:18,bottom:18,left:14,right:14},
-      headStyles:{fillColor:RED_HEAD,fontSize:10,fontStyle:'bold',textColor:[255,255,255]},
-      bodyStyles:{fontSize:9,cellPadding:2},
-      alternateRowStyles:{fillColor:[252,245,245]},
-      columnStyles:critWidths,
-      didParseCell:function(data){
-        var lastIdx=critHead.length-1;
-        var daysIdx=lastIdx-1;
-        if(data.section==='body'&&data.column.index===daysIdx){var v=parseInt(data.cell.raw,10);if(!isNaN(v)&&v<0)data.cell.styles.textColor=[180,30,30];}
-        if(data.section==='body'&&data.column.index===lastIdx){var c=priCellColor(data.cell.raw);if(c)data.cell.styles.textColor=c;}
-      },
-      didDrawPage:function(){}
-    });}
   }
   doc.addPage();
-  drawForestarHeader('Task Summary by Department');
-  var yStart=36;
+  drawReportHeader('Task Summary by Department');
+  var yStart=38;
   var anyDept=false;
   depts.forEach(function(deptName){
     var deptTasks=allTasks.filter(function(t){return t.department===deptName;});
@@ -5933,8 +5896,8 @@ function generatePDFSummary(){
       if(!b.due)return -1;
       return a.due.localeCompare(b.due);
     });
-    if(yStart>230){doc.addPage();drawForestarHeader('Task Summary by Department');yStart=52;}
-    yStart=drawSalmonBanner(deptName,yStart);
+    if(yStart>230){doc.addPage();drawReportHeader('Task Summary by Department');yStart=38;}
+    yStart=drawSectionBanner(deptName,yStart);
     var deptHead=isAll?['Project','Task','Expected Date','Actual Date','Notes','Days Until Due','Priority']
                       :['Task','Expected Date','Actual Date','Notes','Days Until Due','Priority'];
     var deptRows=deptTasks.map(function(t){return buildRow(t,isAll,false);});
@@ -5945,10 +5908,10 @@ function generatePDFSummary(){
       head:[deptHead],
       body:deptRows,
       startY:yStart,
-      margin:{top:18,bottom:18,left:14,right:14},
-      headStyles:{fillColor:[240,240,240],fontSize:9,fontStyle:'bold',textColor:[60,60,60],lineColor:[200,200,200],lineWidth:.1},
-      bodyStyles:{fontSize:9,cellPadding:2},
-      alternateRowStyles:{fillColor:[248,250,248]},
+      margin:{top:38,bottom:18,left:14,right:14},
+      headStyles:{fillColor:HEAD_FILL,fontSize:8.5,fontStyle:'bold',textColor:INK,lineColor:RULE,lineWidth:.1},
+      bodyStyles:{fontSize:9,cellPadding:2.4,textColor:[55,65,81],lineColor:[229,231,235],lineWidth:.1},
+      alternateRowStyles:{fillColor:ALT_FILL},
       columnStyles:deptWidths,
       didParseCell:function(data){
         var lastIdx=deptHead.length-1;

@@ -1182,7 +1182,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
  <div class="spacer"></div>
  <span id="todayBadge" class="today-badge" style="display:none;" title="Tasks due today">0 today</span>
  <button class="top-btn" id="pdfExportBtn" onclick="generatePDFSummary()">📄 Export PDF</button>
-   <button class="top-btn" id="csvExportBtn" onclick="exportSummaryCSV()" title="Export summary to CSV">📊 Export CSV</button>
+   <button class="top-btn" id="csvExportBtn" onclick="exportSummaryExcel()" title="Export executive summary to Excel">📊 Export Excel</button>
    
  <button class="top-btn accent" onclick="openNewTask()">＋ New Task</button>
  <button class="top-btn" onclick="openSettings()">⚙</button>
@@ -5767,12 +5767,18 @@ function generatePDFSummary(){
   var _pgCount=doc.internal.getNumberOfPages();for(var _pi=1;_pi<=_pgCount;_pi++){doc.setPage(_pi);fmtFooter(_pi,_pgCount);}
   doc.save((proj.replace(/[^a-z0-9]/gi,'_')||'report')+'_'+today.toISOString().split('T')[0]+'.pdf');
 }
-function exportSummaryCSV(){
+function exportSummaryCSV(){exportSummaryExcel();}
+function generatePDFReport(){generatePDFSummary();}
+function exportSummaryExcel(){
   var proj=(typeof getActiveTeamProject==='function'?getActiveTeamProject():null)||'All Projects';
   var isAll=(!selectedTeamProject)||proj==='All Projects';
   var today=new Date();
   var dateStamp=today.toISOString().split('T')[0];
+  var todayStr2=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
   var priOrder={Critical:0,High:1,Medium:2,Low:3};
+  var depts=['Acquisition','Entitlements','Development','Legal','HOA','Engineering'];
+  // Palette mirrors the executive PDF summary
+  var INK='#1f2937',MUTED='#6b7280',RULE='#d1d5db',CELL='#e5e7eb',HEAD='#f3f4f6',ALT='#f9fafb',BODY='#374151',RED='#b41e1e';
   function normPri(p){
     if(!p)return '';
     var s=String(p).toLowerCase();
@@ -5789,79 +5795,129 @@ function exportSummaryCSV(){
     if(t.bucket&&String(t.bucket).toLowerCase().indexOf('complet')===0)return true;
     return false;
   }
-  var rows=[];
+  function fmtDate(d){if(!d)return '';var s=String(d);var dd=new Date(s.indexOf('T')>=0?s:s+'T00:00:00');if(isNaN(dd))return '';return dd.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'});}
+  function daysUntil(d){if(!d)return '';var dd=new Date(d+'T00:00:00');if(isNaN(dd))return '';return String(Math.round((dd-today)/86400000));}
+  function esc2(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function priColor(p){if(p==='Critical')return RED;if(p==='High')return '#965000';if(p==='Low')return '#508c50';return BODY;}
+  // ---- collect open tasks (same sources as the PDF export) ----
+  var allTasks=[];
   (state.tasks||[]).forEach(function(t){
     if(!isAll&&t.project!==selectedTeamProject)return;
     if(isCompletedTask(t))return;
     var pri=normPri(t.priority);
-    rows.push({
-      project:t.project||'',
-      department:t.department||'Other',
-      title:t.title||t.text||'',
-      priority:pri||'',
-      due:t.due||'',
-      notes:t.notes||''
-    });
+    if(!pri)return;
+    allTasks.push({department:t.department||'Other',project:t.project||'',title:t.title||t.text||'',created:t.created||'',startDate:t.startDate||'',due:t.due||'',actualDate:t.actualDate||'',notes:t.notes||'',priority:pri});
   });
-  var _csvDevData=(typeof devData!=='undefined'&&devData)?devData:(state.developmentData||null);
-  if(_csvDevData){
-    (_csvDevData.projects||[]).forEach(function(p){
+  var _xlDevData=(typeof devData!=='undefined'&&devData)?devData:(state.developmentData||null);
+  if(_xlDevData){
+    (_xlDevData.projects||[]).forEach(function(p){
       if(!isAll&&p.name!==selectedTeamProject)return;
       (p.notes||[]).forEach(function(n){
         if(n.completed)return;
         var pri=normPri(n.priority);
-        rows.push({
-          project:p.name||'',
-          department:'Development',
-          title:n.title||n.text||n.note||'',
-          priority:pri||'',
-          due:n.dueDate||n.due||'',
-          notes:n.notes||n.description||''
-        });
+        if(!pri||pri==='Low')return;
+        allTasks.push({department:'Development',project:p.name,title:n.task||'',created:n.created||n.dateAdded||'',startDate:'',due:n.dueDate||'',actualDate:'',notes:n.noteText||'',priority:pri});
+      });
+    });
+    Object.keys(_xlDevData.nonProject||{}).forEach(function(key){
+      (_xlDevData.nonProject[key]||[]).forEach(function(item){
+        if(item.completed)return;
+        var pri=normPri(item.priority);
+        if(!pri||pri==='Low')return;
+        allTasks.push({department:'Development',project:key.replace(/([A-Z])/g,' $1').replace(/^./,function(s){return s.toUpperCase();}),title:item.task||'',created:item.created||item.dateAdded||'',startDate:'',due:item.dueDate||'',actualDate:'',notes:item.noteText||'',priority:pri});
       });
     });
   }
-  if(!rows.length){
-    if(typeof showToast==='function')showToast('No open tasks to export.');
-    else alert('No open tasks to export.');
+  if(!allTasks.length){
+    if(typeof showToast==='function')showToast('No open tasks to export.');else alert('No open tasks to export.');
     return;
   }
-  rows.sort(function(a,b){
-    var pa=(a.project||'').toLowerCase(),pb=(b.project||'').toLowerCase();
-    if(pa!==pb)return pa<pb?-1:1;
-    var da=(a.department||'').toLowerCase(),db=(b.department||'').toLowerCase();
-    if(da!==db)return da<db?-1:1;
-    var ra=priOrder[a.priority];if(ra===undefined)ra=99;
-    var rb=priOrder[b.priority];if(rb===undefined)rb=99;
-    if(ra!==rb)return ra-rb;
-    if(!a.due&&!b.due)return 0;
-    if(!a.due)return 1;
-    if(!b.due)return -1;
-    return a.due.localeCompare(b.due);
-  });
-  function csvEsc(v){
-    v=(v==null)?'':String(v);
-    if(v.indexOf(',')>=0||v.indexOf('"')>=0||v.indexOf('\n')>=0||v.indexOf('\r')>=0){
-      return '"'+v.replace(/"/g,'""')+'"';
-    }
-    return v;
+  function sortTasks(arr){
+    arr.sort(function(a,b){
+      var ra=priOrder[a.priority];if(ra===undefined)ra=2;
+      var rb=priOrder[b.priority];if(rb===undefined)rb=2;
+      if(ra!==rb)return ra-rb;
+      if(!a.due&&!b.due)return 0;
+      if(!a.due)return 1;
+      if(!b.due)return -1;
+      return a.due.localeCompare(b.due);
+    });
   }
-  var headers=['Project','Department','Task','Priority','Due Date','Notes'];
-  var csv=headers.join(',')+'\r\n';
-  rows.forEach(function(r){
-    csv+=[csvEsc(r.project),csvEsc(r.department),csvEsc(r.title),csvEsc(r.priority),csvEsc(r.due),csvEsc(r.notes)].join(',')+'\r\n';
-  });
-  // UTF-8 BOM for Excel
-  var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  // ---- one styled sheet: title block, KPI line, department sections ----
+  function sheetHtml(subtitle,tasks,inclProject){
+    var byDept={};tasks.forEach(function(t){var d=t.department||'Other';(byDept[d]=byDept[d]||[]).push(t);});
+    var order=depts.filter(function(d){return byDept[d];}).concat(Object.keys(byDept).filter(function(d){return depts.indexOf(d)<0;}).sort());
+    var cols=(inclProject?['Project']:[]).concat(['Task','Start Date','Expected Date','Actual Date','Notes','Days Until Due','Priority']);
+    var nCols=cols.length;
+    var nCrit=0,nOver=0;
+    tasks.forEach(function(t){
+      if(t.priority==='Critical')nCrit++;
+      var du=daysUntil(t.due);
+      if(du!==''&&parseInt(du,10)<0)nOver++;
+    });
+    var h='<table cellspacing="0" cellpadding="0" style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;">';
+    h+='<tr><td colspan="'+nCols+'" style="font-size:20px;font-weight:bold;color:'+INK+';padding:10px 4px 0;">'+esc2(proj)+'</td></tr>';
+    h+='<tr><td colspan="'+nCols+'" style="font-size:10px;letter-spacing:1px;color:'+MUTED+';padding:2px 4px 0;">'+esc2(subtitle.toUpperCase())+' &nbsp;&middot;&nbsp; '+esc2(todayStr2.toUpperCase())+'</td></tr>';
+    h+='<tr><td colspan="'+nCols+'" style="font-size:10px;color:'+MUTED+';padding:2px 4px 6px;border-bottom:2px solid '+INK+';">'+tasks.length+' open item'+(tasks.length===1?'':'s')+' &nbsp;&middot;&nbsp; <span style="color:'+RED+';font-weight:bold;">'+nCrit+' critical</span> &nbsp;&middot;&nbsp; '+nOver+' overdue</td></tr>';
+    h+='<tr><td colspan="'+nCols+'" style="padding:5px;"></td></tr>';
+    if(!tasks.length){
+      h+='<tr><td colspan="'+nCols+'" style="color:'+MUTED+';font-size:11px;padding:8px 4px;">No items in this category at this time.</td></tr></table>';
+      return h;
+    }
+    order.forEach(function(deptName){
+      var rows=byDept[deptName];sortTasks(rows);
+      h+='<tr><td colspan="'+nCols+'" style="background:'+INK+';color:#ffffff;font-weight:bold;font-size:11px;letter-spacing:1px;padding:6px 8px;">'+esc2(deptName.toUpperCase())+'</td></tr>';
+      h+='<tr>';
+      cols.forEach(function(c){h+='<td style="background:'+HEAD+';color:'+INK+';font-weight:bold;font-size:10px;border:1px solid '+RULE+';padding:4px 8px;">'+esc2(c)+'</td>';});
+      h+='</tr>';
+      rows.forEach(function(t,i){
+        var bg=i%2?ALT:'#ffffff';
+        var du=daysUntil(t.due);
+        var duStyle=(du!==''&&parseInt(du,10)<0)?'color:'+RED+';font-weight:bold;':'color:'+BODY+';';
+        function cell(v,extra){h+='<td style="background:'+bg+';border:1px solid '+CELL+';padding:4px 8px;font-size:10px;color:'+BODY+';vertical-align:top;'+(extra||'')+'">'+esc2(v)+'</td>';}
+        h+='<tr>';
+        if(inclProject)cell(t.project);
+        cell(t.title);
+        cell(fmtDate(t.startDate||t.created));
+        cell(fmtDate(t.due));
+        cell(fmtDate(t.actualDate));
+        cell((t.notes||'').substring(0,200));
+        cell(du,'text-align:center;'+duStyle);
+        cell(t.priority,'font-weight:bold;color:'+priColor(t.priority)+';');
+        h+='</tr>';
+      });
+      h+='<tr><td colspan="'+nCols+'" style="padding:8px;"></td></tr>';
+    });
+    h+='</table>';
+    return h;
+  }
+  function sheetName(s){return String(s||'Sheet').replace(/[\\\/\*\?\:\[\]]/g,'_').substring(0,31);}
+  var sheets=[];
+  var critical=allTasks.filter(function(t){return t.priority==='Critical';});
+  sheets.push({name:'Critical Items',html:sheetHtml('Critical Priority Summary',critical.slice(),isAll)});
+  sheets.push({name:sheetName(isAll?'All Projects':proj),html:sheetHtml('Task Summary by Department',allTasks.slice(),isAll)});
+  if(isAll){
+    var byProject={};
+    allTasks.forEach(function(t){var p=t.project||'General';(byProject[p]=byProject[p]||[]).push(t);});
+    Object.keys(byProject).sort().forEach(function(pn){
+      var nm=sheetName(pn);
+      if(nm==='Critical Items'||nm==='All Projects')nm=sheetName(nm+' (proj)');
+      sheets.push({name:nm,html:sheetHtml('Task Summary by Department',byProject[pn].slice(),false)});
+    });
+  }
+  var xml='<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"/><xml><x:ExcelWorkbook><x:ExcelWorksheets>';
+  sheets.forEach(function(s){xml+='<x:ExcelWorksheet><x:Name>'+esc2(s.name)+'</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>';});
+  xml+='</x:ExcelWorksheets></x:ExcelWorkbook></xml></head><body>';
+  sheets.forEach(function(s,i){xml+='<div id="sheet'+i+'">'+s.html+'</div>';});
+  xml+='</body></html>';
+  var blob=new Blob([xml],{type:'application/vnd.ms-excel;charset=utf-8'});
   var url=URL.createObjectURL(blob);
-  var fname=(String(proj).replace(/[^a-z0-9]/gi,'_')||'report')+'_'+dateStamp+'_summary.csv';
+  var fname=(String(proj).replace(/[^a-z0-9]/gi,'_')||'report')+'_'+dateStamp+'_summary.xls';
   var a=document.createElement('a');
   a.href=url;a.download=fname;document.body.appendChild(a);a.click();
   setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
-  if(typeof showToast==='function')showToast('Summary CSV exported ('+rows.length+' rows).');
+  if(typeof showToast==='function')showToast('Executive summary exported ('+allTasks.length+' tasks).');
 }
-function generatePDFReport(){generatePDFSummary();}
-function exportSummaryExcel(){var proj=(typeof getActiveTeamProject==='function'?getActiveTeamProject():null)||'All Projects';var isAll=(!selectedTeamProject)||proj==='All Projects';var today=new Date();var dateStamp=today.toISOString().split('T')[0];var todayStr2=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});var priOrder={Critical:0,High:1,Medium:2,Low:3};function normPri(p){if(!p)return '';var s=String(p).toLowerCase();if(s==='urgent'||s==='critical')return 'Critical';if(s==='high')return 'High';if(s==='medium'||s==='med'||s==='normal')return 'Medium';if(s==='low')return 'Low';var cap=s.charAt(0).toUpperCase()+s.slice(1);if(priOrder[cap]!==undefined)return cap;return '';}function isCompletedTask(t){if(t.completed===true)return true;if(t.bucket&&String(t.bucket).toLowerCase().indexOf('complet')===0)return true;return false;}function fmtDate(d){return d?new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'';}function daysUntil(d){if(!d)return '';var dd=new Date(d+'T00:00:00');return String(Math.round((dd-today)/86400000));}function esc2(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}var allTasks=[];var depts=['Acquisition','Entitlements','Development','Legal','HOA','Engineering'];(state.tasks||[]).forEach(function(t){if(!isAll&&t.project!==selectedTeamProject)return;if(isCompletedTask(t))return;var pri=normPri(t.priority);if(!pri)return;allTasks.push({department:t.department||'Other',project:t.project||'',title:t.title||t.text||'',startDate:t.startDate||t.created||'',due:t.due||'',actualDate:t.actualDate||'',notes:t.notes||'',priority:pri});});var byProject={};allTasks.forEach(function(t){var p=t.project||'General';(byProject[p]=byProject[p]||[]).push(t);});var projNames=Object.keys(byProject).sort();var priColor={Critical:'#c8102e',High:'#b45309',Medium:'#0369a1',Low:'#166534'};function sheetHtml(name,tasks){tasks.sort(function(a,b){var da=depts.indexOf(a.department);if(da<0)da=99;var db=depts.indexOf(b.department);if(db<0)db=99;if(da!==db)return da-db;var pa=priOrder[a.priority];var pb=priOrder[b.priority];if(pa!==pb)return pa-pb;if(!a.due&&!b.due)return 0;if(!a.due)return 1;if(!b.due)return -1;return a.due.localeCompare(b.due);});var byDept={};tasks.forEach(function(t){(byDept[t.department]=byDept[t.department]||[]).push(t);});var order=depts.filter(function(d){return byDept[d];}).concat(Object.keys(byDept).filter(function(d){return depts.indexOf(d)<0;}));var h='<table border="0" cellspacing="0" cellpadding="6" style="font-family:Calibri,Arial;font-size:11px;border-collapse:collapse;">';h+='<tr><td colspan="8" style="font-size:20px;font-weight:bold;color:#228B22;padding:8px 4px 0">FORESTAR</td></tr>';h+='<tr><td colspan="8" style="font-size:16px;font-weight:bold;padding:2px 4px 0">'+esc2(name)+'</td></tr>';h+='<tr><td colspan="8" style="font-size:11px;color:#c8102e;padding:0 4px">Critical Priority Summary</td></tr>';h+='<tr><td colspan="8" style="font-size:10px;color:#777;padding:0 4px 8px">Generated '+esc2(todayStr2)+'</td></tr>';order.forEach(function(deptName){var rows=byDept[deptName];h+='<tr><td colspan="8" style="background:#fbe0e0;color:#5a1414;font-weight:bold;padding:6px 8px;border:1px solid #f2c7c7">'+esc2(deptName.toUpperCase())+'</td></tr>';h+='<tr style="background:#f0f0f0;font-weight:bold;color:#333">';['Project','Task','Start Date','Expected Date','Actual Date','Notes','Days Until Due','Priority'].forEach(function(c){h+='<td style="border:1px solid #ccc;padding:4px 6px">'+c+'</td>';});h+='</tr>';rows.forEach(function(t,i){var bg=i%2?'#ffffff':'#fafafa';var du=daysUntil(t.due);var duCol=(parseInt(du,10)<0)?'#c8102e':'#333';h+='<tr style="background:'+bg+'">';h+='<td style="border:1px solid #e5e5e5;padding:4px 6px">'+esc2(t.project)+'</td>';h+='<td style="border:1px solid #e5e5e5;padding:4px 6px">'+esc2(t.title)+'</td>';h+='<td style="border:1px solid #e5e5e5;padding:4px 6px">'+esc2(fmtDate(t.startDate))+'</td>';h+='<td style="border:1px solid #e5e5e5;padding:4px 6px">'+esc2(fmtDate(t.due))+'</td>';h+='<td style="border:1px solid #e5e5e5;padding:4px 6px">'+esc2(fmtDate(t.actualDate))+'</td>';h+='<td style="border:1px solid #e5e5e5;padding:4px 6px">'+esc2(t.notes)+'</td>';h+='<td style="border:1px solid #e5e5e5;padding:4px 6px;color:'+duCol+';font-weight:bold;text-align:center">'+esc2(du)+'</td>';h+='<td style="border:1px solid #e5e5e5;padding:4px 6px;color:'+(priColor[t.priority]||'#333')+';font-weight:bold">'+esc2(t.priority)+'</td>';h+='</tr>';});h+='<tr><td colspan="8" style="padding:8px"></td></tr>';});h+='</table>';return h;}var sheets=[{name:'All Projects',html:sheetHtml('All Projects',allTasks.slice())}];projNames.forEach(function(pn){sheets.push({name:pn.substring(0,31).replace(/[\\/*?:\[\]]/g,'_'),html:sheetHtml(pn,byProject[pn].slice())});});var xml='<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"/><xml><x:ExcelWorkbook><x:ExcelWorksheets>';sheets.forEach(function(s){xml+='<x:ExcelWorksheet><x:Name>'+esc2(s.name)+'</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>';});xml+='</x:ExcelWorksheets></x:ExcelWorkbook></xml></head><body>';sheets.forEach(function(s,i){xml+='<div id="sheet'+i+'">'+s.html+'</div>';});xml+='</body></html>';var blob=new Blob([xml],{type:'application/vnd.ms-excel;charset=utf-8'});var url=URL.createObjectURL(blob);var fname=(String(proj).replace(/[^a-z0-9]/gi,'_')||'report')+'_'+dateStamp+'_summary.xls';var a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);if(typeof showToast==='function')showToast('Excel summary exported ('+allTasks.length+' tasks).');}
 
 var masterCalMonth=null,masterCalYear=null;
 function masterCalPrev(){if(masterCalMonth===null){var n=new Date();masterCalMonth=n.getMonth();masterCalYear=n.getFullYear();}masterCalMonth--;if(masterCalMonth<0){masterCalMonth=11;masterCalYear--;}renderMasterCalendar();}
@@ -5958,7 +6014,7 @@ function renderMasterCalendar(){
 // The Ground Control UI was removed (unreachable — devAppContainer was never created).
 // What remains: the New Project modal (used by the sidebar "+ New Project" button via
 // openUnifiedProjectModal) and the devData/state.developmentData persistence helpers,
-// which the PDF/CSV exports still read.
+// which the PDF/Excel exports still read.
 
 // ---- data ----
 function dev_defaultData() {

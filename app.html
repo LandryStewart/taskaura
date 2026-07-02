@@ -1170,7 +1170,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
  <div class="logo">TaskAura</div>
  <input type="hidden" id="projName" value="My Project">
  <div class="topbar-search"><span>🔍</span><input type="search" id="searchBox" placeholder="Search tasks..." oninput="applyFilters()"></div>
- <button class="top-btn" onclick="setView('mastercal')" title="My Calendar">📅</button>
+ <button class="top-btn" id="topMastercalBtn" onclick="setView('mastercal')" title="My Calendar">📅</button>
  <div class="spacer"></div>
  <span id="todayBadge" class="today-badge" style="display:none;" title="Tasks due today">0 today</span>
  <button class="top-btn" id="pdfExportBtn" onclick="generatePDFSummary()">📄 Export PDF</button>
@@ -1196,7 +1196,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
    <div class="nav-item" id="navNotes" onclick="setView('notes')"><span class="nav-icon">◱</span><span>Notes</span></div>
    <div class="nav-item" id="navSchedules" onclick="setView('schedules')"><span class="nav-icon">◫</span><span>Schedules</span></div>
    <div class="nav-item hidden" id="navChat" onclick="setView('chat')"><span class="nav-icon">💬</span><span>Team Chat</span><span class="nav-unread hidden" id="chatUnreadDot"></span></div>
-   <div class="nav-item" id="navMastercal" onclick="setView('mastercal')"><span class="nav-icon">🗓</span><span>Master Calendar</span></div>
+   <div class="nav-item" id="navMastercal" onclick="setView('mastercal')"><span class="nav-icon">🗓</span><span id="navMastercalLabel">My Calendar</span></div>
 </div>
   <div class="sidebar-section">
    <div class="sidebar-section-title">Filters</div>
@@ -2242,6 +2242,9 @@ function renderPersonalDashboard(el){
             '<span class="pill-num" style="'+(dueToday?'color:#d97706':'')+'">'+dueToday+'</span>'+
             '<span>due today<span class="pill-scope"> · all workspaces</span></span>'+
           '</div>'+
+          '<div class="pd-stat-pill" onclick="setView(\'mastercal\')" title="Every task assigned to you, across all workspaces">'+
+            '<span>📅 My Calendar</span>'+
+          '</div>'+
           '<div style="font-size:11px;color:var(--muted);margin-left:4px;display:flex;align-items:center;gap:5px;padding-left:4px">'+
             '<span class="pd-clock-dot"></span><span id="pdClockText"></span>'+
           '</div>'+
@@ -2682,6 +2685,8 @@ function enterPersonalWorkspace(){
 }
 function render(){document.querySelectorAll('.workspace-tab').forEach(t=>{t.classList.toggle('active',t.dataset.ws===currentWorkspace);});updateFilters();renderSidebarFilters();updateStats();updateFilterChips();updateTodayBadge();renderPresets();updateDashboardNav();// Show/hide chat nav item
 const chatNav=document.getElementById('navChat');if(chatNav){if(currentTeamWorkspaceId)chatNav.classList.remove('hidden');else{chatNav.classList.add('hidden');if(currentView==='chat'){currentView='dashboard';}}}
+var _mcLbl=document.getElementById('navMastercalLabel');if(_mcLbl)_mcLbl.textContent=currentTeamWorkspaceId?'Team Calendar':'My Calendar';
+var _mcBtn=document.getElementById('topMastercalBtn');if(_mcBtn)_mcBtn.title=currentTeamWorkspaceId?'Team Calendar':'My Calendar';
 updateChatUnread();
 if(currentView==='dashboard')renderDashboard();else if(currentView==='board')renderBoard();else if(currentView==='list')renderList();else if(currentView==='calendar')renderCalendar();else if(currentView==='notes')renderNotesView();else if(currentView==='schedules')renderSchedules();else if(currentView==='chat')renderChat();else if(currentView==='mastercal')renderMasterCalendar();save();}
 function updateDashboardNav(){const navEl=document.getElementById('navDashboard');if(navEl)navEl.classList.remove('hidden');}
@@ -4745,9 +4750,27 @@ function renderTeamSidebarProjects(){
       '<div style="height:1px;background:var(--border);margin:0 12px 8px"></div>';
   }
 
+  var _psToday=new Date().toISOString().split('T')[0];
+  function _projStats(p){
+    var pn=normalizeTeamProjectName(p);
+    var tks=(state.tasks||[]).filter(function(t){return getTaskProjectName(t)===pn;});
+    var open=tks.filter(function(t){return(t.pct||0)<100;});
+    var overdue=open.filter(function(t){return t.due&&t.due<_psToday;}).length;
+    var done=tks.length-open.length;
+    return{total:tks.length,open:open.length,overdue:overdue,pct:tks.length?Math.round(done/tks.length*100):0};
+  }
   var items=projects.map(function(p,i){
-    return'<div class="team-proj-item '+(getActiveTeamProject()===normalizeTeamProjectName(p)?'active':'')+'" data-projidx="'+i+'" style="display:flex;align-items:center;justify-content:space-between;gap:4px;">'+
-      '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" onclick="selectTeamProject(window.__devProjs[this.closest(\'[data-projidx]\').dataset.projidx])">'+esc(p)+'</span>'+
+    var s=_projStats(p);
+    var meta=s.total===0?'No tasks yet':(s.open===0?'All done ✓':(s.open+' open'+(s.overdue?' · '+s.overdue+' overdue':'')));
+    var metaColor=s.overdue?'var(--crit)':(s.total&&s.open===0?'var(--low)':'var(--muted)');
+    return'<div class="team-proj-item '+(getActiveTeamProject()===normalizeTeamProjectName(p)?'active':'')+'" data-projidx="'+i+'" style="display:flex;align-items:flex-start;justify-content:space-between;gap:4px;">'+
+      '<div style="flex:1;min-width:0;cursor:pointer;" onclick="selectTeamProject(window.__devProjs[this.closest(\'[data-projidx]\').dataset.projidx])">'+
+        '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(p)+'</div>'+
+        '<div style="display:flex;align-items:center;gap:6px;margin-top:3px;">'+
+          (s.total?'<div style="flex:1;max-width:60px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="width:'+s.pct+'%;height:100%;background:var(--pri);border-radius:2px;"></div></div>':'')+
+          '<span style="font-size:10px;font-weight:600;color:'+metaColor+';white-space:nowrap;">'+meta+'</span>'+
+        '</div>'+
+      '</div>'+
       '<button onclick="deleteProject(window.__devProjs[this.closest(\'[data-projidx]\').dataset.projidx])" title="Delete project" style="background:none;border:none;color:var(--text2);font-size:14px;line-height:1;padding:0 2px;cursor:pointer;opacity:.5;flex-shrink:0;" onmouseover="this.style.opacity=1;this.style.color=\'#dc2626\'" onmouseout="this.style.opacity=.5;this.style.color=\'var(--text2)\'">×</button>'+
     '</div>';
   }).join('');
@@ -5822,17 +5845,20 @@ function renderMasterCalendar(){
   // In team workspaces, show the project sidebar (same as dashboard) instead of generic nav items
   if(currentTeamWorkspaceId){renderTeamSidebarProjects();}
   var el=document.getElementById('masterCalView');if(!el)return;
+  var isTeamCal=!!currentTeamWorkspaceId;
   var allTasks=[];
-  (state.tasks||[]).forEach(function(t){
-    var label=inferTaskWorkspaceLabel(t,'Personal');
-    allTasks.push(Object.assign({},t,{_wsLabel:label,_wsSource:(label&&label!=='Personal')?'team':'personal',_wsId:''}));
-  });
-  teamWorkspaces.forEach(function(tw){
-    ((tw.data||{}).tasks||[]).forEach(function(t){
-      allTasks.push(Object.assign({},t,{_wsLabel:inferTaskWorkspaceLabel(t,tw.name||'Team'),_wsSource:'team',_wsId:tw.id||''}));
+  if(isTeamCal){
+    // Team Calendar — every task in THIS team, regardless of assignee
+    (state.tasks||[]).forEach(function(t){
+      allTasks.push(Object.assign({},t,{_wsLabel:t.assignee||'',_wsSource:'team',_wsId:currentTeamWorkspaceId||''}));
     });
-  });
-  allTasks=dedupeMasterCalendarTasks(allTasks);
+  }else{
+    // My Calendar — tasks assigned to me across all workspaces
+    getPersonalTasks().forEach(function(t){
+      allTasks.push(Object.assign({},t,{_wsLabel:(t._wsName==='Work'?'Personal':(t._wsName||'Personal')),_wsSource:t._wsId?'team':'personal',_wsId:t._wsId||''}));
+    });
+    allTasks=dedupeMasterCalendarTasks(allTasks);
+  }
 
   // Filter by search query if one is active
   var _mcSearch=(document.getElementById('searchBox')||{}).value;
@@ -5861,14 +5887,15 @@ function renderMasterCalendar(){
   var year=masterCalYear;var month=masterCalMonth;
   var firstDay=new Date(year,month,1).getDay();
   var daysInMonth=new Date(year,month+1,0).getDate();
-  var monthName=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  var monthName=new Date(year,month,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
   var todayStr3=now.toISOString().split('T')[0];
 
   var monOff=(firstDay+6)%7;
   var _deptLabels={acquisition:'Acquisition',entitlement:'Entitlement',development:'Development',legal:'Legal',hoa:'HOA',engineering:'Engineering'};
   var _filterLabel=masterCalDeptFilter?(_deptLabels[masterCalDeptFilter]||masterCalDeptFilter):(_mcActiveProj||'');
   var projLabel=_filterLabel?' — '+_filterLabel:'';
-  var html='<div class="cal-header" style="display:flex;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">🗓 Master Calendar'+projLabel+' — '+monthName+'</h2><div class="mc-cal-nav"><button onclick="masterCalPrev()" title="Previous month">◀ Prev</button><button onclick="masterCalToday()" title="Jump to today">Today</button><button onclick="masterCalNext()" title="Next month">Next ▶</button></div></div>';
+  var calTitle=isTeamCal?'Team Calendar':'My Calendar';
+  var html='<div class="cal-header" style="display:flex;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">'+calTitle+projLabel+' — '+monthName+'</h2><div class="mc-cal-nav"><button onclick="masterCalPrev()" title="Previous month">◀ Prev</button><button onclick="masterCalToday()" title="Jump to today">Today</button><button onclick="masterCalNext()" title="Next month">Next ▶</button></div></div>';
   html+='<div class="cal-grid" style="grid-template-columns:repeat(5,1fr)">';
   ['Mon','Tue','Wed','Thu','Fri'].forEach(function(d){html+='<div class="cal-day-hdr">'+d+'</div>';});
   for(var i=0;i<Math.min(monOff,5);i++)html+='<div class="cal-cell outside"></div>';
@@ -5883,10 +5910,10 @@ function renderMasterCalendar(){
       '<div class="cal-tasks">';
     var maxVisible=5;
     dayTasks.slice(0,maxVisible).forEach(function(t){
-      var wsLabel=inferTaskWorkspaceLabel(t,t._wsLabel||'Personal');
+      var chip=isTeamCal?(t.assignee||''):(t._wsLabel||'Personal');
       var wsId=(t._wsId||'').replace(/'/g,"\'");
       html+='<div class="cal-task pri-'+(t.priority||'medium').toLowerCase()+'" style="cursor:pointer" title="'+esc((t.title||t.text||''))+'" onclick="jumpToTask(\''+wsId+'\','+t.id+');return false;">'+
-        '<span style="font-size:9px;background:var(--pri);color:#fff;padding:1px 4px;border-radius:3px;margin-right:3px;flex-shrink:0">'+esc(wsLabel)+'</span>'+
+        (chip?'<span style="font-size:9px;background:var(--pri);color:#fff;padding:1px 4px;border-radius:3px;margin-right:3px;flex-shrink:0">'+esc(chip)+'</span>':'')+
         esc(((t.title||t.text||'')).substring(0,20))+
       '</div>';
     });

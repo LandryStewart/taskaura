@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- PATCH v13: CDN Supabase + login retry + loading overlay + fetch timeout -->
 <!-- PATCH: all-projects calendar shows full day task lists v12 -->
 <!-- PATCH: All Projects roll-up + master calendar team-label fix v11 -->
 <html lang="en">
@@ -1132,22 +1131,13 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 .dev-modal .form-row .form-group { flex:1; }
 .dev-modal textarea { min-height:60px; resize:vertical; }
 .dev-modal h3, .dev-modal h4 { color:var(--text); }
-
-.ta-loading-overlay{position:fixed;inset:0;background:rgba(13,17,23,.85);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;z-index:99999;color:#fff;font-family:Inter,sans-serif;}
-.ta-loading-overlay.hidden{display:none;}
-.ta-spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,.15);border-top-color:#4ade80;border-radius:50%;animation:ta-spin 0.9s linear infinite;}
-@keyframes ta-spin{to{transform:rotate(360deg);}}
-.ta-loading-msg{font-size:14px;font-weight:600;letter-spacing:.3px;}
-.ta-loading-sub{font-size:12px;color:rgba(255,255,255,.6);}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src='/vendor/supabase.js';"></script>
+<script src="/vendor/supabase.js"></script>
 <script src="/vendor/jspdf.umd.min.js"></script>
 <script src="/vendor/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 </head>
 <body>
-<div class="ta-loading-overlay hidden" id="taLoadingOverlay"><div class="ta-spinner"></div><div class="ta-loading-msg" id="taLoadingMsg">Loading your workspace…</div><div class="ta-loading-sub" id="taLoadingSub">Fetching tasks and teams</div></div>
-
 <!-- TOPO BACKGROUND -->
 <canvas id="topo-bg" style="position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.10;" aria-hidden="true"></canvas>
 
@@ -1421,80 +1411,7 @@ input,select,textarea{font-family:inherit;color:var(--text);}
 // ── Supabase Configuration ────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://kxidfwesywhhdifekkqo.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Mpf3fQxq5253lluxVGdXxA_Se4rBp9z';
-// Patched: safer client init + retry-capable fetch
-const _supabase = (typeof supabase !== 'undefined' && supabase.createClient)
-  ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
-      global: {
-        fetch: (url, opts) => {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 15000);
-          return fetch(url, { ...opts, signal: controller.signal })
-            .finally(() => clearTimeout(timeout));
-        }
-      }
-    })
-  : null;
-if (!_supabase) {
-  alert('TaskAura could not load Supabase. Please check your connection and refresh.');
-}
-// Loading overlay helpers
-window.taShowLoading = function(msg, sub){
-  const el = document.getElementById('taLoadingOverlay');
-  if (!el) return;
-  if (msg) document.getElementById('taLoadingMsg').textContent = msg;
-  if (sub) document.getElementById('taLoadingSub').textContent = sub;
-  el.classList.remove('hidden');
-};
-window.taHideLoading = function(){
-  const el = document.getElementById('taLoadingOverlay');
-  if (el) el.classList.add('hidden');
-};
-// Patched doLogin wrapper with retry + friendlier errors
-window._origDoLogin = null;
-window.doLoginPatched = async function(){
-  const emailEl = document.getElementById('loginEmail');
-  const pwEl = document.getElementById('loginPw');
-  const errEl = document.getElementById('loginError');
-  if (errEl) errEl.textContent = '';
-  const email = emailEl && emailEl.value.trim();
-  const password = pwEl && pwEl.value;
-  if (!email || !password) { if (errEl) errEl.textContent = 'Enter email and password.'; return; }
-  taShowLoading('Signing you in…', 'Contacting Supabase');
-  let lastErr = null;
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
-      if (error) { lastErr = error; break; }
-      taShowLoading('Loading your workspace…', 'Fetching tasks and teams');
-      currentUser = data.user;
-      if (typeof unlockApp === 'function') { await unlockApp(); }
-      taHideLoading();
-      return;
-    } catch (e) {
-      lastErr = e;
-      if (attempt < 3) { await new Promise(r => setTimeout(r, 600 * attempt)); }
-    }
-  }
-  taHideLoading();
-  const msg = (lastErr && lastErr.message) ? lastErr.message : 'Network error';
-  if (errEl) errEl.textContent = /fetch|network|abort/i.test(msg)
-    ? 'Cannot reach server. Check your connection and try again.'
-    : msg;
-};
-// Rebind Sign-In button after DOM is ready
-document.addEventListener('DOMContentLoaded', function(){
-  const btns = document.querySelectorAll('.auth-btn');
-  btns.forEach(b => {
-    if (b.getAttribute('onclick') && b.getAttribute('onclick').indexOf('doLogin') !== -1) {
-      b.setAttribute('onclick', 'doLoginPatched()');
-    }
-  });
-  const em = document.getElementById('loginEmail');
-  const pw = document.getElementById('loginPw');
-  if (em) em.setAttribute('onkeydown', "if(event.key==='Enter')doLoginPatched()");
-  if (pw) pw.setAttribute('onkeydown', "if(event.key==='Enter')doLoginPatched()");
-});
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null;
 let _unlockingApp = false;
 
